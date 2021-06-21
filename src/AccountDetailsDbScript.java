@@ -11,7 +11,11 @@ public class AccountDetailsDbScript {
 	public static final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
 	private static final String USERNAME = "root";
 	private static final String PASSWORD = "password";
-	private static final String CONN_STRING = "jdbc:mysql://localhost:3306/test"; // jdbc:mysql://ip:3306/DBNAME
+	private static String CONN_STRING = "jdbc:mysql://localhost:3306/test"; // jdbc:mysql://ip:3306/DBNAME
+
+	public static void setConnString(String ipandPort, String dbName) {
+		CONN_STRING = "jdbc:mysql//" + ipandPort + dbName;
+	}
 
 	public static void getAccountDetails(int accountDetailsId) throws SQLException {
 		Connection con = null;
