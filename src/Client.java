@@ -8,6 +8,10 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 	}
 
+	// Client will need to display account details, send buy/sell order, list of
+	// account stock holdings, polling of stock price per interval (not necessarily
+	// need polling, can be on update) when on that page.
+
 	public static void main(String[] args) {
 		System.out.println("client main method");
 
