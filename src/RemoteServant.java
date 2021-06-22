@@ -41,7 +41,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	@Override
 	public String getAccountDetailsByUsername(String username) throws RemoteException {
 		// TODO Auto-generated method stub
-		return "test";
+		return "5";
 	}
 
 	@Override

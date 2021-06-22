@@ -47,7 +47,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 																			// or on update
 
 			ArrayList stockOrderList = remoteObj.retrieveOrders("SG", "SGX:A17U"); // second parameter can enter be
-																					// tickerSymbol / stockId, for now is tickerSymbol
+																					// tickerSymbol / stockId, for now
+																					// is tickerSymbol
 
 			String stockPrice1 = remoteObj.retrievePrice("US", "NASDAQ:AAPL");
 			ArrayList stockOrderList1 = remoteObj.retrieveOrders("US", "NASDAQ:AAPL");
