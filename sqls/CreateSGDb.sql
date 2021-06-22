@@ -30,11 +30,11 @@ CREATE TABLE `marketdata` (
 
 /*data*/
 /*Status true = open, false = closed */
-INSERT INTO `stock` VALUES (1,'UOB','SGX: U11',25.69,true,'SGT ',current_timestamp());
-INSERT INTO `stock` VALUES (null,'Singapore Airline','SGX: C6L',4.98,true,'SGT',current_timestamp());
-INSERT INTO `stock` VALUES (null,'Sheng Shiong','SGX: OV8',1.57,false,'SGT',current_timestamp());
-INSERT INTO `stock` VALUES (null,'Oversea-Chinese Banking Corp. Limited','SGX: O39',11.80,true,'SGT',current_timestamp());
-INSERT INTO `stock` VALUES (null,'Singapore Telecommunications Limited','SGX: Z74',2.30,true,'SGT',current_timestamp());
+INSERT INTO `stock` VALUES (1,'UOB','SGX: U11',25.69,true,'GMT+8 ',current_timestamp());
+INSERT INTO `stock` VALUES (null,'Singapore Airline','SGX: C6L',4.98,true,'GMT+8',current_timestamp());
+INSERT INTO `stock` VALUES (null,'Sheng Shiong','SGX: OV8',1.57,false,'GMT+8',current_timestamp());
+INSERT INTO `stock` VALUES (null,'Oversea-Chinese Banking Corp. Limited','SGX: O39',11.80,true,'GMT+8',current_timestamp());
+INSERT INTO `stock` VALUES (null,'Singapore Telecommunications Limited','SGX: Z74',2.30,true,'GMT+8',current_timestamp());
 Select * from stock;
 
 INSERT INTO `marketdata` VALUES (1,1,4,null,12,25.69,current_timestamp());

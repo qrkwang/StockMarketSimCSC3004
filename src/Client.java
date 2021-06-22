@@ -26,9 +26,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			String input = null;
 			String secondInput = null;
 
-			remoteObj.testMethod("test method");
-			remoteObj.sendOrder(1, "testtest");
-
 			String accountDetails = remoteObj.getAccountDetailsByUsername(username);
 			// Will receive a string with account details delimited by "," . First item is
 			// accountId. Assign accountId value to global variable so can use on other
@@ -37,13 +34,26 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			accountId = Integer.parseInt(splitArray[0]);
 			remoteObj.getAccountHoldingsById(accountId);
 
-			// retrieve stock per market, retrieve orders per stock, retrieve price per
-			// stock
-			String stockPrice = remoteObj.retrievePrice("SG", "SGX:A17U");
-			ArrayList stockOrderList = remoteObj.retrieveOrders("SG", "SGX:A17U");
+			// getAllStocks(US), return array list of object?, stock id needed for later use
+			// too.
+			// getAllStocks(SG), return array list of object?, stock id needed for later use
+			// too.
+			// getAllStocks(HK), return array list of object?, stock id needed for later use
+			// too.
+
+			// When go into a stock page by itself:
+			// retrieve order list per stock, retrieve price per stock
+			String stockPrice = remoteObj.retrievePrice("SG", "SGX:A17U"); // need retrieve price per whatever interval
+																			// or on update
+
+			ArrayList stockOrderList = remoteObj.retrieveOrders("SG", "SGX:A17U"); // second parameter can enter be
+																					// tickerSymbol / stockId, for now is tickerSymbol
 
 			String stockPrice1 = remoteObj.retrievePrice("US", "NASDAQ:AAPL");
 			ArrayList stockOrderList1 = remoteObj.retrieveOrders("US", "NASDAQ:AAPL");
+
+			// When want send order.
+			remoteObj.sendOrder(1, "testtest");
 
 		} catch (Exception e) {
 			System.out.format("Error obtaining remoteServer/remoteInterface from registry");
