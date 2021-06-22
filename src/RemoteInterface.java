@@ -13,7 +13,7 @@ public interface RemoteInterface extends Remote {
 
 	public ArrayList getAccountHoldingsById(int accountId) throws RemoteException;
 
-	public String sendOrder(String accountId, String order) throws RemoteException;
+	public String sendOrder(int accountId, String order) throws RemoteException;
 
 	public ArrayList retrieveOrders(String market, String tickerSymbol) throws RemoteException;
 

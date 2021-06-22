@@ -1,4 +1,5 @@
 import java.rmi.Naming;
+import java.rmi.registry.LocateRegistry;
 
 /*
  * Remote server to call servant and bind to registry
@@ -13,7 +14,7 @@ public class RemoteServer {
 
 			// Naming lookup
 			RemoteInterface remoteObj = new RemoteServant();
-
+			LocateRegistry.createRegistry(port);
 			Naming.rebind("rmi://localhost:" + port + "/RemoteServer", remoteObj);
 			System.out.format("Advertising completed\n");
 

@@ -1,6 +1,5 @@
 import java.rmi.Naming;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Client extends java.rmi.server.UnicastRemoteObject implements ClientInt {
@@ -27,21 +26,23 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			String secondInput = null;
 
 			remoteObj.testMethod("test method");
-			String accountDetails = remoteObj.getAccountDetailsByUsername(username);
-			// Will receive a string with account details delimited by "," . First item is
-			// accountId. Assign accountId value to global variable so can use on other
-			// methods.
-			String[] splitArray = accountDetails.split(",");
-			accountId = Integer.parseInt(splitArray[0]);
-			remoteObj.getAccountHoldingsById(accountId);
+			remoteObj.sendOrder(1, "testtest");
 
-			// retrieve stock per market, retrieve orders per stock, retrieve price per
-			// stock
-			String stockPrice = remoteObj.retrievePrice("SG", "SGX:A17U");
-			ArrayList stockOrderList = remoteObj.retrieveOrders("SG", "SGX:A17U");
-
-			String stockPrice1 = remoteObj.retrievePrice("US", "NASDAQ:AAPL");
-			ArrayList stockOrderList1 = remoteObj.retrieveOrders("US", "NASDAQ:AAPL");
+//			String accountDetails = remoteObj.getAccountDetailsByUsername(username);
+//			// Will receive a string with account details delimited by "," . First item is
+//			// accountId. Assign accountId value to global variable so can use on other
+//			// methods.
+//			String[] splitArray = accountDetails.split(",");
+//			accountId = Integer.parseInt(splitArray[0]);
+//			remoteObj.getAccountHoldingsById(accountId);
+//
+//			// retrieve stock per market, retrieve orders per stock, retrieve price per
+//			// stock
+//			String stockPrice = remoteObj.retrievePrice("SG", "SGX:A17U");
+//			ArrayList stockOrderList = remoteObj.retrieveOrders("SG", "SGX:A17U");
+//
+//			String stockPrice1 = remoteObj.retrievePrice("US", "NASDAQ:AAPL");
+//			ArrayList stockOrderList1 = remoteObj.retrieveOrders("US", "NASDAQ:AAPL");
 
 		} catch (Exception e) {
 			System.out.format("Error obtaining remoteServer/remoteInterface from registry");
