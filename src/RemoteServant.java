@@ -38,6 +38,17 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 		System.out.format("Creating server object\n"); // Print to client that server object is being created once
 														// constructor called.
+		
+		boolean result;
+		try {
+			result = checkConnection("192.168.210.129:3306", "root",  "root" , "AccountDetailsServer");
+			System.out.println("checking for db result connection" + " " + result);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
 	}
 
 	@Override
@@ -188,12 +199,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 						e.printStackTrace();
 						cancel(); // if there is exception also cancel the lease 
 						leaseAlive = false;
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					} 
 		        }
 		    };
+		    
 		    leaseAlive = true;
 	        timer.schedule(task,0, 300); // to trigger to reschedule the lease will repeat itself till the condition is met 		 
 	 }
@@ -216,7 +225,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	            }
 			} catch (SQLException | ClassNotFoundException e) {
 				// TODO Auto-generated catch block
-			//	e.printStackTrace();
+				e.printStackTrace();
 			}
 			return result;
 		}
