@@ -1,11 +1,14 @@
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.sql.CallableStatement;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.TimeoutException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.mysql.jdbc.Connection;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
@@ -25,7 +28,7 @@ public class AccountDetailsDbScript {
 		CONN_STRING = "jdbc:mysql//" + ipandPort + dbName;
 	}
 
-	public void getAccountDetails(String userName) throws SQLException {
+	public String getAccountDetails(String userName) throws SQLException {
 		Connection con = null;
 		try {
 			Class.forName(DRIVER_CLASS);
@@ -38,21 +41,52 @@ public class AccountDetailsDbScript {
 
 		String query = "{CALL getAccountDetailsByUsername(?)}"; // Query of calling stored procedure "Get account
 																// Details" with
-		// input of ?
 		CallableStatement stmt = con.prepareCall(query); // prepare to call
 
 		stmt.setString(1, userName); // Set the parameter
 
 		ResultSet rs = stmt.executeQuery();
-		AccountDetails accountDetail = new AccountDetails();
 
+		System.out.println("before while loop");
 		while (rs.next()) {
+			System.out.println("there's result");
+
+			AccountDetails accountDetail = new AccountDetails();
+
+			accountDetail.setAccountId(rs.getInt("accountId"));
+			accountDetail.setUserName(rs.getString("userName"));
+			accountDetail.setPassword(rs.getString("password"));
+			accountDetail.setEmail(rs.getString("email"));
+			accountDetail.setTotalAccountValue(rs.getFloat("totalAccountValue"));
+			accountDetail.setTotalSecurityValue(rs.getFloat("totalSecurityValue"));
+			accountDetail.setAvailableCash(rs.getFloat("availableCash"));
+
+			// Assign values to object
 			System.out.println(rs.getInt("accountId") + " " + rs.getString("userName") + rs.getString("password")
 					+ rs.getString("email") + rs.getFloat("totalAccountValue") + rs.getFloat("totalSecurityValue")
 					+ rs.getFloat("availableCash"));
+
+			// Convert object to string to return as string:
+			ObjectMapper objectMapper = new ObjectMapper();
+
+			// configure Object mapper for pretty print
+			objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+
+			// writing to console, can write to any output stream such as file
+			StringWriter stringAccountDetails = new StringWriter();
+			try {
+				objectMapper.writeValue(stringAccountDetails, accountDetail);
+			} catch (IOException e) {
+				System.out.println("io exception!!");
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			System.out.println("Account Details JSON is\n" + stringAccountDetails);
+			return stringAccountDetails.toString();
 		}
 		con.close();
-		// When really do the method, will have a return value to server for it to use.
+
+		return "not found";
 	}
 
 	public void startWaitForMsg() throws SQLException {

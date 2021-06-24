@@ -10,5 +10,8 @@
 	<classpathentry kind="lib" path="C:/Users/Unkno/Desktop/workspace/StockMarketSimCSC3004/lib/mysql-connector.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Unkno/Desktop/workspace/StockMarketSimCSC3004/lib/slf4j-api-1.7.26.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Unkno/Desktop/workspace/StockMarketSimCSC3004/lib/slf4j-simple-1.7.26.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Unkno/Desktop/workspace/StockMarketSimCSC3004/lib/jackson-databind-2.12.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Unkno/Desktop/workspace/StockMarketSimCSC3004/lib/jackson-core-2.12.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Unkno/Desktop/workspace/StockMarketSimCSC3004/lib/jackson-annotations-2.12.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

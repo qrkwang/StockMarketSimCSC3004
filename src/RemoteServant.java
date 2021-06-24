@@ -5,6 +5,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.concurrent.TimeoutException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 
@@ -39,15 +42,36 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	@Override
-	public String getAccountDetailsByUsername(String username) throws RemoteException {
+	public String getAccountDetailsByUsernameAndPW(String username, String pw) throws RemoteException {
+		System.out.println("servantgetaccountdetailsybusernameandpw " + username + pw);
+		ObjectMapper objectMapper = new ObjectMapper();
+
 		try {
-			accountDetailsDb.getAccountDetails(username);
-		} catch (SQLException e) {
+			String resAccountDetail = accountDetailsDb.getAccountDetails(username);
+			System.out.println("result from db script" + resAccountDetail);
+			if (resAccountDetail == "not found") {
+				return "not found";
+			}
+			JsonNode jsonNodeRoot = objectMapper.readTree(resAccountDetail);
+			JsonNode jsonNodePW = jsonNodeRoot.get("password");
+			String password = jsonNodePW.asText();
+			System.out.println(password);
+
+			if (password.equals(pw)) {
+				System.out.println("passwword match");
+				return resAccountDetail;
+			} else {
+				System.out.println("passwword not match");
+
+				return "wrong pw";
+			}
+		} catch (SQLException | JsonProcessingException e) {
 			// TODO Auto-generated catch block
+			System.out.println("sql or json processing exception");
 			e.printStackTrace();
+			return "problem";
 		}
-		// TODO Auto-generated method stub
-		return "5";
+
 	}
 
 	@Override
