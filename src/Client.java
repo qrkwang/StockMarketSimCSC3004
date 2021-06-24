@@ -21,7 +21,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			RemoteInterface remoteObj = (RemoteInterface) Naming.lookup("rmi://localhost:1099/RemoteServer");
 
 			// Interface for login
-			String username = "demo";
+			String username = "testing";
 			Scanner stdin = new Scanner(System.in); // Init scanner
 			String input = null;
 			String secondInput = null;

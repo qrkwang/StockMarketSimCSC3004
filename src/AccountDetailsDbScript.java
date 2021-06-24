@@ -9,22 +9,23 @@ import java.util.concurrent.TimeoutException;
 import com.mysql.jdbc.Connection;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
+
 import classes.AccountDetails;
 
 public class AccountDetailsDbScript {
 	private final static String QUEUE_NAME = "hello";
 	public static final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
 	private static final String USERNAME = "root";
-	private static final String PASSWORD = "password";
+	private static final String PASSWORD = "root";
 
 	// Change this string according to leader election
-	private static String CONN_STRING = "jdbc:mysql://localhost:3306/test"; // jdbc:mysql://ip:3306/DBNAME
+	private static String CONN_STRING = "jdbc:mysql://localhost:3306/accountdetailsserver"; // jdbc:mysql://ip:3306/DBNAME
 
 	public static void setConnString(String ipandPort, String dbName) {
 		CONN_STRING = "jdbc:mysql//" + ipandPort + dbName;
 	}
 
-	public static void getAccountDetails(int accountDetailsId) throws SQLException {
+	public void getAccountDetails(String userName) throws SQLException {
 		Connection con = null;
 		try {
 			Class.forName(DRIVER_CLASS);
@@ -35,24 +36,20 @@ public class AccountDetailsDbScript {
 			e.printStackTrace();
 		}
 
-		String query = "{CALL get_account_Details(?)}"; // Query of calling stored procedure "Get account Details" with
-														// input of ?
+		String query = "{CALL getAccountDetailsByUsername(?)}"; // Query of calling stored procedure "Get account
+																// Details" with
+		// input of ?
 		CallableStatement stmt = con.prepareCall(query); // prepare to call
 
-		stmt.setInt(1, accountDetailsId); // Set the parameter
+		stmt.setString(1, userName); // Set the parameter
 
 		ResultSet rs = stmt.executeQuery();
+		AccountDetails accountDetail = new AccountDetails();
 
 		while (rs.next()) {
-			System.out.println(String.format("%s - %s", rs.getString("first_name") + " " + rs.getString("last_name"), // Getting
-																														// attribute
-																														// of
-																														// returned
-																														// rows
-																														// and
-																														// printing
-																														// it.
-					rs.getString("skill")));
+			System.out.println(rs.getInt("accountId") + " " + rs.getString("userName") + rs.getString("password")
+					+ rs.getString("email") + rs.getFloat("totalAccountValue") + rs.getFloat("totalSecurityValue")
+					+ rs.getFloat("availableCash"));
 		}
 		con.close();
 		// When really do the method, will have a return value to server for it to use.

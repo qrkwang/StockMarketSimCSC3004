@@ -40,6 +40,12 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	@Override
 	public String getAccountDetailsByUsername(String username) throws RemoteException {
+		try {
+			accountDetailsDb.getAccountDetails(username);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		// TODO Auto-generated method stub
 		return "5";
 	}
