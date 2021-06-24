@@ -73,7 +73,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			// Send Order
 			// Please send in format ("US", "StockId", "SellerId", "BuyerId", "Qty",
 			// "Price"), or u can just do true/false on 3rd parameter.
-			remoteObj.sendOrder(1, "US,1,5,0"); // 0 to indicate null, i will change to null on backend.
+			remoteObj.sendOrder(1, "US,1,5,0,100,23.3"); // 0 to indicate null, i will change to null on backend.
 
 		} catch (Exception e) {
 			System.out.format("Error obtaining remoteServer/remoteInterface from registry");
