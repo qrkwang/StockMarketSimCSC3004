@@ -62,21 +62,18 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 				// When go into a stock page by itself:
 				// retrieve order list per stock, retrieve price per stock
-				String stockPrice = remoteObj.retrievePrice("SG", "SGX:A17U"); // need retrieve price per whatever
-																				// interval
-																				// or on update
+				String stockPrice = remoteObj.retrievePrice("SG", "5"); // Retrieve By StockId
 
-				ArrayList stockOrderList = remoteObj.retrieveOrders("SG", "SGX:A17U"); // second parameter can enter be
-																						// tickerSymbol / stockId, for
-																						// now
-																						// is tickerSymbol
+				ArrayList stockOrderList = remoteObj.retrieveOrders("SG", "4"); // Retrieve By StockId
 
-				String stockPrice1 = remoteObj.retrievePrice("US", "NASDAQ:AAPL");
-				ArrayList stockOrderList1 = remoteObj.retrieveOrders("US", "NASDAQ:AAPL");
+				String stockPrice1 = remoteObj.retrievePrice("US", "3"); // Retrieve By StockId
+				ArrayList stockOrderList1 = remoteObj.retrieveOrders("US", "2"); // Retrieve By StockId
 			}
 
-			// When want send order.
-			remoteObj.sendOrder(1, "testtest");
+			// Send Order
+			// Please send in format ("US", "StockId", "SellerId", "BuyerId", "Qty",
+			// "Price"), or u can just do true/false on 3rd parameter.
+			remoteObj.sendOrder(1, "US,1,5,0"); // 0 to indicate null, i will change to null on backend.
 
 		} catch (Exception e) {
 			System.out.format("Error obtaining remoteServer/remoteInterface from registry");
