@@ -50,7 +50,7 @@ public class RemoteServer {
 			
 			for(int i=0; i < servername.length; i++ ) {
 				long startTime = System.nanoTime();
-				checkConnection(servername[i], "root",  "password");
+				checkConnection(servername[i], "root",  "password" , "AccountDetailsServer");
 				long endTime = System.nanoTime();
 				long total = endTime - startTime;
 				if(i == 0) {
@@ -84,7 +84,7 @@ public class RemoteServer {
 		        public void run() { 
 		        	boolean checkHeartbeatResult =  false;
 					try {
-						checkHeartbeatResult = checkConnection(ipname,  username ,  password);
+						checkHeartbeatResult = checkConnection(ipname,  username ,  password , "AccountDetailsServer");
 						  if(checkHeartbeatResult == false) { // check if it ok to reset the lease , if heartbeat fail no reset of lease 
 							  timer.cancel(); // cancel all the schedule task that maybe happending 
 							  leaseAlive = false;
@@ -103,13 +103,13 @@ public class RemoteServer {
 	 
 
 	 // act like heartbeat to check if connection exist or not 
-		public boolean checkConnection(String ipname, String USERNAME, String PASSWORD) throws SQLException {
+		public boolean checkConnection(String ipname, String username, String password , String dbname) throws SQLException {
 			Connection con = null;
 			boolean result = false;
-			String CONN_STRING = "jdbc:mysql://" + "localhost" + "/AccountDetailsServer";
+			String CONN_STRING = "jdbc:mysql://" + ipname + "/" + dbname;
 			try {
 				Class.forName("com.mysql.jdbc.Driver");
-				con = (Connection) DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+				con = (Connection) DriverManager.getConnection(CONN_STRING, username, password);
 	            if (con != null) {
 	            	 result = true; // able to connect to db
 	            }
