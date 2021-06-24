@@ -87,6 +87,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	@Override
 	public ArrayList getAccountHoldingsById(int accountId) throws RemoteException {
 		// TODO Auto-generated method stub
+		// price and stock is combined, price is avg price.
+
 		return null;
 	}
 
