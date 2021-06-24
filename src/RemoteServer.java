@@ -18,7 +18,7 @@ import com.mysql.jdbc.Connection;
 // method heartbeat (check if the server alive)
 // method try to restart the server
 // method check for the new leader / add log 
-// 
+// how to make the lease timing keep on running and nofity the method when it is ended 
 
 /*
  * flow 
@@ -59,15 +59,23 @@ public class RemoteServer {
 					}
 				}
 			}
-			
-			
-			
-			
+			// get the selectedserver 
+			//add the generation and log map 
+			// 
+
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}  
-		return "";
+		return ""; // if the set up properly
+		 
+	 }
+	 
+	 public double lease(double leasetime) {
+		 if(leasetime == 0) {
+			 // time for new election
+		 }
+		return leasetime;
 		 
 	 }
 	 
