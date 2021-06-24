@@ -5,6 +5,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.mysql.jdbc.Connection;
 
@@ -32,9 +34,10 @@ import com.mysql.jdbc.Connection;
 public class RemoteServer {
 	
 	 HashMap<String, Integer> logMap = new HashMap<>(); // for log (will be server name and generation number)
-	 private int leasetime = 20; // default lease time for the leader 
+//	 private int leasetime = 20; // default lease time for the leader 
 	 String startAccountDB = "accountDB1"; // set as default first // may need to get latency and use it to assign unique id?
 	 String servername[]={"192.168.210.1","192.168.210.128 ","192.168.210.129"};
+	 boolean leaseAlive = false;
 	 	//192.168.210.129 server 3
 			//192.168.210.128 server 2
 			// 192.168.210.1 server 1
@@ -71,12 +74,33 @@ public class RemoteServer {
 		 
 	 }
 	 
-	 public double lease(double leasetime) {
-		 if(leasetime == 0) {
-			 // time for new election
-		 }
-		return leasetime;
-		 
+	 // set a lease to run in backgroup for the leader 
+	 // set timer 
+	 public void setLease(String ipname,  String username, String password) {
+	//    final boolean a = new MutableInt(3);
+
+	        Timer timer = new Timer();
+	        TimerTask task = new TimerTask() {
+		 //    private final double currentCount = 0.3; // temp set 300 ms 
+		        @Override
+		        public void run() { 
+		        	boolean checkHeartbeatResult =  false;
+					try {
+						checkHeartbeatResult = checkConnection(ipname,  username ,  password);
+						  if(checkHeartbeatResult == false) { // check if it ok to reset the lease , if heartbeat fail no reset of lease 
+							  timer.cancel(); // cancel all the schedule task that maybe happending 
+							  leaseAlive = false;
+		         }
+					} catch (SQLException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						cancel(); // if there is exception also cancel the lease 
+						leaseAlive = false;
+					}
+		        }
+		    };
+		    leaseAlive = true;
+	        timer.schedule(task,0, 300); // to trigger to reschedule the lease will repeat itself till the condition is met 		 
 	 }
 	 
 
