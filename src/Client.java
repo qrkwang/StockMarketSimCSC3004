@@ -3,6 +3,10 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import classes.AccountDetails;
+
 public class Client extends java.rmi.server.UnicastRemoteObject implements ClientInt {
 	public Client() throws RemoteException {
 
@@ -21,37 +25,58 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			RemoteInterface remoteObj = (RemoteInterface) Naming.lookup("rmi://localhost:1099/RemoteServer");
 
 			// Interface for login
-			String username = "testing";
+			String username = "demo";
+			String pw = "password";
 			Scanner stdin = new Scanner(System.in); // Init scanner
 			String input = null;
 			String secondInput = null;
 
-			String accountDetails = remoteObj.getAccountDetailsByUsername(username);
-			// Will receive a string with account details delimited by "," . First item is
-			// accountId. Assign accountId value to global variable so can use on other
-			// methods.
-			String[] splitArray = accountDetails.split(",");
-			accountId = Integer.parseInt(splitArray[0]);
-			remoteObj.getAccountHoldingsById(accountId);
+			System.out.println("before call method");
+			String resAccountDetails = remoteObj.getAccountDetailsByUsernameAndPW(username, pw);
+			System.out.println("after call method");
+			System.out.println("result in client is " + resAccountDetails);
+			// convert json string to object
+			if (resAccountDetails.equals("not found")) {
+				System.out.println("your username does not exist. Try again.");
 
-			// getAllStocks(US), return array list of object?, stock id needed for later use
-			// too.
-			// getAllStocks(SG), return array list of object?, stock id needed for later use
-			// too.
-			// getAllStocks(HK), return array list of object?, stock id needed for later use
-			// too.
+			} else if (resAccountDetails.equals("problem")) {
+				System.out.println("there's a problem while accessing the server");
 
-			// When go into a stock page by itself:
-			// retrieve order list per stock, retrieve price per stock
-			String stockPrice = remoteObj.retrievePrice("SG", "SGX:A17U"); // need retrieve price per whatever interval
-																			// or on update
+			} else if (resAccountDetails.equals("wrong pw")) {
+				System.out.println("your pw is wrong");
 
-			ArrayList stockOrderList = remoteObj.retrieveOrders("SG", "SGX:A17U"); // second parameter can enter be
-																					// tickerSymbol / stockId, for now
-																					// is tickerSymbol
+			} else {
+				// Successfully logged in cause all cases checked.
+				ObjectMapper objectMapper = new ObjectMapper();
 
-			String stockPrice1 = remoteObj.retrievePrice("US", "NASDAQ:AAPL");
-			ArrayList stockOrderList1 = remoteObj.retrieveOrders("US", "NASDAQ:AAPL");
+				AccountDetails accountDetailsObj = objectMapper.readValue(resAccountDetails, AccountDetails.class);
+
+				// Assign accountId value to global variable so can use on other
+				// methods.
+				accountId = accountDetailsObj.getAccountId();
+				remoteObj.getAccountHoldingsById(accountId);
+
+				// getAllStocks(US), return array list of object?, stock id needed for later use
+				// too.
+				// getAllStocks(SG), return array list of object?, stock id needed for later use
+				// too.
+				// getAllStocks(HK), return array list of object?, stock id needed for later use
+				// too.
+
+				// When go into a stock page by itself:
+				// retrieve order list per stock, retrieve price per stock
+				String stockPrice = remoteObj.retrievePrice("SG", "SGX:A17U"); // need retrieve price per whatever
+																				// interval
+																				// or on update
+
+				ArrayList stockOrderList = remoteObj.retrieveOrders("SG", "SGX:A17U"); // second parameter can enter be
+																						// tickerSymbol / stockId, for
+																						// now
+																						// is tickerSymbol
+
+				String stockPrice1 = remoteObj.retrievePrice("US", "NASDAQ:AAPL");
+				ArrayList stockOrderList1 = remoteObj.retrieveOrders("US", "NASDAQ:AAPL");
+			}
 
 			// When want send order.
 			remoteObj.sendOrder(1, "testtest");

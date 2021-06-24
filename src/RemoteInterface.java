@@ -9,7 +9,7 @@ public interface RemoteInterface extends Remote {
 
 	public String testMethod(String s) throws RemoteException;
 
-	public String getAccountDetailsByUsername(String username) throws RemoteException;
+	public String getAccountDetailsByUsernameAndPW(String username, String pw) throws RemoteException;
 
 	public ArrayList getAccountHoldingsById(int accountId) throws RemoteException;
 
