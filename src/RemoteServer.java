@@ -66,7 +66,7 @@ public class RemoteServer {
 			//add the generation and log map 
 			// 
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}  
@@ -94,6 +94,9 @@ public class RemoteServer {
 						e.printStackTrace();
 						cancel(); // if there is exception also cancel the lease 
 						leaseAlive = false;
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
 		        }
 		    };
@@ -103,26 +106,29 @@ public class RemoteServer {
 	 
 
 	 // act like heartbeat to check if connection exist or not 
-		public boolean checkConnection(String ipname, String username, String password , String dbname) throws SQLException {
+		public static boolean checkConnection(String ipname, String username, String password , String dbname) throws SQLException {
 			Connection con = null;
 			boolean result = false;
 			String CONN_STRING = "jdbc:mysql://" + ipname + "/" + dbname;
+			//String CONN_STRING = "jdbc:mysql://localhost:3306/accountdetailsserver";
+			//jdbc:mysql://localhost:3306/accountdetailsserver
+			//jdbc:mysql//" + ipandPort + dbName;
 			try {
 				Class.forName("com.mysql.jdbc.Driver");
 				con = (Connection) DriverManager.getConnection(CONN_STRING, username, password);
 	            if (con != null) {
 	            	 result = true; // able to connect to db
+	            	 con.close();
 	            }
-			} catch (ClassNotFoundException e) {
+			} catch (SQLException | ClassNotFoundException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+			//	e.printStackTrace();
 			}
-			con.close();
 			return result;
 		}
 
 	 
-	public static void main(String[] args) {
+	public static void main(String[] args)  {
 		try {
 			int port = 1099;
 
@@ -133,9 +139,9 @@ public class RemoteServer {
 			LocateRegistry.createRegistry(port);
 			Naming.rebind("rmi://localhost:" + port + "/RemoteServer", remoteObj);
 			System.out.format("Advertising completed\n");
-
-			
-			
+			//------ testing -----------------------
+			//boolean result = checkConnection("192.168.210.128", "root",  "password" , "AccountDetailsServer");
+			//System.out.println("checking for db result connection" + " " + result);
 
 		} catch (Exception e) {
 			System.out.format("export exception - %s\n", e.getMessage());
