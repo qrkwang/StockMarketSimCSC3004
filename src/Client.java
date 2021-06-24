@@ -48,7 +48,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			} else {
 				// Successfully logged in cause all cases checked.
 				ObjectMapper objectMapper = new ObjectMapper();
-
+				// Unmarshall json string to object.
 				AccountDetails accountDetailsObj = objectMapper.readValue(resAccountDetails, AccountDetails.class);
 
 				// Assign accountId value to global variable so can use on other
@@ -56,12 +56,9 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				accountId = accountDetailsObj.getAccountId();
 				remoteObj.getAccountHoldingsById(accountId);
 
-				// getAllStocks(US), return array list of object?, stock id needed for later use
-				// too.
-				// getAllStocks(SG), return array list of object?, stock id needed for later use
-				// too.
-				// getAllStocks(HK), return array list of object?, stock id needed for later use
-				// too.
+				remoteObj.getAllStocksByMarket("US"); // return array list of stock object
+				remoteObj.getAllStocksByMarket("HK");
+				remoteObj.getAllStocksByMarket("SG");
 
 				// When go into a stock page by itself:
 				// retrieve order list per stock, retrieve price per stock

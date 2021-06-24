@@ -116,4 +116,17 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return null;
 	}
 
+	@Override
+	public String getAllStocksByMarket(String market) throws RemoteException {
+		if (market.equals("US")) {
+
+		} else if (market.equals("HK")) {
+
+		} else {
+			// SG
+
+		}
+		return null;
+	}
+
 }
