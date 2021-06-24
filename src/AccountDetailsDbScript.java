@@ -1,3 +1,4 @@
+
 import java.io.IOException;
 import java.sql.CallableStatement;
 import java.sql.DriverManager;
@@ -8,6 +9,7 @@ import java.util.concurrent.TimeoutException;
 import com.mysql.jdbc.Connection;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
+import classes.AccountDetails;
 
 public class AccountDetailsDbScript {
 	private final static String QUEUE_NAME = "hello";
