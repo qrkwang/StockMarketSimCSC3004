@@ -41,7 +41,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		
 		boolean result;
 		try {
-			result = checkConnection("192.168.210.129:3306", "root",  "root" , "AccountDetailsServer");
+			result = checkConnection("192.168.210.128", "root",  "root" , "AccountDetailsServer");
 			System.out.println("checking for db result connection" + " " + result);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -144,13 +144,13 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	// ended
 
 	/*
-	 * flow 1. First election select the leader and enter into the log 2. The leader
-	 * will have their own lease and will renew every few second ? 3. if the leader
-	 * lease timeout or when heatbeat fail . it will hold a new election to select a
-	 * new leader 4. once leader is selected , enter a new log with the generation
-	 * number (maybe hashmap) and have a lease 5. restart the fail server and it
-	 * will check who is the leader at log 6. The leader will update the follower
-	 * all the latest data
+	 * flow 
+	 * 1. First election select the leader and enter into the log
+	 *  2. The leader will have their own lease and will renew every few second ? 
+	 *  3. if the leader lease timeout or when heatbeat fail . it will hold a new election to select a new leader 
+	 *  4. once leader is selected , enter a new log with the generation number (maybe hashmap) and have a lease 
+	 *  5. restart the fail server and it will check who is the leader at log 
+	 *  6. The leader will update the follower  all the latest data
 	 */
 
 	HashMap<String, Integer> logMap = new HashMap<>(); // for log (will be server name and generation number)
@@ -162,9 +162,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	// 192.168.210.129 server 3
 	// 192.168.210.128 server 2
 	// 192.168.210.1 server 1
+	int generation = 0; 
 
-	// set the first time when running // use the faster
-	public String setServer() {
+	// set the first time when running 
+	public int setServer() {
 		long prevTotal = 0;
 		int selectedserver = 1;
 		try {
@@ -184,16 +185,14 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 					}
 				}
 			}
-			// get the selectedserver
-			// add the generation and log map
-			//
+			System.out.println("Selected Server as a leader is " + selectedserver);
+			logMap.put("server" + selectedserver, generation + 1); // add the generation and log map
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return ""; // if the set up properly
-
+		return selectedserver; // return the leader 
 	}
 
 	// set a lease to run in backgroup for the leader
@@ -227,6 +226,13 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		timer.schedule(task, 0, 300); // to trigger to reschedule the lease will repeat itself till the condition is
 										// met
 	}
+	
+	public void electionLeader() {
+		// get the past leader number 
+		// from the two existing check which one have 
+		
+	}
+	
 
 	// act like heartbeat to check if connection exist or not
 	public static boolean checkConnection(String ipname, String username, String password, String dbname)
@@ -251,10 +257,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return result;
 	}
 
-	// ------ testing -----------------------
-	// boolean result = checkConnection("192.168.210.128", "root", "password" ,
-	// "AccountDetailsServer");
-	// System.out.println("checking for db result connection" + " " + result);
 
 	@Override
 	public ArrayList retrieveOrders(String market, String tickerSymbol) throws RemoteException {
