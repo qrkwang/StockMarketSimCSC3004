@@ -1,4 +1,6 @@
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.DriverManager;
@@ -16,6 +18,8 @@ import com.mysql.jdbc.Connection;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 
+import classes.Stock;
+
 public class RemoteServant extends UnicastRemoteObject implements RemoteInterface {
 	AccountDetailsDbScript accountDetailsDb = null;
 	HKDbScript hkDb = null;
@@ -25,6 +29,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	public RemoteServant() throws RemoteException {
 		super();
 		accountDetailsDb = new AccountDetailsDbScript(); // Start the RabbitMQ Receiver that's in main method
+		hkDb = new HKDbScript(); // Start the RabbitMQ Receiver that's in main method
+		sgDb = new SGDbScript(); // Start the RabbitMQ Receiver that's in main method
+		usaDb = new USADbScript(); // Start the RabbitMQ Receiver that's in main method
+
 		try {
 			accountDetailsDb.startWaitForMsg();
 		} catch (SQLException e) {
@@ -32,9 +40,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		hkDb = new HKDbScript(); // Start the RabbitMQ Receiver that's in main method
-		sgDb = new SGDbScript(); // Start the RabbitMQ Receiver that's in main method
-		usaDb = new USADbScript(); // Start the RabbitMQ Receiver that's in main method
 
 		System.out.format("Creating server object\n"); // Print to client that server object is being created once
 														// constructor called.
@@ -257,17 +262,70 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return null;
 	}
 
+	@SuppressWarnings("resource")
 	@Override
 	public String getAllStocksByMarket(String market) throws RemoteException {
+		StringBuilder sb = new StringBuilder();
+
 		if (market.equals("US")) {
+			try {
+				ArrayList<Stock> arrayListStocks = usaDb.getAllStocks();
+				if (arrayListStocks == null) {
+					return "empty";
+				}
+				// Serialize list of object to string for returning to client.
+				new ObjectOutputStream(new OutputStream() {
+					@Override
+					public void write(int i) throws IOException {
+						sb.append((char) i);
+					}
+				}).writeObject(arrayListStocks);
+				return sb.toString();
 
+			} catch (SQLException | IOException e) {
+				e.printStackTrace();
+				return "error fetching";
+			}
 		} else if (market.equals("HK")) {
+			try {
+				ArrayList<Stock> arrayListStocks = hkDb.getAllStocks();
+				if (arrayListStocks == null) {
+					return "empty";
+				}
+				// Serialize list of object to string for returning to client.
+				new ObjectOutputStream(new OutputStream() {
+					@Override
+					public void write(int i) throws IOException {
+						sb.append((char) i);
+					}
+				}).writeObject(arrayListStocks);
+				return sb.toString();
 
+			} catch (SQLException | IOException e) {
+				e.printStackTrace();
+				return "error fetching";
+			}
 		} else {
 			// SG
+			try {
+				ArrayList<Stock> arrayListStocks = sgDb.getAllStocks();
+				if (arrayListStocks == null) {
+					return "empty";
+				}
+				// Serialize list of object to string for returning to client.
+				new ObjectOutputStream(new OutputStream() {
+					@Override
+					public void write(int i) throws IOException {
+						sb.append((char) i);
+					}
+				}).writeObject(arrayListStocks);
+				return sb.toString();
 
+			} catch (SQLException | IOException e) {
+				e.printStackTrace();
+				return "error fetching";
+			}
 		}
-		return null;
 	}
 
 }
