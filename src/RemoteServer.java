@@ -77,8 +77,6 @@ public class RemoteServer {
 	 // set a lease to run in backgroup for the leader 
 	 // set timer 
 	 public void setLease(String ipname,  String username, String password) {
-	//    final boolean a = new MutableInt(3);
-
 	        Timer timer = new Timer();
 	        TimerTask task = new TimerTask() {
 		 //    private final double currentCount = 0.3; // temp set 300 ms 
