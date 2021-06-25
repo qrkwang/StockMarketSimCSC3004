@@ -169,7 +169,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	 */
 
 	HashMap<String, Integer> logMap = new HashMap<>(); // for log (will be server name and generation number)
-	String startAccountDB = "accountDB1"; // set as default first // may need to get latency and use it to assign unique
 											// id?
 	//String servername[] = { "192.168.210.1", "192.168.210.128 ", "192.168.210.129" };
 	  List<String> listServer = new ArrayList<>(Arrays.asList("192.168.210.1", "192.168.210.128" , "192.168.210.129"));
@@ -178,15 +177,15 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	// 192.168.210.128 server 2
 	// 192.168.210.1 server 1
 	int generation = 0; // increase everytime it election a new leader 
-    HashMap<String, Long> rankListServer = new HashMap<>();
-
+	 List<String> ranked = new ArrayList<String>();
 	
 	public String electionLeader(List<String> listServer, String currServer) { 
 		
 		long prevTotal = 0;
 		String selectedserver = "";
         List<String> serverlist =  new ArrayList<String>(listServer);
-        
+        HashMap<String, Long> rankListServer = new HashMap<>();
+
         try {
         	
         	if(!logMap.isEmpty()) {
@@ -196,52 +195,32 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			for (int i = 0; i < serverlist.size(); i++) {
 				
 				long startTime = System.nanoTime();
-				checkConnection(serverlist.get(i) , "root", "password", "AccountDetailsServer");
+				
+				boolean connectionResult = checkConnection(serverlist.get(i) , "root", "password", "AccountDetailsServer");
 				long endTime = System.nanoTime();
 				long total = endTime - startTime;
-				
-				// may need to ranking to create a list 
-				rankListServer.put(serverlist.get(i), total);
-
-				Map<String, Long> sortedServerList = 
-						rankListServer.entrySet().stream()
-					    .sorted(Entry.comparingByValue())
-					    .collect(Collectors.toMap(Entry::getKey, Entry::getValue,
-					                              (e1, e2) -> e1, LinkedHashMap::new));
-				rankListServer = (HashMap<String, Long>) sortedServerList; // update the rank list
-				
-
-				if (i == 0) {
-					prevTotal = total; // first time running
-				} else if (i > 0) {
-					if (total < prevTotal) { // compare the timing
-						selectedserver = serverlist.get(i);
-						prevTotal = total; // if found the faster , do not need to care previous value just need
-											// continue to compare with next
-					}
+	
+				if(connectionResult == true) {
+				rankListServer.put(serverlist.get(i), total); // adding result that pass the connection
 				}
+				
 			}
-			
-			// sort the hashmap 
-/*
- *  for (int i = 0; i <intArray.length; i++) {     
-          for (int j = i+1; j <intArray.length; j++) {     
-              if(intArray[i] >intArray[j]) {      //swap elements if not in order
-                 temp = intArray[i];    
-                 intArray[i] = intArray[j];    
-                 intArray[j] = temp;    
-               }     
-            }     
-        }  
- */
-			/*
-			for(int e = 0; e < sortedServer.size(); e++) {
-				System.out.println("print list "  + sortedServer.get(e));
-			}
-			*/
-			System.out.println("Selected Server as a leader is " + selectedserver);
-			logMap.put(selectedserver, generation + 1); // add the generation and log map
+			// sorting of map to get the best time result  
+			Map<String, Long> sortedServerList = // smaller to the bigger 
+					rankListServer.entrySet().stream()
+				    .sorted(Entry.comparingByValue())
+				    .collect(Collectors.toMap(Entry::getKey, Entry::getValue,
+				                              (e1, e2) -> e1, LinkedHashMap::new));
 
+			System.out.println(Arrays.asList(sortedServerList));
+			for(String key: sortedServerList.keySet()) {
+				ranked.add(key);
+				System.out.println("printing key to enter " + key );
+			}
+			System.out.println("Selected Server as a leader is " + selectedserver);
+			generation = generation + 1; // increase count every new election with leader 
+			logMap.put(ranked.get(1), generation); // add the generation and log map
+			selectedserver = ranked.get(1); // always get 1 because to get faster result 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
