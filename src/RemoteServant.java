@@ -6,7 +6,9 @@ import java.rmi.server.UnicastRemoteObject;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
@@ -161,25 +163,29 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	 */
 
 	HashMap<String, Integer> logMap = new HashMap<>(); // for log (will be server name and generation number)
-//	 private int leasetime = 20; // default lease time for the leader 
 	String startAccountDB = "accountDB1"; // set as default first // may need to get latency and use it to assign unique
 											// id?
-	String servername[] = { "192.168.210.1", "192.168.210.128 ", "192.168.210.129" };
+	//String servername[] = { "192.168.210.1", "192.168.210.128 ", "192.168.210.129" };
+	  List<String> listServer = new ArrayList<>(Arrays.asList("192.168.210.1", "192.168.210.128" , "192.168.210.129"));
 	boolean leaseAlive = false;
 	// 192.168.210.129 server 3
 	// 192.168.210.128 server 2
 	// 192.168.210.1 server 1
-	int generation = 0; 
+	int generation = 0; // increase everytime it election a new leader 
 
-	// set the first time when running 
-	public int setServer() {
+	
+	public int electionLeader(List<String> listServer, String currServer) {
 		long prevTotal = 0;
 		int selectedserver = 1;
+        List<String> serverlist =  new ArrayList<String>(listServer);
 		try {
-
-			for (int i = 0; i < servername.length; i++) {
+			for (int i = 0; i < listServer.size(); i++) {
+				if(!logMap.isEmpty()) {
+					int index = serverlist.indexOf(currServer);
+					serverlist.remove(index);
+				}
 				long startTime = System.nanoTime();
-				checkConnection(servername[i], "root", "password", "AccountDetailsServer");
+				checkConnection(serverlist.get(i) , "root", "password", "AccountDetailsServer");
 				long endTime = System.nanoTime();
 				long total = endTime - startTime;
 				if (i == 0) {
@@ -201,6 +207,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		}
 		return selectedserver; // return the leader 
 	}
+	
 
 	// set a lease to run in backgroup for the leader
 	// set timer
@@ -214,9 +221,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				try {
 					checkHeartbeatResult = checkConnection(ipname, username, password, "AccountDetailsServer");
 					if (checkHeartbeatResult == false) { // check if it ok to reset the lease , if heartbeat fail no
-															// reset of lease
 						timer.cancel(); // cancel all the schedule task that maybe happending
-						leaseAlive = false;
+						leaseAlive = false; 
 					}
 				} catch (SQLException e) {
 					// TODO Auto-generated catch block
@@ -233,13 +239,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		timer.schedule(task, 0, 300); // to trigger to reschedule the lease will repeat itself till the condition is
 										// met
 	}
-	
-	public void electionLeader() {
-		// get the past leader number 
-		// from the two existing check which one have 
-		
-	}
-	
 
 	// act like heartbeat to check if connection exist or not
 	public static boolean checkConnection(String ipname, String username, String password, String dbname)
@@ -247,9 +246,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		Connection con = null;
 		boolean result = false;
 		String CONN_STRING = "jdbc:mysql://" + ipname + "/" + dbname;
-		// String CONN_STRING = "jdbc:mysql://localhost:3306/accountdetailsserver";
-		// jdbc:mysql://localhost:3306/accountdetailsserver
-		// jdbc:mysql//" + ipandPort + dbName;
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
 			con = (Connection) DriverManager.getConnection(CONN_STRING, username, password);
@@ -342,5 +338,4 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		}
 	}
-
 }
