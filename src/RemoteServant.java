@@ -54,9 +54,12 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		
 		boolean result;
 		try {
+			//------------ for testing connection---------------------------------------------------
 			result = checkConnection("192.168.210.128", "root",  "root" , "AccountDetailsServer");
 			System.out.println("checking for db result connection" + " " + result);
-			 electionLeader(listServer, null) ;
+			
+			String serverNo = electionLeader(listServer, null);
+			System.out.println("result of calling method    " +  serverNo);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -149,7 +152,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return null;
 	}
 
-	  List<String> listServer = new ArrayList<>(Arrays.asList("192.168.210.1", "192.168.210.128" , "192.168.210.129"));
+	  List<String> listServer = new ArrayList<>(Arrays.asList("127.0.0.1", "192.168.210.128" , "192.168.210.129"));
 	HashMap<String, Integer> logMap = new HashMap<>(); // for log (will be server name and generation number)
 	//String servername[] = { "192.168.210.1", "192.168.210.128 ", "192.168.210.129" };
 	boolean leaseAlive = false;
@@ -170,12 +173,14 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				
 				long startTime = System.nanoTime();
 				
-				boolean connectionResult = checkConnection(serverlist.get(i) , "root", "password", "AccountDetailsServer");
+				boolean connectionResult = checkConnection(serverlist.get(i) , "root", "root", "AccountDetailsServer");
 				long endTime = System.nanoTime();
 				long total = endTime - startTime;
-	
+				System.out.println("total tine for " + total + " server running" +  serverlist.get(i) );
+				System.out.println("server result connection " + connectionResult +  " what server is running" +  serverlist.get(i));
 				if(connectionResult == true) {
 				rankListServer.put(serverlist.get(i), total); // adding result that pass the connection
+				
 				}
 				
 			}
@@ -191,10 +196,15 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				ranked.add(key);
 				System.out.println("printing key to enter " + key );
 			}
-			System.out.println("Selected Server as a leader is " + selectedserver);
-			generation = generation + 1; // increase count every new election with leader 
-			logMap.put(ranked.get(1), generation); // add the generation and log map
+			
+			generation = generation + 1; // increase count every new election with leader
+			if(!ranked.isEmpty()) {
+			logMap.put(ranked.get(1), generation); // add the generation and log map	
 			selectedserver = ranked.get(1); // always get 1 because to get faster result 
+			System.out.println("Selected Server as a leader is " + selectedserver  +  "generation no" + generation);
+			}
+			
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
