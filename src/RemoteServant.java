@@ -56,6 +56,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		try {
 			result = checkConnection("192.168.210.128", "root",  "root" , "AccountDetailsServer");
 			System.out.println("checking for db result connection" + " " + result);
+			 electionLeader(listServer, null) ;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -148,46 +149,19 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return null;
 	}
 
-	// add method to trigger the two different server
-	// method add lease or check for existing lease (lease should be around 10 - 30
-	// sec normally + the process run time)
-	// possible timing 150ms-300ms.
-	// method heartbeat (check if the server alive)
-	// method try to restart the server
-	// method check for the new leader / add log
-	// how to make the lease timing keep on running and nofity the method when it is
-	// ended
-
-	/*
-	 * flow 
-	 * 1. First election select the leader and enter into the log
-	 *  2. The leader will have their own lease and will renew every few second ? 
-	 *  3. if the leader lease timeout or when heatbeat fail . it will hold a new election to select a new leader 
-	 *  4. once leader is selected , enter a new log with the generation number (maybe hashmap) and have a lease 
-	 *  5. restart the fail server and it will check who is the leader at log 
-	 *  6. The leader will update the follower  all the latest data
-	 */
-
-	HashMap<String, Integer> logMap = new HashMap<>(); // for log (will be server name and generation number)
-											// id?
-	//String servername[] = { "192.168.210.1", "192.168.210.128 ", "192.168.210.129" };
 	  List<String> listServer = new ArrayList<>(Arrays.asList("192.168.210.1", "192.168.210.128" , "192.168.210.129"));
+	HashMap<String, Integer> logMap = new HashMap<>(); // for log (will be server name and generation number)
+	//String servername[] = { "192.168.210.1", "192.168.210.128 ", "192.168.210.129" };
 	boolean leaseAlive = false;
-	// 192.168.210.129 server 3
-	// 192.168.210.128 server 2
-	// 192.168.210.1 server 1
 	int generation = 0; // increase everytime it election a new leader 
 	 List<String> ranked = new ArrayList<String>();
 	
 	public String electionLeader(List<String> listServer, String currServer) { 
-		
-		long prevTotal = 0;
-		String selectedserver = "";
+		String selectedserver = null;
         List<String> serverlist =  new ArrayList<String>(listServer);
         HashMap<String, Long> rankListServer = new HashMap<>();
 
         try {
-        	
         	if(!logMap.isEmpty()) {
 				int index = serverlist.indexOf(currServer);
 				serverlist.remove(index);
