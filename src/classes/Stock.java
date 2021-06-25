@@ -1,8 +1,10 @@
 package classes;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class Stock {
+@SuppressWarnings("serial")
+public class Stock implements Serializable {
 	private int StockId;
 	private String CompanyName;
 	private String TickerSymbol;
@@ -66,4 +68,10 @@ public class Stock {
 	public void setCreatedDate(LocalDateTime createdDate) {
 		CreatedDate = createdDate;
 	}
+
+	@Override
+	public String toString() {
+		return "StockId: " + StockId + " CompanyName: " + CompanyName;
+	}
+
 }
