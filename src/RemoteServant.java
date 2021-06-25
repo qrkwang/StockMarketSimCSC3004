@@ -52,14 +52,39 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		System.out.format("Creating server object\n"); // Print to client that server object is being created once
 														// constructor called.
 		
+		  List<String> serverNo = null;
+		  
 		boolean result;
 		try {
 			//------------ for testing connection---------------------------------------------------
 			result = checkConnection("192.168.210.128", "root",  "root" , "AccountDetailsServer");
 			System.out.println("checking for db result connection" + " " + result);
+			 int generation = 0; // increase everytime it election a new leader 
+		// ------------ still working/testing in progress -------------------------------------
+			 /*
+			if(leaseAlive == false && serverNo == null) {	// running for first time 
+			    serverNo = electionLeader(listServer, null , generation); 
+			    System.out.println("result of calling method    " +  serverNo);		
+				setLease(serverNo.get(0), "root", "root"); // set lease once selected leader 
+			}else if(leaseAlive == false && serverNo != null) {
+				// the leader need to be reelection
+				//String value = logMap.lastEntry().getKey();
+				var test =logMap.entrySet().toArray()[logMap.size() -1];
 			
-			String serverNo = electionLeader(listServer, null);
-			System.out.println("result of calling method    " +  serverNo);
+				int lastValue = 0;// read value from log 
+			    serverNo = electionLeader(listServer, "" , lastValue); // access last election leader from map log
+				setLease(serverNo.get(1), "root", "root"); // restart the lease again 
+			}
+			
+			if(leaseAlive == true && serverNo != null) {
+				for(int no = 1; no < serverNo.size(); no++) { // start from 1 because 0 will always be the better server 
+					accountDetailsDb.setConnString(serverNo.get(0) ,"AccountDetailsServer");
+					if(!serverNo.get(no).equals(serverNo.get(0))) {
+					 accountDetailsDb.setConnString(serverNo.get(no) ,"AccountDetailsServer"); // call the follower to update database
+					}
+				}
+			}
+			 */
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -152,17 +177,15 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return null;
 	}
 
-	  List<String> listServer = new ArrayList<>(Arrays.asList("127.0.0.1", "192.168.210.128" , "192.168.210.129"));
-	HashMap<String, Integer> logMap = new HashMap<>(); // for log (will be server name and generation number)
-	//String servername[] = { "192.168.210.1", "192.168.210.128 ", "192.168.210.129" };
-	boolean leaseAlive = false;
-	int generation = 0; // increase everytime it election a new leader 
-	 List<String> ranked = new ArrayList<String>();
+    HashMap<String, Integer> logMap = new HashMap<>(); // for log (will be server name and generation number)
+ List<String> listServer = new ArrayList<>(Arrays.asList("127.0.0.1", "192.168.210.128" , "192.168.210.129"));
+  boolean leaseAlive = false;
 	
-	public String electionLeader(List<String> listServer, String currServer) { 
+	public List<String> electionLeader(List<String> listServer, String currServer , int generation) { 
 		String selectedserver = null;
         List<String> serverlist =  new ArrayList<String>(listServer);
         HashMap<String, Long> rankListServer = new HashMap<>();
+        List<String> ranked = new ArrayList<String>();
 
         try {
         	if(!logMap.isEmpty()) {
@@ -199,8 +222,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			
 			generation = generation + 1; // increase count every new election with leader
 			if(!ranked.isEmpty()) {
-			logMap.put(ranked.get(1), generation); // add the generation and log map	
-			selectedserver = ranked.get(1); // always get 1 because to get faster result 
+			logMap.put(ranked.get(0), generation); // add the generation and log map	
+			selectedserver = ranked.get(0); // always get 1 because to get faster result 
 			System.out.println("Selected Server as a leader is " + selectedserver  +  "generation no" + generation);
 			}
 			
@@ -209,7 +232,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return selectedserver; // return the leader 
+		return ranked; // return the leader 
 	}
 	
 	public boolean restartServer() {
@@ -228,9 +251,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				boolean checkHeartbeatResult = false;
 				try {
 					checkHeartbeatResult = checkConnection(ipname, username, password, "AccountDetailsServer");
+					System.out.println("task have expired , ready to check for renew" );
 					if (checkHeartbeatResult == false) { // check if it ok to reset the lease , if heartbeat fail no
 						timer.cancel(); // cancel all the schedule task that maybe happending
 						leaseAlive = false; 
+						System.out.println("time out unable to lease due to error" );
 					}
 				} catch (SQLException e) {
 					// TODO Auto-generated catch block
@@ -244,6 +269,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		};
 		leaseAlive = true;
+		System.out.println("lease have been renew" );
 		timer.schedule(task, 0, 300); // to trigger to reschedule the lease will repeat itself till the condition is met								
 	}
 
