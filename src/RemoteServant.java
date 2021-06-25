@@ -7,11 +7,17 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -172,34 +178,69 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	// 192.168.210.128 server 2
 	// 192.168.210.1 server 1
 	int generation = 0; // increase everytime it election a new leader 
+    HashMap<String, Long> rankListServer = new HashMap<>();
 
 	
-	public int electionLeader(List<String> listServer, String currServer) {
+	public String electionLeader(List<String> listServer, String currServer) { 
+		
 		long prevTotal = 0;
-		int selectedserver = 1;
+		String selectedserver = "";
         List<String> serverlist =  new ArrayList<String>(listServer);
-		try {
-			for (int i = 0; i < listServer.size(); i++) {
-				if(!logMap.isEmpty()) {
-					int index = serverlist.indexOf(currServer);
-					serverlist.remove(index);
-				}
+        
+        try {
+        	
+        	if(!logMap.isEmpty()) {
+				int index = serverlist.indexOf(currServer);
+				serverlist.remove(index);
+			}
+			for (int i = 0; i < serverlist.size(); i++) {
+				
 				long startTime = System.nanoTime();
 				checkConnection(serverlist.get(i) , "root", "password", "AccountDetailsServer");
 				long endTime = System.nanoTime();
 				long total = endTime - startTime;
+				
+				// may need to ranking to create a list 
+				rankListServer.put(serverlist.get(i), total);
+
+				Map<String, Long> sortedServerList = 
+						rankListServer.entrySet().stream()
+					    .sorted(Entry.comparingByValue())
+					    .collect(Collectors.toMap(Entry::getKey, Entry::getValue,
+					                              (e1, e2) -> e1, LinkedHashMap::new));
+				rankListServer = (HashMap<String, Long>) sortedServerList; // update the rank list
+				
+
 				if (i == 0) {
 					prevTotal = total; // first time running
 				} else if (i > 0) {
 					if (total < prevTotal) { // compare the timing
-						selectedserver = i;
+						selectedserver = serverlist.get(i);
 						prevTotal = total; // if found the faster , do not need to care previous value just need
 											// continue to compare with next
 					}
 				}
 			}
+			
+			// sort the hashmap 
+/*
+ *  for (int i = 0; i <intArray.length; i++) {     
+          for (int j = i+1; j <intArray.length; j++) {     
+              if(intArray[i] >intArray[j]) {      //swap elements if not in order
+                 temp = intArray[i];    
+                 intArray[i] = intArray[j];    
+                 intArray[j] = temp;    
+               }     
+            }     
+        }  
+ */
+			/*
+			for(int e = 0; e < sortedServer.size(); e++) {
+				System.out.println("print list "  + sortedServer.get(e));
+			}
+			*/
 			System.out.println("Selected Server as a leader is " + selectedserver);
-			logMap.put("server" + selectedserver, generation + 1); // add the generation and log map
+			logMap.put(selectedserver, generation + 1); // add the generation and log map
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -208,9 +249,13 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return selectedserver; // return the leader 
 	}
 	
+	public boolean restartServer() {
+		return leaseAlive;
+		// restart the server 
+		// will know which one leader 
+	}
 
 	// set a lease to run in backgroup for the leader
-	// set timer
 	public void setLease(String ipname, String username, String password) {
 		Timer timer = new Timer();
 		TimerTask task = new TimerTask() {
@@ -236,8 +281,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		};
 		leaseAlive = true;
-		timer.schedule(task, 0, 300); // to trigger to reschedule the lease will repeat itself till the condition is
-										// met
+		timer.schedule(task, 0, 300); // to trigger to reschedule the lease will repeat itself till the condition is met								
 	}
 
 	// act like heartbeat to check if connection exist or not
