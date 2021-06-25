@@ -107,6 +107,44 @@ FROM stock;
 END$$
 DELIMITER ;
 
+USE `HKStockMarket`;
+DROP PROCEDURE IF EXISTS `GetTotalStockCount`;
+
+DELIMITER $$
+USE `HKStockMarket`$$
+
+CREATE PROCEDURE `GetTotalStockCount`()
+BEGIN
+
+SELECT Count(*)
+FROM stock;
+
+END$$
+DELIMITER ;
+
+
+USE `HKStockMarket`;
+DROP PROCEDURE IF EXISTS `getTotalHoldingsByAccountId`;
+
+DELIMITER $$
+USE `HKStockMarket`$$
+
+CREATE PROCEDURE `getTotalHoldingsByAccountId`(IN buyerId int)
+BEGIN
+
+SELECT s.CompanyName,s.StockId, sum(m.Quantity), avg(m.Price)
+FROM stock s
+INNER JOIN marketcompleted m 
+ON s.StockId = m.StockId
+Where m.BuyerId = buyerId
+group by m.StockId;
+
+
+
+END$$
+DELIMITER ;
+
+
 
 
 
