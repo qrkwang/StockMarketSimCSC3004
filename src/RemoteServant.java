@@ -6,10 +6,18 @@ import java.rmi.server.UnicastRemoteObject;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -43,6 +51,21 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 		System.out.format("Creating server object\n"); // Print to client that server object is being created once
 														// constructor called.
+		
+		boolean result;
+		try {
+			//------------ for testing connection---------------------------------------------------
+			result = checkConnection("192.168.210.128", "root",  "root" , "AccountDetailsServer");
+			System.out.println("checking for db result connection" + " " + result);
+			
+			String serverNo = electionLeader(listServer, null);
+			System.out.println("result of calling method    " +  serverNo);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
 	}
 
 	@Override
@@ -129,71 +152,73 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return null;
 	}
 
-	// add method to trigger the two different server
-	// method add lease or check for existing lease (lease should be around 10 - 30
-	// sec normally + the process run time)
-	// possible timing 150ms-300ms.
-	// method heartbeat (check if the server alive)
-	// method try to restart the server
-	// method check for the new leader / add log
-	// how to make the lease timing keep on running and nofity the method when it is
-	// ended
-
-	/*
-	 * flow 1. First election select the leader and enter into the log 2. The leader
-	 * will have their own lease and will renew every few second ? 3. if the leader
-	 * lease timeout or when heatbeat fail . it will hold a new election to select a
-	 * new leader 4. once leader is selected , enter a new log with the generation
-	 * number (maybe hashmap) and have a lease 5. restart the fail server and it
-	 * will check who is the leader at log 6. The leader will update the follower
-	 * all the latest data
-	 */
-
+	  List<String> listServer = new ArrayList<>(Arrays.asList("127.0.0.1", "192.168.210.128" , "192.168.210.129"));
 	HashMap<String, Integer> logMap = new HashMap<>(); // for log (will be server name and generation number)
-//	 private int leasetime = 20; // default lease time for the leader 
-	String startAccountDB = "accountDB1"; // set as default first // may need to get latency and use it to assign unique
-											// id?
-	String servername[] = { "192.168.210.1", "192.168.210.128 ", "192.168.210.129" };
+	//String servername[] = { "192.168.210.1", "192.168.210.128 ", "192.168.210.129" };
 	boolean leaseAlive = false;
-	// 192.168.210.129 server 3
-	// 192.168.210.128 server 2
-	// 192.168.210.1 server 1
+	int generation = 0; // increase everytime it election a new leader 
+	 List<String> ranked = new ArrayList<String>();
+	
+	public String electionLeader(List<String> listServer, String currServer) { 
+		String selectedserver = null;
+        List<String> serverlist =  new ArrayList<String>(listServer);
+        HashMap<String, Long> rankListServer = new HashMap<>();
 
-	// set the first time when running // use the faster
-	public String setServer() {
-		long prevTotal = 0;
-		int selectedserver = 1;
-		try {
-
-			for (int i = 0; i < servername.length; i++) {
+        try {
+        	if(!logMap.isEmpty()) {
+				int index = serverlist.indexOf(currServer);
+				serverlist.remove(index);
+			}
+			for (int i = 0; i < serverlist.size(); i++) {
+				
 				long startTime = System.nanoTime();
-				checkConnection(servername[i], "root", "password", "AccountDetailsServer");
+				
+				boolean connectionResult = checkConnection(serverlist.get(i) , "root", "root", "AccountDetailsServer");
 				long endTime = System.nanoTime();
 				long total = endTime - startTime;
-				if (i == 0) {
-					prevTotal = total; // first time running
-				} else if (i > 0) {
-					if (total < prevTotal) { // compare the timing
-						selectedserver = i;
-						prevTotal = total; // if found the faster , do not need to care previous value just need
-											// continue to compare with next
-					}
+				System.out.println("total tine for " + total + " server running" +  serverlist.get(i) );
+				System.out.println("server result connection " + connectionResult +  " what server is running" +  serverlist.get(i));
+				if(connectionResult == true) {
+				rankListServer.put(serverlist.get(i), total); // adding result that pass the connection
+				
 				}
+				
 			}
-			// get the selectedserver
-			// add the generation and log map
-			//
+			// sorting of map to get the best time result  
+			Map<String, Long> sortedServerList = // smaller to the bigger 
+					rankListServer.entrySet().stream()
+				    .sorted(Entry.comparingByValue())
+				    .collect(Collectors.toMap(Entry::getKey, Entry::getValue,
+				                              (e1, e2) -> e1, LinkedHashMap::new));
 
+			System.out.println(Arrays.asList(sortedServerList));
+			for(String key: sortedServerList.keySet()) {
+				ranked.add(key);
+				System.out.println("printing key to enter " + key );
+			}
+			
+			generation = generation + 1; // increase count every new election with leader
+			if(!ranked.isEmpty()) {
+			logMap.put(ranked.get(1), generation); // add the generation and log map	
+			selectedserver = ranked.get(1); // always get 1 because to get faster result 
+			System.out.println("Selected Server as a leader is " + selectedserver  +  "generation no" + generation);
+			}
+			
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return ""; // if the set up properly
-
+		return selectedserver; // return the leader 
+	}
+	
+	public boolean restartServer() {
+		return leaseAlive;
+		// restart the server 
+		// will know which one leader 
 	}
 
 	// set a lease to run in backgroup for the leader
-	// set timer
 	public void setLease(String ipname, String username, String password) {
 		Timer timer = new Timer();
 		TimerTask task = new TimerTask() {
@@ -204,9 +229,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				try {
 					checkHeartbeatResult = checkConnection(ipname, username, password, "AccountDetailsServer");
 					if (checkHeartbeatResult == false) { // check if it ok to reset the lease , if heartbeat fail no
-															// reset of lease
 						timer.cancel(); // cancel all the schedule task that maybe happending
-						leaseAlive = false;
+						leaseAlive = false; 
 					}
 				} catch (SQLException e) {
 					// TODO Auto-generated catch block
@@ -220,8 +244,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		};
 		leaseAlive = true;
-		timer.schedule(task, 0, 300); // to trigger to reschedule the lease will repeat itself till the condition is
-										// met
+		timer.schedule(task, 0, 300); // to trigger to reschedule the lease will repeat itself till the condition is met								
 	}
 
 	// act like heartbeat to check if connection exist or not
@@ -230,9 +253,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		Connection con = null;
 		boolean result = false;
 		String CONN_STRING = "jdbc:mysql://" + ipname + "/" + dbname;
-		// String CONN_STRING = "jdbc:mysql://localhost:3306/accountdetailsserver";
-		// jdbc:mysql://localhost:3306/accountdetailsserver
-		// jdbc:mysql//" + ipandPort + dbName;
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
 			con = (Connection) DriverManager.getConnection(CONN_STRING, username, password);
@@ -247,10 +267,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return result;
 	}
 
-	// ------ testing -----------------------
-	// boolean result = checkConnection("192.168.210.128", "root", "password" ,
-	// "AccountDetailsServer");
-	// System.out.println("checking for db result connection" + " " + result);
 
 	@Override
 	public ArrayList retrieveOrders(String market, String tickerSymbol) throws RemoteException {
@@ -329,5 +345,4 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		}
 	}
-
 }
