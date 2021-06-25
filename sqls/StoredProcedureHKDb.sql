@@ -139,11 +139,40 @@ ON s.StockId = m.StockId
 Where m.BuyerId = buyerId
 group by m.StockId;
 
+END$$
+DELIMITER ;
 
+USE `HKStockMarket`;
+DROP PROCEDURE IF EXISTS `getCurrentValueByStockId`;
+
+DELIMITER $$
+USE `HKStockMarket`$$
+
+CREATE PROCEDURE `getCurrentValueByStockId`(IN stockId int)
+BEGIN
+
+SELECT CurrentValue 
+FROM stock
+where StockId = stockId;
 
 END$$
 DELIMITER ;
 
+USE `HKStockMarket`;
+DROP PROCEDURE IF EXISTS `getOrdersByStockId`;
+
+DELIMITER $$
+USE `HKStockMarket`$$
+
+CREATE PROCEDURE `getOrdersByStockId`(IN stockId int)
+BEGIN
+
+SELECT * 
+FROM marketpending
+where StockId = stockId;
+
+END$$
+DELIMITER ;
 
 
 
