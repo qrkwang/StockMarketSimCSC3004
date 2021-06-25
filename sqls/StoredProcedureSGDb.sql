@@ -145,6 +145,38 @@ group by m.StockId;
 END$$
 DELIMITER ;
 
+USE `SGStockMarket`;
+DROP PROCEDURE IF EXISTS `getCurrentValueByStockId`;
+
+DELIMITER $$
+USE `SGStockMarket`$$
+
+CREATE PROCEDURE `getCurrentValueByStockId`(IN stockId int)
+BEGIN
+
+SELECT CurrentValue 
+FROM stock
+where StockId = stockId;
+
+END$$
+DELIMITER ;
+
+USE `SGStockMarket`;
+DROP PROCEDURE IF EXISTS `getOrdersByStockId`;
+
+DELIMITER $$
+USE `SGStockMarket`$$
+
+CREATE PROCEDURE `getOrdersByStockId`(IN stockId int)
+BEGIN
+
+SELECT * 
+FROM marketpending
+where StockId = stockId;
+
+END$$
+DELIMITER ;
+
 
 
 

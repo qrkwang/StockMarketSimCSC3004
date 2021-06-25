@@ -78,7 +78,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 				// Assign accountId value to global variable so can use on other
 				// methods.
-				accountId = accountDetailsObj.getAccountId();
+				accountId = accountDetailsObj.getAccountId(); // not done yet
 				remoteObj.getAccountHoldingsById(accountId);
 
 				String returnedHkStocks = remoteObj.getAllStocksByMarket("HK");
