@@ -61,7 +61,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			result = checkConnection("192.168.210.128", "root",  "root" , "AccountDetailsServer");
 		//	System.out.println("checking for db result connection" + " " + result);
 			 int generation = 0; // increase everytime it election a new leader 
-		// ------------ still working/testing in progress -------------------------------------
 			 
 			if(leaseAlive == false && serverNo == null) {	// running for first time 
 			    serverNo = electionLeader(listServer, null , generation); 
@@ -182,7 +181,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
     HashMap<String, Integer> logMap = new HashMap<>(); // for log (will be server name and generation number)
  List<String> listServer = new ArrayList<>(Arrays.asList( "192.168.210.128" , "192.168.210.129"));
- //"127.0.0.1",
+ //"127.0.0.1", // add back local host when finish testing // localhost will always be faster then vm db
   boolean leaseAlive = false;
 	
 	public List<String> electionLeader(List<String> listServer, String currServer , int generation) { 
