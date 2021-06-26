@@ -174,6 +174,22 @@ where StockId = stockId;
 END$$
 DELIMITER ;
 
+USE `HKStockMarket`;
+DROP PROCEDURE IF EXISTS `getOrdersCompletedByStockId`;
+
+DELIMITER $$
+USE `HKStockMarket`$$
+
+CREATE PROCEDURE `getOrdersCompletedByStockId`(IN stockId int)
+BEGIN
+
+SELECT * 
+FROM marketcompleted
+where StockId = stockId;
+
+END$$
+DELIMITER ;
+
 
 
 

@@ -178,6 +178,23 @@ END$$
 DELIMITER ;
 
 
+USE `SGStockMarket`;
+DROP PROCEDURE IF EXISTS `getOrdersCompletedByStockId`;
+
+DELIMITER $$
+USE `SGStockMarket`$$
+
+CREATE PROCEDURE `getOrdersCompletedByStockId`(IN stockId int)
+BEGIN
+
+SELECT * 
+FROM marketcompleted
+where StockId = stockId;
+
+END$$
+DELIMITER ;
+
+
 
 
 
