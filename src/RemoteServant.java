@@ -7,7 +7,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,7 +17,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -27,6 +25,8 @@ import com.mysql.jdbc.Connection;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 
+import classes.MarketComplete;
+import classes.MarketPending;
 import classes.Stock;
 
 public class RemoteServant extends UnicastRemoteObject implements RemoteInterface {
@@ -52,9 +52,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 		System.out.format("Creating server object\n"); // Print to client that server object is being created once
 														// constructor called.
-		
-		  List<String> serverNo = null;
-		  
+
+		List<String> serverNo = null;
+
 		boolean result;
 		try {
 			//------------ for testing connection---------------------------------------------------
@@ -93,8 +93,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
+
 	}
 
 	@Override
@@ -188,9 +187,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	
 	public List<String> electionLeader(List<String> listServer, String currServer , int generation) { 
 		String selectedserver = null;
-        List<String> serverlist =  new ArrayList<String>(listServer);
-        HashMap<String, Long> rankListServer = new HashMap<>();
-        List<String> ranked = new ArrayList<String>();
+		List<String> serverlist = new ArrayList<String>(listServer);
+		HashMap<String, Long> rankListServer = new HashMap<>();
+		List<String> ranked = new ArrayList<String>();
 
         try {
         	if(!logMap.isEmpty()) {
@@ -203,27 +202,26 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				boolean connectionResult = checkConnection(serverlist.get(i) , "root", "root", "AccountDetailsServer");
 				long endTime = System.nanoTime();
 				long total = endTime - startTime;
-				System.out.println("total tine for " + total + " server running" +  serverlist.get(i) );
-				System.out.println("server result connection " + connectionResult +  " what server is running" +  serverlist.get(i));
-				if(connectionResult == true) {
-				rankListServer.put(serverlist.get(i), total); // adding result that pass the connection
-				
+				System.out.println("total tine for " + total + " server running" + serverlist.get(i));
+				System.out.println(
+						"server result connection " + connectionResult + " what server is running" + serverlist.get(i));
+				if (connectionResult == true) {
+					rankListServer.put(serverlist.get(i), total); // adding result that pass the connection
+
 				}
-				
+
 			}
-			// sorting of map to get the best time result  
-			Map<String, Long> sortedServerList = // smaller to the bigger 
-					rankListServer.entrySet().stream()
-				    .sorted(Entry.comparingByValue())
-				    .collect(Collectors.toMap(Entry::getKey, Entry::getValue,
-				                              (e1, e2) -> e1, LinkedHashMap::new));
+			// sorting of map to get the best time result
+			Map<String, Long> sortedServerList = // smaller to the bigger
+					rankListServer.entrySet().stream().sorted(Entry.comparingByValue()).collect(
+							Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 
 			System.out.println(Arrays.asList(sortedServerList));
-			for(String key: sortedServerList.keySet()) {
+			for (String key : sortedServerList.keySet()) {
 				ranked.add(key);
-				System.out.println("printing key to enter " + key );
+				System.out.println("printing key to enter " + key);
 			}
-			
+
 			generation = generation + 1; // increase count every new election with leader
 			if(!ranked.isEmpty()) {
 			logMap.put(ranked.get(0), generation); // add the generation and log map	
@@ -231,19 +229,18 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			setLease(selectedserver, "root", "root"); // once elected leader start the lease time 
 			System.out.println("Selected Server as a leader is " + selectedserver  +  "generation no" + generation);
 			}
-			
-			
+
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return ranked; // return the leader 
+		return ranked; // return the leader
 	}
-	
+
 	public boolean restartServer() {
 		return leaseAlive;
-		// restart the server 
-		// will know which one leader 
+		// restart the server
+		// will know which one leader
 	}
 
 	// set a lease to run in backgroup for the leader
@@ -256,7 +253,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				boolean checkHeartbeatResult = false;
 				try {
 					checkHeartbeatResult = checkConnection(ipname, username, password, "AccountDetailsServer");
-					System.out.println("task have expired , ready to check for renew" );
+					System.out.println("task have expired , ready to check for renew");
 					if (checkHeartbeatResult == false) { // check if it ok to reset the lease , if heartbeat fail no
 						timer.cancel(); // cancel all the schedule task that maybe happending
 						leaseAlive = false; 
@@ -276,8 +273,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		};
 		leaseAlive = true;
-		System.out.println("lease have been renew" );
-		timer.schedule(task, 0, 300); // to trigger to reschedule the lease will repeat itself till the condition is met								
+		System.out.println("lease have been renew");
+		timer.schedule(task, 0, 300); // to trigger to reschedule the lease will repeat itself till the condition is
+										// met
 	}
 
 	// act like heartbeat to check if connection exist or not
@@ -307,15 +305,134 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	@Override
-	public ArrayList retrieveOrders(String market, String tickerSymbol) throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+	public String retrievePendingOrders(String market, int stockId) throws RemoteException {
+		StringBuilder sb = new StringBuilder();
+
+		if (market.equals("US")) {
+			try {
+				ArrayList<MarketPending> arrayListStocks = usaDb.getPendingOrders(stockId);
+				if (arrayListStocks == null) {
+					return "empty";
+				}
+				// Serialize list of object to string for returning to client.
+				new ObjectOutputStream(new OutputStream() {
+					@Override
+					public void write(int i) throws IOException {
+						sb.append((char) i);
+					}
+				}).writeObject(arrayListStocks);
+				return sb.toString();
+
+			} catch (SQLException | IOException e) {
+				e.printStackTrace();
+				return "error fetching";
+			}
+		} else if (market.equals("HK")) {
+			try {
+				ArrayList<MarketPending> arrayListStocks = hkDb.getPendingOrders(stockId);
+				if (arrayListStocks == null) {
+					return "empty";
+				}
+				// Serialize list of object to string for returning to client.
+				new ObjectOutputStream(new OutputStream() {
+					@Override
+					public void write(int i) throws IOException {
+						sb.append((char) i);
+					}
+				}).writeObject(arrayListStocks);
+				return sb.toString();
+
+			} catch (SQLException | IOException e) {
+				e.printStackTrace();
+				return "error fetching";
+			}
+		} else {
+			// SG
+			try {
+				ArrayList<MarketPending> arrayListStocks = sgDb.getPendingOrders(stockId);
+				if (arrayListStocks == null) {
+					return "empty";
+				}
+				// Serialize list of object to string for returning to client.
+				new ObjectOutputStream(new OutputStream() {
+					@Override
+					public void write(int i) throws IOException {
+						sb.append((char) i);
+					}
+				}).writeObject(arrayListStocks);
+				return sb.toString();
+
+			} catch (SQLException | IOException e) {
+				e.printStackTrace();
+				return "error fetching";
+			}
+		}
 	}
 
+	@SuppressWarnings("resource")
 	@Override
-	public String retrievePrice(String market, String tickerSymbol) throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+	public String retrieveCompletedOrders(String market, int stockId) throws RemoteException {
+		StringBuilder sb = new StringBuilder();
+
+		if (market.equals("US")) {
+			try {
+				ArrayList<MarketComplete> arrayListStocks = usaDb.getCompletedOrders(stockId);
+				if (arrayListStocks == null) {
+					return "empty";
+				}
+				// Serialize list of object to string for returning to client.
+				new ObjectOutputStream(new OutputStream() {
+					@Override
+					public void write(int i) throws IOException {
+						sb.append((char) i);
+					}
+				}).writeObject(arrayListStocks);
+				return sb.toString();
+
+			} catch (SQLException | IOException e) {
+				e.printStackTrace();
+				return "error fetching";
+			}
+		} else if (market.equals("HK")) {
+			try {
+				ArrayList<MarketComplete> arrayListStocks = hkDb.getCompletedOrders(stockId);
+				if (arrayListStocks == null) {
+					return "empty";
+				}
+				// Serialize list of object to string for returning to client.
+				new ObjectOutputStream(new OutputStream() {
+					@Override
+					public void write(int i) throws IOException {
+						sb.append((char) i);
+					}
+				}).writeObject(arrayListStocks);
+				return sb.toString();
+
+			} catch (SQLException | IOException e) {
+				e.printStackTrace();
+				return "error fetching";
+			}
+		} else {
+			// SG
+			try {
+				ArrayList<MarketComplete> arrayListStocks = sgDb.getCompletedOrders(stockId);
+				if (arrayListStocks == null) {
+					return "empty";
+				}
+				// Serialize list of object to string for returning to client.
+				new ObjectOutputStream(new OutputStream() {
+					@Override
+					public void write(int i) throws IOException {
+						sb.append((char) i);
+					}
+				}).writeObject(arrayListStocks);
+				return sb.toString();
+
+			} catch (SQLException | IOException e) {
+				e.printStackTrace();
+				return "error fetching";
+			}
+		}
 	}
 
 	@SuppressWarnings("resource")

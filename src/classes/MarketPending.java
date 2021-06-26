@@ -1,9 +1,11 @@
 package classes;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class MarketPending {
-	private int MarketPending;
+@SuppressWarnings("serial")
+public class MarketPending implements Serializable {
+	private int MarketPendingId;
 	private int StockId;
 	private int SellerId;
 	private int BuyerId;
@@ -11,12 +13,12 @@ public class MarketPending {
 	private float Price;
 	private LocalDateTime CreatedDate;
 
-	public int getMarketPending() {
-		return MarketPending;
+	public int getMarketPendingId() {
+		return MarketPendingId;
 	}
 
-	public void setMarketPending(int marketPending) {
-		MarketPending = marketPending;
+	public void setMarketPendingId(int marketPendingId) {
+		MarketPendingId = marketPendingId;
 	}
 
 	public int getStockId() {
@@ -65,5 +67,11 @@ public class MarketPending {
 
 	public void setCreatedDate(LocalDateTime createdDate) {
 		CreatedDate = createdDate;
+	}
+
+	@Override
+	public String toString() {
+		return "StockId: " + StockId + "\nBuyerId: " + BuyerId + "\nSellerId : " + SellerId + " Quantity:\n" + Quantity
+				+ "\nPrice: " + Price;
 	}
 }
