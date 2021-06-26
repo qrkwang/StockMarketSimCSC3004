@@ -13,6 +13,18 @@ public class MarketPending implements Serializable {
 	private float Price;
 	private LocalDateTime CreatedDate;
 
+	public MarketPending(int marketPendingId, int stockId, int sellerId, int buyerId, int quantity, float price,
+			LocalDateTime createdDate) {
+		super();
+		MarketPendingId = marketPendingId;
+		StockId = stockId;
+		SellerId = sellerId;
+		BuyerId = buyerId;
+		Quantity = quantity;
+		Price = price;
+		CreatedDate = createdDate;
+	}
+
 	public int getMarketPendingId() {
 		return MarketPendingId;
 	}
@@ -71,7 +83,7 @@ public class MarketPending implements Serializable {
 
 	@Override
 	public String toString() {
-		return "StockId: " + StockId + "\nBuyerId: " + BuyerId + "\nSellerId : " + SellerId + " Quantity:\n" + Quantity
+		return "StockId: " + StockId + "\nBuyerId: " + BuyerId + "\nSellerId : " + SellerId + "\nQuantity:" + Quantity
 				+ "\nPrice: " + Price;
 	}
 }

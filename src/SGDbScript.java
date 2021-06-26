@@ -108,6 +108,8 @@ public class SGDbScript {
 			LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
 			marketOrder.setCreatedDate(localDateTime);
 
+			System.out.println("Market Pending: ");
+
 			arrayListOrders.add(marketOrder);
 			count++;
 		}

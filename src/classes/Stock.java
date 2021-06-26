@@ -13,6 +13,18 @@ public class Stock implements Serializable {
 	private String Timezone;
 	private LocalDateTime CreatedDate;
 
+	public Stock(int stockId, String companyName, String tickerSymbol, float currentValue, boolean status,
+			String timezone, LocalDateTime createdDate) {
+		super();
+		StockId = stockId;
+		CompanyName = companyName;
+		TickerSymbol = tickerSymbol;
+		CurrentValue = currentValue;
+		Status = status;
+		Timezone = timezone;
+		CreatedDate = createdDate;
+	}
+
 	public int getStockId() {
 		return StockId;
 	}
