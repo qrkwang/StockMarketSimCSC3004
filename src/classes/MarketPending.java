@@ -12,7 +12,11 @@ public class MarketPending implements Serializable {
 	private int Quantity;
 	private float Price;
 	private LocalDateTime CreatedDate;
-
+	
+	public MarketPending() {
+		super();
+	}
+	
 	public MarketPending(int marketPendingId, int stockId, int sellerId, int buyerId, int quantity, float price,
 			LocalDateTime createdDate) {
 		super();

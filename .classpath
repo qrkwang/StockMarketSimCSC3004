@@ -13,5 +13,6 @@
 	<classpathentry kind="lib" path="lib/mysql-connector-java-5.1.49.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.7.26.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-simple-1.7.26.jar"/>
+	<classpathentry kind="lib" path="lib/xchart-3.8.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
