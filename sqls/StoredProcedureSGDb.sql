@@ -55,10 +55,10 @@ DROP PROCEDURE IF EXISTS `DeleteMarketPending`;
 DELIMITER $$
 USE `SGStockMarket`$$
 
-CREATE PROCEDURE `DeleteMarketPending`(In marketPendingId int)
+CREATE PROCEDURE `DeleteMarketPending`(In inputMarketPendingId int)
 BEGIN
 
-DELETE FROM marketpending where MarketPendingId = marketPendingId;
+DELETE FROM marketpending where MarketPendingId = inputMarketPendingId;
 
 END$$
 DELIMITER ;
@@ -83,12 +83,12 @@ DROP PROCEDURE IF EXISTS `UpdateMarketPendingQuantity`;
 DELIMITER $$
 USE `SGStockMarket`$$
 
-CREATE PROCEDURE `UpdateMarketPendingQuantity`(IN marketPendingId int, In quantity int)
+CREATE PROCEDURE `UpdateMarketPendingQuantity`(IN inputMarketPendingId int, In inputQuantity int)
 BEGIN
 
 UPDATE marketpending 
-SET Quantity = quantity
-WHERE MarketPendingId = marketPendingId;
+SET Quantity = inputQuantity
+WHERE MarketPendingId = inputMarketPendingId;
 
 END$$
 DELIMITER ;
@@ -130,17 +130,15 @@ DROP PROCEDURE IF EXISTS `getTotalHoldingsByAccountId`;
 DELIMITER $$
 USE `SGStockMarket`$$
 
-CREATE PROCEDURE `getTotalHoldingsByAccountId`(IN buyerId int)
+CREATE PROCEDURE `getTotalHoldingsByAccountId`(IN inputBuyerId int)
 BEGIN
 
 SELECT s.CompanyName,s.StockId, sum(m.Quantity), avg(m.Price)
-FROM stock s
+FROM stock s 
 INNER JOIN marketcompleted m 
 ON s.StockId = m.StockId
-Where m.BuyerId = buyerId
+Where m.BuyerId = inputBuyerId
 group by m.StockId;
-
-
 
 END$$
 DELIMITER ;
@@ -151,12 +149,12 @@ DROP PROCEDURE IF EXISTS `getCurrentValueByStockId`;
 DELIMITER $$
 USE `SGStockMarket`$$
 
-CREATE PROCEDURE `getCurrentValueByStockId`(IN stockId int)
+CREATE PROCEDURE `getCurrentValueByStockId`(IN inputStockId int)
 BEGIN
 
 SELECT CurrentValue 
 FROM stock
-where StockId = stockId;
+where StockId = inputStockId;
 
 END$$
 DELIMITER ;
@@ -167,12 +165,12 @@ DROP PROCEDURE IF EXISTS `getOrdersByStockId`;
 DELIMITER $$
 USE `SGStockMarket`$$
 
-CREATE PROCEDURE `getOrdersByStockId`(IN stockId int)
+CREATE PROCEDURE `getOrdersByStockId`(IN inputStockId int)
 BEGIN
 
 SELECT * 
 FROM marketpending
-where StockId = stockId;
+where StockId = inputStockId;
 
 END$$
 DELIMITER ;
@@ -184,12 +182,12 @@ DROP PROCEDURE IF EXISTS `getOrdersCompletedByStockId`;
 DELIMITER $$
 USE `SGStockMarket`$$
 
-CREATE PROCEDURE `getOrdersCompletedByStockId`(IN stockId int)
+CREATE PROCEDURE `getOrdersCompletedByStockId`(IN inputStockId int)
 BEGIN
 
 SELECT * 
 FROM marketcompleted
-where StockId = stockId;
+where StockId = inputStockId;
 
 END$$
 DELIMITER ;
