@@ -237,7 +237,14 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	public boolean restartServer() {
-		return leaseAlive;
+		try {
+			Process process = Runtime.getRuntime().exec("net STOP MySQL");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return true;
 		// restart the server
 		// will know which one leader
 	}
@@ -259,6 +266,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 						System.out.println("time out unable to lease due to error" );
 						String[] serverDetailsLog = getLogResult(logMap);
 						electionLeader(listServer,  ipname , Integer.parseInt(serverDetailsLog[1])); //call for election again to get new leader 
+						// restartServer() try to restart server 
+						// maybe check if the server manage to reset ?
+						// once if reset , add back to ranking? but last one 
+						// or just leave it to be?
 					}
 				} catch (SQLException e) {
 					// TODO Auto-generated catch block
