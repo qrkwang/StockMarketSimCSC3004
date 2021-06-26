@@ -1,8 +1,10 @@
 package classes;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class MarketComplete {
+@SuppressWarnings("serial")
+public class MarketComplete implements Serializable {
 	private int MarketCompleteId;
 	private int StockId;
 	private int SellerId;
@@ -65,6 +67,12 @@ public class MarketComplete {
 
 	public void setTransactionDate(LocalDateTime transactionDate) {
 		TransactionDate = transactionDate;
+	}
+
+	@Override
+	public String toString() {
+		return "StockId: " + StockId + "\nBuyerId: " + BuyerId + "\nSellerId : " + SellerId + "\nQuantity: " + Quantity
+				+ "\nPrice: " + Price;
 	}
 
 }

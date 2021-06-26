@@ -9,6 +9,8 @@ import java.util.Scanner;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import classes.AccountDetails;
+import classes.MarketComplete;
+import classes.MarketPending;
 import classes.Stock;
 
 public class Client extends java.rmi.server.UnicastRemoteObject implements ClientInt {
@@ -22,23 +24,69 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 	// account stock holdings, polling of stock price per interval (not necessarily
 	// need polling, can be on update) when on that page, stock page orders.
 
-	@SuppressWarnings({ "unchecked", "resource" })
-	private static ArrayList<Stock> deserializeString(String sb) {
-		final int[] index = { 0 }; // I hate this, but no way to walk around
-		ArrayList<Stock> deserializedList = null;
-		try {
-			deserializedList = (ArrayList<Stock>) new ObjectInputStream(new InputStream() {
-				@Override
-				public int read() throws IOException {
-					return sb.charAt(index[0]++);
-				}
-			}).readObject();
-		} catch (ClassNotFoundException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	@SuppressWarnings({ "unchecked", "resource", "rawtypes" })
+	private static ArrayList<?> deserializeString(String sb, String action) {
+		final int[] index = { 0 };
+		ArrayList deserializedList = null;
+
+		if (action.equals("stock")) {
+			try {
+				deserializedList = (ArrayList<Stock>) new ObjectInputStream(new InputStream() {
+					@Override
+					public int read() throws IOException {
+						return sb.charAt(index[0]++);
+					}
+				}).readObject();
+			} catch (ClassNotFoundException | IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else if (action.equals("completeOrders")) {
+			try {
+				deserializedList = (ArrayList<MarketComplete>) new ObjectInputStream(new InputStream() {
+					@Override
+					public int read() throws IOException {
+						return sb.charAt(index[0]++);
+					}
+				}).readObject();
+			} catch (ClassNotFoundException | IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else {
+			// action is pendingOrders
+			try {
+				deserializedList = (ArrayList<MarketPending>) new ObjectInputStream(new InputStream() {
+					@Override
+					public int read() throws IOException {
+						return sb.charAt(index[0]++);
+					}
+				}).readObject();
+			} catch (ClassNotFoundException | IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		return deserializedList;
 	}
+
+//	@SuppressWarnings({ "unchecked", "resource" })
+//	private static ArrayList<MarketComplete> deserializeMarketOrderString(String sb) {
+//		final int[] index = { 0 };
+//		ArrayList<Stock> deserializedList = null;
+//		try {
+//			deserializedList = (ArrayList<Stock>) new ObjectInputStream(new InputStream() {
+//				@Override
+//				public int read() throws IOException {
+//					return sb.charAt(index[0]++);
+//				}
+//			}).readObject();
+//		} catch (ClassNotFoundException | IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		return deserializedList;
+//	}
 
 	@SuppressWarnings({ "unchecked", "resource" })
 	public static void main(String[] args) {
@@ -86,56 +134,71 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				String returnedSGkStocks = remoteObj.getAllStocksByMarket("SG");
 
 				// HK MARKET PAGE
-				if (returnedHkStocks.equals("not found")) {
+				if (returnedHkStocks.equals("empty")) {
 					System.out.println("db does not have any row");
 
 				} else if (returnedHkStocks.equals("error fetching")) {
 					System.out.println("had some issue fetching from server");
 
 				} else {
-					ArrayList<Stock> arrayListHkStocks = deserializeString(returnedHkStocks);
-					System.out.println("after deserialize");
+					ArrayList<Stock> arrayListHkStocks = (ArrayList<Stock>) deserializeString(returnedHkStocks,
+							"stock");
+					System.out.println("after deserialize HK");
 					System.out.println(arrayListHkStocks.toString());
 
 				}
 
 				// US MARKET PAGE
-				if (returnedHkStocks.equals("not found")) {
+				if (returnedUSStocks.equals("empty")) {
 					System.out.println("db does not have any row");
 
-				} else if (returnedHkStocks.equals("error fetching")) {
+				} else if (returnedUSStocks.equals("error fetching")) {
 					System.out.println("had some issue fetching from server");
 
 				} else {
-					ArrayList<Stock> arrayListHkStocks = deserializeString(returnedHkStocks);
-					System.out.println("after deserialize");
-					System.out.println(arrayListHkStocks.toString());
+					ArrayList<Stock> arrayListUSStocks = (ArrayList<Stock>) deserializeString(returnedUSStocks,
+							"stock");
+					System.out.println("after deserialize US");
+					System.out.println(arrayListUSStocks.toString());
 
 				}
 
 				// SG MARKET PAGE
-				if (returnedHkStocks.equals("not found")) {
+				if (returnedSGkStocks.equals("empty")) {
 					System.out.println("db does not have any row");
 
-				} else if (returnedHkStocks.equals("error fetching")) {
+				} else if (returnedSGkStocks.equals("error fetching")) {
 					System.out.println("had some issue fetching from server");
 
 				} else {
-					ArrayList<Stock> arrayListHkStocks = deserializeString(returnedHkStocks);
-					System.out.println("after deserialize");
-					System.out.println(arrayListHkStocks.toString());
+					ArrayList<Stock> arrayListSGStocks = (ArrayList<Stock>) deserializeString(returnedSGkStocks,
+							"stock");
+					System.out.println("after deserialize SG ");
+					System.out.println(arrayListSGStocks.toString());
 
 				}
 
 				// Below methods are not implemented and are subjected to change.
 				// When go into a stock page by itself:
 				// retrieve order list per stock, retrieve price per stock
-				String stockPrice = remoteObj.retrievePrice("SG", "5"); // Retrieve By StockId
 
-				ArrayList stockOrderList = remoteObj.retrieveOrders("SG", "4"); // Retrieve By StockId
+				String stockOrderList = remoteObj.retrievePendingOrders("SG", 4); // Retrieve By StockId
+				String orderCompleted = remoteObj.retrieveCompletedOrders("SG", 4); // Retrieve By StockId
+				if (stockOrderList.equals("empty")) {
 
-				String stockPrice1 = remoteObj.retrievePrice("US", "3"); // Retrieve By StockId
-				ArrayList stockOrderList1 = remoteObj.retrieveOrders("US", "2"); // Retrieve By StockId
+				} else if (stockOrderList.equals("error fetching")) {
+
+				} else {
+					ArrayList<MarketPending> arrayListPendingOrders = (ArrayList<MarketPending>) deserializeString(
+							stockOrderList, "pendingOrders");
+					ArrayList<MarketComplete> arrayListCompleteOrders = (ArrayList<MarketComplete>) deserializeString(
+							orderCompleted, "completeOrders");
+					System.out.println("PENDING ORDERS FOLLOWED BY COMPLETE ORDERS");
+					System.out.println(arrayListPendingOrders.toString());
+					System.out.println(arrayListCompleteOrders.toString());
+
+				}
+
 			}
 
 			// Send Order

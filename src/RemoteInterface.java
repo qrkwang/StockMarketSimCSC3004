@@ -17,8 +17,8 @@ public interface RemoteInterface extends Remote {
 
 	public String sendOrder(int accountId, String order) throws RemoteException;
 
-	public ArrayList retrieveOrders(String market, String tickerSymbol) throws RemoteException;
+	public String retrievePendingOrders(String market, int stockId) throws RemoteException;
 
-	public String retrievePrice(String market, String tickerSymbol) throws RemoteException;
+	public String retrieveCompletedOrders(String market, int stockId) throws RemoteException;
 
 }
