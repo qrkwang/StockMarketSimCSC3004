@@ -50,17 +50,11 @@ public class SGDbScript {
 			if (count == 0) {
 				arrayListStocks = new ArrayList<Stock>(); // initialize arraylist if results to be found
 			}
-			Stock stockItem = new Stock();
-
-			stockItem.setStockId(rs.getInt("stockId"));
-			stockItem.setCompanyName(rs.getString("CompanyName"));
-			stockItem.setTickerSymbol(rs.getString("TickerSymbol"));
-			stockItem.setCurrentValue(rs.getFloat("CurrentValue"));
-			stockItem.setStatus(rs.getBoolean("Status"));
-			stockItem.setTimezone(rs.getString("Timezone"));
 			java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("CreatedDate");
 			LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
-			stockItem.setCreatedDate(localDateTime);
+			Stock stockItem = new Stock(rs.getInt("stockId"), rs.getString("CompanyName"), rs.getString("TickerSymbol"),
+					rs.getFloat("CurrentValue"), rs.getBoolean("Status"), rs.getString("Timezone"), localDateTime);
+
 			System.out.println(stockItem.toString());
 			arrayListStocks.add(stockItem);
 			count++;
@@ -95,21 +89,17 @@ public class SGDbScript {
 			if (count == 0) {
 				arrayListOrders = new ArrayList<MarketPending>(); // initialize arraylist if results to be found
 			}
-			MarketPending marketOrder = new MarketPending();
-
-			marketOrder.setMarketPendingId(rs.getInt("MarketPendingId"));
-			marketOrder.setStockId(rs.getInt("StockId"));
-			marketOrder.setSellerId(rs.getInt("SellerId"));
-			marketOrder.setBuyerId(rs.getInt("BuyerId"));
-			marketOrder.setQuantity(rs.getInt("Quantity"));
-			marketOrder.setPrice(rs.getFloat("Price"));
 
 			java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("CreatedDate");
 			LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
+			MarketPending marketOrder = new MarketPending(rs.getInt("MarketPendingId"), rs.getInt("StockId"),
+					rs.getInt("SellerId"), rs.getInt("BuyerId"), rs.getInt("Quantity"), rs.getFloat("Price"),
+					localDateTime);
+
 			marketOrder.setCreatedDate(localDateTime);
 
 			System.out.println("Market Pending: ");
-
+			System.out.println(marketOrder.toString());
 			arrayListOrders.add(marketOrder);
 			count++;
 		}
@@ -142,19 +132,15 @@ public class SGDbScript {
 			if (count == 0) {
 				arrayListOrders = new ArrayList<MarketComplete>(); // initialize arraylist if results to be found
 			}
-			MarketComplete marketOrder = new MarketComplete();
-
-			marketOrder.setMarketCompleteId(rs.getInt("MarketCompleteId"));
-			marketOrder.setStockId(rs.getInt("StockId"));
-			marketOrder.setSellerId(rs.getInt("SellerId"));
-			marketOrder.setBuyerId(rs.getInt("BuyerId"));
-			marketOrder.setQuantity(rs.getInt("Quantity"));
-			marketOrder.setPrice(rs.getFloat("Price"));
-
 			java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("TransactionDate");
 			LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
-			marketOrder.setTransactionDate(localDateTime);
 
+			MarketComplete marketOrder = new MarketComplete(rs.getInt("MarketCompleteId"), rs.getInt("StockId"),
+					rs.getInt("SellerId"), rs.getInt("BuyerId"), rs.getInt("Quantity"), rs.getFloat("Price"),
+					localDateTime);
+
+			System.out.println("Market Completed: ");
+			System.out.println(marketOrder.toString());
 			arrayListOrders.add(marketOrder);
 			count++;
 		}

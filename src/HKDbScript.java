@@ -52,17 +52,9 @@ public class HKDbScript {
 			}
 			java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("CreatedDate");
 			LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
-			Stock stockItem = new Stock(rs.getInt("stockId"),rs.getString("CompanyName"),rs.getString("TickerSymbol"),rs.getFloat("CurrentValue"),rs.getBoolean("Status"),rs.getString("Timezone"),localDateTime);
+			Stock stockItem = new Stock(rs.getInt("stockId"), rs.getString("CompanyName"), rs.getString("TickerSymbol"),
+					rs.getFloat("CurrentValue"), rs.getBoolean("Status"), rs.getString("Timezone"), localDateTime);
 
-//			stockItem.setStockId(rs.getInt("stockId"));
-//			stockItem.setCompanyName(rs.getString("CompanyName"));
-//			stockItem.setTickerSymbol(rs.getString("TickerSymbol"));
-//			stockItem.setCurrentValue(rs.getFloat("CurrentValue"));
-//			stockItem.setStatus(rs.getBoolean("Status"));
-//			stockItem.setTimezone(rs.getString("Timezone"));
-//			java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("CreatedDate");
-//			LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
-//			stockItem.setCreatedDate(localDateTime);
 			System.out.println(stockItem.toString());
 			arrayListStocks.add(stockItem);
 			count++;
