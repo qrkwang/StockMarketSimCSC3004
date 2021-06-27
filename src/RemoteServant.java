@@ -52,57 +52,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		System.out.format("Creating server object\n"); // Print to client that server object is being created once
 														// constructor called.
 
-//		List<String> serverNo = null;
-//
-//		boolean result;
-//		try {
-//			// ------------ for testing
-//			// connection---------------------------------------------------
-//			result = checkConnection("192.168.210.128", "root", "root", "AccountDetailsServer");
-//			// System.out.println("checking for db result connection" + " " + result);
-//			int generation = 0; // increase everytime it election a new leader
-//
-//			if (leaseAlive == false && serverNo == null) { // running for first time
-//				serverNo = electionLeader(listServer, null, generation);
-//				System.out.println("result of calling method    " + serverNo);
-//				// setLease(serverNo.get(0), "root", "root"); // set lease once selected leader
-//				System.out.println("Set up server for first time");
-//
-//			} else if (leaseAlive == false && serverNo != null) { // for second time onward
-//				// the leader need to be reelection
-//				String logMapResult = logMap.entrySet().toArray()[logMap.size() - 1].toString(); // trying to get last
-//																									// value
-//				String[] resultgenserver = getLogResult(logMap);
-//				serverNo = electionLeader(listServer, resultgenserver[0], Integer.parseInt(resultgenserver[1])); // access
-//																													// last
-//																													// election
-//																													// leader
-//																													// from
-//																													// map
-//																													// log
-//				// setLease(serverNo.get(1), "root", "root"); // restart the lease again
-//			}
-//
-//			if (leaseAlive == true && serverNo != null) { // call the script once the node is ready to be called
-//				accountDetailsDb.setConnString(serverNo.get(0), "AccountDetailsServer");
-//				System.out.println("running the accountDetailsDb leader");
-//				for (int no = 1; no < serverNo.size(); no++) { // start from 1 because 0 will always be the better
-//																// server
-//					if (!serverNo.get(no).equals(serverNo.get(0))) {
-//						accountDetailsDb.setConnString(serverNo.get(no), "AccountDetailsServer"); // call the follower
-//																									// to update
-//																									// database
-//						System.out.println("running the accountDetailsDb follower");
-//					}
-//
-//				}
-//			}
-//
-//		} catch (SQLException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-
 	}
 
 	@Override
@@ -116,53 +65,31 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 		boolean result;
 
-		//	restartServer();
-		try {
-			//------------ for testing connection---------------------------------------------------
-			result = checkConnection("192.168.210.128", "root",  "root" , "AccountDetailsServer");
-		//	System.out.println("checking for db result connection" + " " + result);
-			 int generation = 0; // increase everytime it election a new leader 
+		int generation = 0; // increase everytime it election a new leader 
 
-			if(leaseAlive == false && serverNo == null) {	// running for first time 
-			    serverNo = electionLeader(listServer, null , generation); 
-			    System.out.println("result of calling method    " +  serverNo);		
-				//setLease(serverNo.get(0), "root", "root"); // set lease once selected leader 
-				System.out.println("Set up server for first time");
+		if(leaseAlive == false && serverNo == null) {	// running for first time 
+		    serverNo = electionLeader(listServer, null , generation); 
+			System.out.println("Set up server for first time  " + serverNo);
 
-			}else if(leaseAlive == false && serverNo != null) { // for second time onward
-				// the leader need to be reelection
-				String logMapResult = logMap.entrySet().toArray()[logMap.size() - 1].toString(); // trying to get last
-																									// value
-				String[] resultgenserver = getLogResult(logMap);
-				serverNo = electionLeader(listServer, resultgenserver[0], Integer.parseInt(resultgenserver[1])); // access
-																													// last
-																													// election
-																													// leader
-																													// from
-																													// map
-																													// log
-				// setLease(serverNo.get(1), "root", "root"); // restart the lease again
-			}
-
-			if(leaseAlive == true && serverNo != null) { // call the script once the node is ready to be called 
-				accountDetailsDb.setConnString(serverNo.get(0) ,"AccountDetailsServer");
-				System.out.println("running the accountDetailsDb leader");
-				for (int no = 1; no < serverNo.size(); no++) { // start from 1 because 0 will always be the better
-																// server
-					if (!serverNo.get(no).equals(serverNo.get(0))) {
-						accountDetailsDb.setConnString(serverNo.get(no), "AccountDetailsServer"); // call the follower
-																									// to update
-																									// database
-						System.out.println("running the accountDetailsDb follower");
-					}
-
-				}
-			}
-
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		}else if(leaseAlive == false && serverNo != null) { // for second time onward
+			// the leader need to be reelection
+			String logMapResult = logMap.entrySet().toArray()[logMap.size() -1].toString(); // trying to get last value 
+			String[] resultgenserver = getLogResult(logMap);
+		    serverNo = electionLeader(listServer, resultgenserver[0] , Integer.parseInt(resultgenserver[1])); // access last election leader from map log
 		}
+
+		if(leaseAlive == true && serverNo != null) { // call the script once the node is ready to be called 
+			accountDetailsDb.setConnString(serverNo.get(0) ,"AccountDetailsServer");
+			System.out.println("running the accountDetailsDb leader");
+			for(int no = 1; no < serverNo.size(); no++) { // start from 1 because 0 will always be the better server 					
+				if(!serverNo.get(no).equals(serverNo.get(0))) {
+				 accountDetailsDb.setConnString(serverNo.get(no) ,"AccountDetailsServer"); // call the follower to update database
+				 System.out.println("running the accountDetailsDb follower");
+				}
+
+			}
+		}
+
 	}
 
 	@Override
