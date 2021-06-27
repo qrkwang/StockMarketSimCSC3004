@@ -70,24 +70,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		return deserializedList;
 	}
 
-//	@SuppressWarnings({ "unchecked", "resource" })
-//	private static ArrayList<MarketComplete> deserializeMarketOrderString(String sb) {
-//		final int[] index = { 0 };
-//		ArrayList<Stock> deserializedList = null;
-//		try {
-//			deserializedList = (ArrayList<Stock>) new ObjectInputStream(new InputStream() {
-//				@Override
-//				public int read() throws IOException {
-//					return sb.charAt(index[0]++);
-//				}
-//			}).readObject();
-//		} catch (ClassNotFoundException | IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		return deserializedList;
-//	}
-
 	@SuppressWarnings({ "unchecked", "resource" })
 	public static void main(String[] args) {
 		System.out.println("client main method");
@@ -191,14 +173,24 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				} else {
 					ArrayList<MarketPending> arrayListPendingOrders = (ArrayList<MarketPending>) deserializeString(
 							stockOrderList, "pendingOrders");
-					ArrayList<MarketComplete> arrayListCompleteOrders = (ArrayList<MarketComplete>) deserializeString(
-							orderCompleted, "completeOrders");
-					System.out.println("PENDING ORDERS FOLLOWED BY COMPLETE ORDERS");
+
+					System.out.println("PENDING ORDERS ");
 					System.out.println(arrayListPendingOrders.toString());
-					System.out.println(arrayListCompleteOrders.toString());
 
 				}
 
+				if (orderCompleted.equals("empty")) {
+
+				} else if (orderCompleted.equals("error fetching")) {
+
+				} else {
+
+					ArrayList<MarketComplete> arrayListCompleteOrders = (ArrayList<MarketComplete>) deserializeString(
+							orderCompleted, "completeOrders");
+					System.out.println("COMPLETED ORDERS");
+					System.out.println(arrayListCompleteOrders.toString());
+
+				}
 			}
 
 			// Send Order

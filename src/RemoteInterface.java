@@ -21,4 +21,5 @@ public interface RemoteInterface extends Remote {
 
 	public String retrieveCompletedOrders(String market, int stockId) throws RemoteException;
 
+	public void startLeaderElectionAlgo() throws RemoteException;
 }
