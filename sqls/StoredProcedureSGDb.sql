@@ -193,12 +193,12 @@ END$$
 DELIMITER ;
 
 USE `SGStockMarket`;
-DROP PROCEDURE IF EXISTS `getPendingSellOrderByStockId`;
+DROP PROCEDURE IF EXISTS `getPendingSellOrdersRequiredForNewInsertion`;
 
 DELIMITER $$
 USE `SGStockMarket`$$
 
-CREATE PROCEDURE `getPendingSellOrderByStockId`(IN inputStockId int, In inputPrice double)
+CREATE PROCEDURE `getPendingSellOrdersRequiredForNewInsertion`(IN inputStockId int, In inputPrice double)
 BEGIN
 
 SELECT * 
@@ -212,12 +212,12 @@ END$$
 DELIMITER ;
 
 USE `SGStockMarket`;
-DROP PROCEDURE IF EXISTS `getPendingBuyOrderByStockId`;
+DROP PROCEDURE IF EXISTS `getPendingBuyOrdersRequiredForNewInsertion`;
 
 DELIMITER $$
 USE `SGStockMarket`$$
 
-CREATE PROCEDURE `getPendingBuyOrderByStockId`(IN inputStockId int, In inputPrice double)
+CREATE PROCEDURE `getPendingBuyOrdersRequiredForNewInsertion`(IN inputStockId int, In inputPrice double)
 BEGIN
 
 SELECT * 

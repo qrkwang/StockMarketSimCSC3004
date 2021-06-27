@@ -190,12 +190,12 @@ END$$
 DELIMITER ;
 
 USE `USStockMarket`;
-DROP PROCEDURE IF EXISTS `getPendingSellOrderByStockId`;
+DROP PROCEDURE IF EXISTS `getPendingSellOrdersRequiredForNewInsertion`;
 
 DELIMITER $$
 USE `USStockMarket`$$
 
-CREATE PROCEDURE `getPendingSellOrderByStockId`(IN inputStockId int, In inputPrice double)
+CREATE PROCEDURE `getPendingSellOrdersRequiredForNewInsertion`(IN inputStockId int, In inputPrice double)
 BEGIN
 
 SELECT * 
@@ -209,12 +209,12 @@ END$$
 DELIMITER ;
 
 USE `USStockMarket`;
-DROP PROCEDURE IF EXISTS `getPendingBuyOrderByStockId`;
+DROP PROCEDURE IF EXISTS `getPendingBuyOrdersRequiredForNewInsertion`;
 
 DELIMITER $$
 USE `USStockMarket`$$
 
-CREATE PROCEDURE `getPendingBuyOrderByStockId`(IN inputStockId int, In inputPrice double)
+CREATE PROCEDURE `getPendingBuyOrdersRequiredForNewInsertion`(IN inputStockId int, In inputPrice double)
 BEGIN
 
 SELECT * 
