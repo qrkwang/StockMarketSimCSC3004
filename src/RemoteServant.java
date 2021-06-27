@@ -69,11 +69,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	public void startLeaderElectionAlgo() throws RemoteException {
-		List<String> serverNo = null;
+		String serverNo = null;
 		int generation = 0; // increase everytime it election a new leader 
 		if(leaseAlive == false && serverNo == null) {	// running for first time 
 		    serverNo = electionLeader(listServer, null , generation); 
-		    if(serverNo.isEmpty()) {
+		    if(serverNo.isEmpty() || serverNo == null) {
 				System.out.println("Fail to find any working server , please restart application or check server status");
 		    }else {
 		    	System.out.println("Set up server for first time  " + serverNo);
@@ -163,11 +163,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 
 
-	public List<String> electionLeader(List<String> listServer, String currServer, int generation) {
+	public String electionLeader(List<String> listServer, String currServer, int generation) {
 		String selectedserver = null;
 		List<String> serverlist = new ArrayList<String>(listServer);
 		HashMap<String, Long> rankListServer = new HashMap<>();
-		List<String> ranked = new ArrayList<String>();
 
 		try {
 			
@@ -195,15 +194,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 							Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 
 			System.out.println(Arrays.asList(sortedServerList));
-			for (String key : sortedServerList.keySet()) { // get back first key instead //  follow stackover flow
-				ranked.add(key);
-				System.out.println("printing key to enter " + key);
-			}
-
+			
 			generation = generation + 1; // increase count every new election with leader
-			if (!ranked.isEmpty()) {
-				logMap.put(ranked.get(0), generation); // add the generation and log map
-				selectedserver = ranked.get(0); // always get 0 because to get faster result
+			if (!rankListServer.isEmpty()) {
+				selectedserver = sortedServerList.keySet().stream().findFirst().get();// get the first key 
+				logMap.put(selectedserver, generation); // add the generation and log map
 				setLease(selectedserver, "root", "root"); // once elected leader start the lease time
 				System.out.println("Selected Server as a leader is " + selectedserver + "generation no" + generation);
 			}
@@ -217,7 +212,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			accountDetailsDb.setConnString(selectedserver ,"AccountDetailsServer");
 			System.out.println("running the accountDetailsDb leader");
 		}
-		return ranked; // return the leader
+		return selectedserver; // return the leader
 	}
 
 	public boolean restartServer() {
@@ -257,8 +252,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 						// once if reset , add back to ranking? but last one 
 						// or just leave it to be?
 						// get back into the list server to run
-						List<String> resultElection = electionLeader(listServer,  ipname , Integer.parseInt(serverDetailsLog[1])); //call for election again to get new leader 
-						if(resultElection.isEmpty()) {
+						String resultElection = electionLeader(listServer,  ipname , Integer.parseInt(serverDetailsLog[1])); //call for election again to get new leader 
+						if(resultElection.isEmpty() || resultElection != null) {
 							System.out.println("Fail to find any working server , please restart application or check server status");
 						}
 					}
