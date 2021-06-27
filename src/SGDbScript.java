@@ -90,11 +90,25 @@ public class SGDbScript {
 				arrayListOrders = new ArrayList<MarketPending>(); // initialize arraylist if results to be found
 			}
 
+			int SellerId = 0;
+			int BuyerId = 0;
+
+			// If ID is null, return as -1
+			if (rs.getInt("SellerId") == 0) {
+				SellerId = -1;
+			} else {
+				BuyerId = rs.getInt("SellerId");
+			}
+			if (rs.getInt("BuyerId") == 0) {
+				BuyerId = -1;
+			} else {
+				BuyerId = rs.getInt("BuyerId");
+			}
+
 			java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("CreatedDate");
 			LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
-			MarketPending marketOrder = new MarketPending(rs.getInt("MarketPendingId"), rs.getInt("StockId"),
-					rs.getInt("SellerId"), rs.getInt("BuyerId"), rs.getInt("Quantity"), rs.getFloat("Price"),
-					localDateTime);
+			MarketPending marketOrder = new MarketPending(rs.getInt("MarketPendingId"), rs.getInt("StockId"), SellerId,
+					BuyerId, rs.getInt("Quantity"), rs.getFloat("Price"), localDateTime);
 
 			marketOrder.setCreatedDate(localDateTime);
 

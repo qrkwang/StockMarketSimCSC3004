@@ -89,19 +89,31 @@ public class USADbScript {
 			if (count == 0) {
 				arrayListOrders = new ArrayList<MarketPending>(); // initialize arraylist if results to be found
 			}
-			MarketPending marketOrder = new MarketPending();
 
-			marketOrder.setMarketPendingId(rs.getInt("MarketPendingId"));
-			marketOrder.setStockId(rs.getInt("StockId"));
-			marketOrder.setSellerId(rs.getInt("SellerId"));
-			marketOrder.setBuyerId(rs.getInt("BuyerId"));
-			marketOrder.setQuantity(rs.getInt("Quantity"));
-			marketOrder.setPrice(rs.getFloat("Price"));
+			int SellerId = 0;
+			int BuyerId = 0;
+
+			// If ID is null, return as -1
+			if (rs.getInt("SellerId") == 0) {
+				SellerId = -1;
+			} else {
+				BuyerId = rs.getInt("SellerId");
+			}
+			if (rs.getInt("BuyerId") == 0) {
+				BuyerId = -1;
+			} else {
+				BuyerId = rs.getInt("BuyerId");
+			}
 
 			java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("CreatedDate");
 			LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
+			MarketPending marketOrder = new MarketPending(rs.getInt("MarketPendingId"), rs.getInt("StockId"), SellerId,
+					BuyerId, rs.getInt("Quantity"), rs.getFloat("Price"), localDateTime);
+
 			marketOrder.setCreatedDate(localDateTime);
 
+			System.out.println("Market Pending: ");
+			System.out.println(marketOrder.toString());
 			arrayListOrders.add(marketOrder);
 			count++;
 		}
