@@ -24,7 +24,7 @@ public class AccountDetailsDbScript {
 	// Change this string according to leader election
 	private static String CONN_STRING = "jdbc:mysql://localhost:3306/accountdetailsserver"; // jdbc:mysql://ip:3306/DBNAME
 
-	public static void setConnString(String ipandPort, String dbName) {
+	public void setConnString(String ipandPort, String dbName) {
 		CONN_STRING = "jdbc:mysql//" + ipandPort + dbName;
 	}
 

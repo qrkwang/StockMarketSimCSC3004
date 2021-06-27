@@ -12,6 +12,21 @@ public class MarketComplete implements Serializable {
 	private int Quantity;
 	private float Price;
 	private LocalDateTime TransactionDate;
+	
+	public MarketComplete() {
+		super();
+	}
+	public MarketComplete(int marketCompleteId, int stockId, int sellerId, int buyerId, int quantity, float price,
+			LocalDateTime transactionDate) {
+		super();
+		MarketCompleteId = marketCompleteId;
+		StockId = stockId;
+		SellerId = sellerId;
+		BuyerId = buyerId;
+		Quantity = quantity;
+		Price = price;
+		TransactionDate = transactionDate;
+	}
 
 	public int getMarketCompleteId() {
 		return MarketCompleteId;
