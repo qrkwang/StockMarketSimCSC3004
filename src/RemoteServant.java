@@ -1,4 +1,7 @@
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.rmi.RemoteException;
@@ -69,6 +72,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	public void startLeaderElectionAlgo() throws RemoteException {
+		restartServer();
+		/*
 		String serverNo = null;
 		int generation = 0; // increase everytime it election a new leader 
 		if(leaseAlive == false && serverNo == null) {	// running for first time 
@@ -80,7 +85,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		    }
 			
 		}
-
+*/
 	}
 
 	@Override
@@ -217,10 +222,21 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	public boolean restartServer() {
 		try {
-			String command = "sudo /usr/local/mysql/support-files/mysql.server start";
-			Process process = Runtime.getRuntime().exec(command);
-			System.out.println("testing to switch off");
-		} catch (IOException e) {
+			String result;
+			String error;
+			Process process = Runtime.getRuntime().exec("cmd /c python accountServer.py");
+			System.out.println("running program");
+			BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
+			
+			  BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+			  while ((result = stdout.readLine()) != null) {
+	                System.out.println(result);
+	            }
+	            System.out.println("error running here");
+			  while ((error = stdError.readLine()) != null) {
+	                System.out.println(error);
+	            }
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
