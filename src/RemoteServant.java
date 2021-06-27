@@ -29,18 +29,26 @@ import classes.MarketPending;
 import classes.Stock;
 
 public class RemoteServant extends UnicastRemoteObject implements RemoteInterface {
-	AccountDetailsDbScript accountDetailsDb = null;
-	HKDbScript hkDb = null;
-	SGDbScript sgDb = null;
-	USADbScript usaDb = null;
+	private AccountDetailsDbScript accountDetailsDb;
+	private HKDbScript hkDb;
+	private SGDbScript sgDb;
+	private USADbScript usaDb;
 
+	private HashMap<String, Integer> logMap; // for log (will be server name and generation number)
+	private List<String> listServer;
+
+	private boolean leaseAlive;
+	
 	public RemoteServant() throws RemoteException {
 		super();
 		accountDetailsDb = new AccountDetailsDbScript(); // Start the RabbitMQ Receiver that's in main method
 		hkDb = new HKDbScript(); // Start the RabbitMQ Receiver that's in main method
 		sgDb = new SGDbScript(); // Start the RabbitMQ Receiver that's in main method
 		usaDb = new USADbScript(); // Start the RabbitMQ Receiver that's in main method
-
+		logMap = new HashMap<>(); // for log (will be server name and generation number)
+		listServer = new ArrayList<>(Arrays.asList("192.168.210.128", "192.168.210.129" , "192.168.210.130"));
+		leaseAlive = false;
+		
 		try {
 			accountDetailsDb.startWaitForMsg();
 		} catch (SQLException e) {
@@ -62,32 +70,15 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	public void startLeaderElectionAlgo() throws RemoteException {
 		List<String> serverNo = null;
-
-		boolean result;
-
 		int generation = 0; // increase everytime it election a new leader 
-
 		if(leaseAlive == false && serverNo == null) {	// running for first time 
 		    serverNo = electionLeader(listServer, null , generation); 
-			System.out.println("Set up server for first time  " + serverNo);
-
-		}else if(leaseAlive == false && serverNo != null) { // for second time onward
-			// the leader need to be reelection
-			String logMapResult = logMap.entrySet().toArray()[logMap.size() -1].toString(); // trying to get last value 
-			String[] resultgenserver = getLogResult(logMap);
-		    serverNo = electionLeader(listServer, resultgenserver[0] , Integer.parseInt(resultgenserver[1])); // access last election leader from map log
-		}
-
-		if(leaseAlive == true && serverNo != null) { // call the script once the node is ready to be called 
-			accountDetailsDb.setConnString(serverNo.get(0) ,"AccountDetailsServer");
-			System.out.println("running the accountDetailsDb leader");
-			for(int no = 1; no < serverNo.size(); no++) { // start from 1 because 0 will always be the better server 					
-				if(!serverNo.get(no).equals(serverNo.get(0))) {
-				 accountDetailsDb.setConnString(serverNo.get(no) ,"AccountDetailsServer"); // call the follower to update database
-				 System.out.println("running the accountDetailsDb follower");
-				}
-
-			}
+		    if(serverNo.isEmpty()) {
+				System.out.println("Fail to find any working server , please restart application or check server status");
+		    }else {
+		    	System.out.println("Set up server for first time  " + serverNo);
+		    }
+			
 		}
 
 	}
@@ -170,11 +161,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return null;
 	}
 
-	HashMap<String, Integer> logMap = new HashMap<>(); // for log (will be server name and generation number)
-	List<String> listServer = new ArrayList<>(Arrays.asList("192.168.210.128", "192.168.210.129"));
-	// "127.0.0.1", // add back local host when finish testing // localhost will
-	// always be faster then vm db
-	boolean leaseAlive = false;
+
 
 	public List<String> electionLeader(List<String> listServer, String currServer, int generation) {
 		String selectedserver = null;
@@ -183,32 +170,32 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		List<String> ranked = new ArrayList<String>();
 
 		try {
-			if (!logMap.isEmpty()) {
+			
+			/*
+			if (!logMap.isEmpty()) { //should be remove due to the server can restart 
 				int index = serverlist.indexOf(currServer);// remove the server that unable to run temp
 				serverlist.remove(index);
 			}
+			*/
 			for (int i = 0; i < serverlist.size(); i++) {
 				// rank them by the faster server speed
 				long startTime = System.nanoTime();
 				boolean connectionResult = checkConnection(serverlist.get(i), "root", "root", "AccountDetailsServer");
 				long endTime = System.nanoTime();
 				long total = endTime - startTime;
-				System.out.println("total tine for " + total + " server running" + serverlist.get(i));
+				System.out.println("total time for " + total + " server running" + serverlist.get(i));
 				System.out.println(
 						"server result connection " + connectionResult + " what server is running" + serverlist.get(i));
 				if (connectionResult == true) {
 					rankListServer.put(serverlist.get(i), total); // adding result that pass the connection
-
 				}
-
 			}
-			// sorting of map to get the best time result
-			Map<String, Long> sortedServerList = // smaller to the bigger
-					rankListServer.entrySet().stream().sorted(Entry.comparingByValue()).collect(
+			// sorting of map to get the best time result smaller to the bigger
+			Map<String, Long> sortedServerList = rankListServer.entrySet().stream().sorted(Entry.comparingByValue()).collect(
 							Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 
 			System.out.println(Arrays.asList(sortedServerList));
-			for (String key : sortedServerList.keySet()) {
+			for (String key : sortedServerList.keySet()) { // get back first key instead //  follow stackover flow
 				ranked.add(key);
 				System.out.println("printing key to enter " + key);
 			}
@@ -224,6 +211,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		
+		if(leaseAlive == true && !logMap.isEmpty()) { // call the script once the node is ready to be called 
+			accountDetailsDb.setConnString(selectedserver ,"AccountDetailsServer");
+			System.out.println("running the accountDetailsDb leader");
 		}
 		return ranked; // return the leader
 	}
@@ -249,7 +241,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	public void setLease(String ipname, String username, String password) {
 		Timer timer = new Timer();
 		TimerTask task = new TimerTask() {
-			// private final double currentCount = 0.3; // temp set 300 ms
 			@Override
 			public void run() {
 				boolean checkHeartbeatResult = false;
@@ -261,27 +252,28 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 						leaseAlive = false;
 						System.out.println("time out unable to lease due to error");
 						String[] serverDetailsLog = getLogResult(logMap);
-						electionLeader(listServer,  ipname , Integer.parseInt(serverDetailsLog[1])); //call for election again to get new leader 
 						// restartServer() try to restart server 
 						// maybe check if the server manage to reset ?
 						// once if reset , add back to ranking? but last one 
 						// or just leave it to be?
+						// get back into the list server to run
+						List<String> resultElection = electionLeader(listServer,  ipname , Integer.parseInt(serverDetailsLog[1])); //call for election again to get new leader 
+						if(resultElection.isEmpty()) {
+							System.out.println("Fail to find any working server , please restart application or check server status");
+						}
 					}
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 					cancel(); // if there is exception also cancel the lease
 					leaseAlive = false;
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
 		};
 		leaseAlive = true;
 		System.out.println("lease have been renew");
-		timer.schedule(task, 0, 300); // to trigger to reschedule the lease will repeat itself till the condition is
-										// met
+		timer.schedule(task, 0, 300); // to trigger to reschedule the lease will repeat itself till the condition is met
 	}
 
 	// act like heartbeat to check if connection exist or not
@@ -298,7 +290,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				con.close();
 			}
 		} catch (SQLException | ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			// e.printStackTrace();
 		}
 		return result;
@@ -306,8 +297,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	public String[] getLogResult(HashMap<String, Integer> log) {
 		String logMapResult = log.entrySet().toArray()[log.size() - 1].toString(); // trying to get last value
-		String[] resultgenserver = logMapResult.split("="); // get back the last election leader server & generation
-															// number
+		String[] resultgenserver = logMapResult.split("="); // get back the last election leader server & generation number
 		return resultgenserver;
 	}
 
