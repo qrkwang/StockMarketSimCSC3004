@@ -12,7 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
@@ -53,45 +52,56 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		System.out.format("Creating server object\n"); // Print to client that server object is being created once
 														// constructor called.
 
-		List<String> serverNo = null;
-
-		boolean result;
-		try {
-			//------------ for testing connection---------------------------------------------------
-			result = checkConnection("192.168.210.128", "root",  "root" , "AccountDetailsServer");
-		//	System.out.println("checking for db result connection" + " " + result);
-			 int generation = 0; // increase everytime it election a new leader 
-			 
-			if(leaseAlive == false && serverNo == null) {	// running for first time 
-			    serverNo = electionLeader(listServer, null , generation); 
-			    System.out.println("result of calling method    " +  serverNo);		
-				//setLease(serverNo.get(0), "root", "root"); // set lease once selected leader 
-				System.out.println("Set up server for first time");
-				
-			}else if(leaseAlive == false && serverNo != null) { // for second time onward
-				// the leader need to be reelection
-				String logMapResult = logMap.entrySet().toArray()[logMap.size() -1].toString(); // trying to get last value 
-				String[] resultgenserver = getLogResult(logMap);
-			    serverNo = electionLeader(listServer, resultgenserver[0] , Integer.parseInt(resultgenserver[1])); // access last election leader from map log
-				//setLease(serverNo.get(1), "root", "root"); // restart the lease again 
-			}
-			
-			if(leaseAlive == true && serverNo != null) { // call the script once the node is ready to be called 
-				accountDetailsDb.setConnString(serverNo.get(0) ,"AccountDetailsServer");
-				System.out.println("running the accountDetailsDb leader");
-				for(int no = 1; no < serverNo.size(); no++) { // start from 1 because 0 will always be the better server 					
-					if(!serverNo.get(no).equals(serverNo.get(0))) {
-					 accountDetailsDb.setConnString(serverNo.get(no) ,"AccountDetailsServer"); // call the follower to update database
-					 System.out.println("running the accountDetailsDb follower");
-					}
-					
-				}
-			}
-			 
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		List<String> serverNo = null;
+//
+//		boolean result;
+//		try {
+//			// ------------ for testing
+//			// connection---------------------------------------------------
+//			result = checkConnection("192.168.210.128", "root", "root", "AccountDetailsServer");
+//			// System.out.println("checking for db result connection" + " " + result);
+//			int generation = 0; // increase everytime it election a new leader
+//
+//			if (leaseAlive == false && serverNo == null) { // running for first time
+//				serverNo = electionLeader(listServer, null, generation);
+//				System.out.println("result of calling method    " + serverNo);
+//				// setLease(serverNo.get(0), "root", "root"); // set lease once selected leader
+//				System.out.println("Set up server for first time");
+//
+//			} else if (leaseAlive == false && serverNo != null) { // for second time onward
+//				// the leader need to be reelection
+//				String logMapResult = logMap.entrySet().toArray()[logMap.size() - 1].toString(); // trying to get last
+//																									// value
+//				String[] resultgenserver = getLogResult(logMap);
+//				serverNo = electionLeader(listServer, resultgenserver[0], Integer.parseInt(resultgenserver[1])); // access
+//																													// last
+//																													// election
+//																													// leader
+//																													// from
+//																													// map
+//																													// log
+//				// setLease(serverNo.get(1), "root", "root"); // restart the lease again
+//			}
+//
+//			if (leaseAlive == true && serverNo != null) { // call the script once the node is ready to be called
+//				accountDetailsDb.setConnString(serverNo.get(0), "AccountDetailsServer");
+//				System.out.println("running the accountDetailsDb leader");
+//				for (int no = 1; no < serverNo.size(); no++) { // start from 1 because 0 will always be the better
+//																// server
+//					if (!serverNo.get(no).equals(serverNo.get(0))) {
+//						accountDetailsDb.setConnString(serverNo.get(no), "AccountDetailsServer"); // call the follower
+//																									// to update
+//																									// database
+//						System.out.println("running the accountDetailsDb follower");
+//					}
+//
+//				}
+//			}
+//
+//		} catch (SQLException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 
 	}
 
@@ -99,6 +109,59 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	public String testMethod(String s) throws RemoteException {
 		System.out.println(s);
 		return "printed";
+	}
+
+	public void startLeaderElectionAlgo() throws RemoteException {
+		List<String> serverNo = null;
+
+		boolean result;
+		try {
+			// ------------ for testing
+			// connection---------------------------------------------------
+			result = checkConnection("192.168.210.128", "root", "root", "AccountDetailsServer");
+			// System.out.println("checking for db result connection" + " " + result);
+			int generation = 0; // increase everytime it election a new leader
+
+			if (leaseAlive == false && serverNo == null) { // running for first time
+				serverNo = electionLeader(listServer, null, generation);
+				System.out.println("result of calling method    " + serverNo);
+				// setLease(serverNo.get(0), "root", "root"); // set lease once selected leader
+				System.out.println("Set up server for first time");
+
+			} else if (leaseAlive == false && serverNo != null) { // for second time onward
+				// the leader need to be reelection
+				String logMapResult = logMap.entrySet().toArray()[logMap.size() - 1].toString(); // trying to get last
+																									// value
+				String[] resultgenserver = getLogResult(logMap);
+				serverNo = electionLeader(listServer, resultgenserver[0], Integer.parseInt(resultgenserver[1])); // access
+																													// last
+																													// election
+																													// leader
+																													// from
+																													// map
+																													// log
+				// setLease(serverNo.get(1), "root", "root"); // restart the lease again
+			}
+
+			if (leaseAlive == true && serverNo != null) { // call the script once the node is ready to be called
+				accountDetailsDb.setConnString(serverNo.get(0), "AccountDetailsServer");
+				System.out.println("running the accountDetailsDb leader");
+				for (int no = 1; no < serverNo.size(); no++) { // start from 1 because 0 will always be the better
+																// server
+					if (!serverNo.get(no).equals(serverNo.get(0))) {
+						accountDetailsDb.setConnString(serverNo.get(no), "AccountDetailsServer"); // call the follower
+																									// to update
+																									// database
+						System.out.println("running the accountDetailsDb follower");
+					}
+
+				}
+			}
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -179,26 +242,27 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return null;
 	}
 
-    HashMap<String, Integer> logMap = new HashMap<>(); // for log (will be server name and generation number)
- List<String> listServer = new ArrayList<>(Arrays.asList( "192.168.210.128" , "192.168.210.129"));
- //"127.0.0.1", // add back local host when finish testing // localhost will always be faster then vm db
-  boolean leaseAlive = false;
-	
-	public List<String> electionLeader(List<String> listServer, String currServer , int generation) { 
+	HashMap<String, Integer> logMap = new HashMap<>(); // for log (will be server name and generation number)
+	List<String> listServer = new ArrayList<>(Arrays.asList("192.168.210.128", "192.168.210.129"));
+	// "127.0.0.1", // add back local host when finish testing // localhost will
+	// always be faster then vm db
+	boolean leaseAlive = false;
+
+	public List<String> electionLeader(List<String> listServer, String currServer, int generation) {
 		String selectedserver = null;
 		List<String> serverlist = new ArrayList<String>(listServer);
 		HashMap<String, Long> rankListServer = new HashMap<>();
 		List<String> ranked = new ArrayList<String>();
 
-        try {
-        	if(!logMap.isEmpty()) {
+		try {
+			if (!logMap.isEmpty()) {
 				int index = serverlist.indexOf(currServer);// remove the server that unable to run temp
 				serverlist.remove(index);
 			}
 			for (int i = 0; i < serverlist.size(); i++) {
-				// rank them by the faster server speed 
+				// rank them by the faster server speed
 				long startTime = System.nanoTime();
-				boolean connectionResult = checkConnection(serverlist.get(i) , "root", "root", "AccountDetailsServer");
+				boolean connectionResult = checkConnection(serverlist.get(i), "root", "root", "AccountDetailsServer");
 				long endTime = System.nanoTime();
 				long total = endTime - startTime;
 				System.out.println("total tine for " + total + " server running" + serverlist.get(i));
@@ -222,11 +286,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 
 			generation = generation + 1; // increase count every new election with leader
-			if(!ranked.isEmpty()) {
-			logMap.put(ranked.get(0), generation); // add the generation and log map	
-			selectedserver = ranked.get(0); // always get 0 because to get faster result 
-			setLease(selectedserver, "root", "root"); // once elected leader start the lease time 
-			System.out.println("Selected Server as a leader is " + selectedserver  +  "generation no" + generation);
+			if (!ranked.isEmpty()) {
+				logMap.put(ranked.get(0), generation); // add the generation and log map
+				selectedserver = ranked.get(0); // always get 0 because to get faster result
+				setLease(selectedserver, "root", "root"); // once elected leader start the lease time
+				System.out.println("Selected Server as a leader is " + selectedserver + "generation no" + generation);
 			}
 
 		} catch (Exception e) {
@@ -255,10 +319,12 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 					System.out.println("task have expired , ready to check for renew");
 					if (checkHeartbeatResult == false) { // check if it ok to reset the lease , if heartbeat fail no
 						timer.cancel(); // cancel all the schedule task that maybe happending
-						leaseAlive = false; 
-						System.out.println("time out unable to lease due to error" );
+						leaseAlive = false;
+						System.out.println("time out unable to lease due to error");
 						String[] serverDetailsLog = getLogResult(logMap);
-						electionLeader(listServer,  ipname , Integer.parseInt(serverDetailsLog[1])); //call for election again to get new leader 
+						electionLeader(listServer, ipname, Integer.parseInt(serverDetailsLog[1])); // call for election
+																									// again to get new
+																									// leader
 					}
 				} catch (SQLException e) {
 					// TODO Auto-generated catch block
@@ -298,11 +364,13 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	public String[] getLogResult(HashMap<String, Integer> log) {
-		String logMapResult = log.entrySet().toArray()[log.size() -1].toString(); // trying to get last value 
-		String[] resultgenserver = logMapResult.split("="); // get back the last election leader server & generation number 
+		String logMapResult = log.entrySet().toArray()[log.size() - 1].toString(); // trying to get last value
+		String[] resultgenserver = logMapResult.split("="); // get back the last election leader server & generation
+															// number
 		return resultgenserver;
 	}
 
+	@SuppressWarnings("resource")
 	@Override
 	public String retrievePendingOrders(String market, int stockId) throws RemoteException {
 		StringBuilder sb = new StringBuilder();

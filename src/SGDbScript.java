@@ -135,7 +135,7 @@ public class SGDbScript {
 			java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("TransactionDate");
 			LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
 
-			MarketComplete marketOrder = new MarketComplete(rs.getInt("MarketCompleteId"), rs.getInt("StockId"),
+			MarketComplete marketOrder = new MarketComplete(rs.getInt("MarketCompletedId"), rs.getInt("StockId"),
 					rs.getInt("SellerId"), rs.getInt("BuyerId"), rs.getInt("Quantity"), rs.getFloat("Price"),
 					localDateTime);
 
