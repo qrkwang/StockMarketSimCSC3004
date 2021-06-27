@@ -12,14 +12,6 @@ do
     esac
 done
 
-echo $databaseName;
-echo $dbUser;
-echo $dbPassword;
-echo $fileNamePart1;
-echo $destinationServerPart1;
-echo $fileNamePart2;
-echo $destinationServerPart2;
-
 myCount=$(mysql -s -N $databaseName -u$dbUser -p$dbPassword -e"SELECT Count(*) FROM stock")
 
 count=$(($myCount/2))
