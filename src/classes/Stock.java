@@ -12,17 +12,20 @@ public class Stock implements Serializable {
 	private boolean Status;
 	private String Timezone;
 	private LocalDateTime CreatedDate;
-
+	
+	public Stock() {
+		super();
+	}
 	public Stock(int stockId, String companyName, String tickerSymbol, float currentValue, boolean status,
 			String timezone, LocalDateTime createdDate) {
 		super();
-		StockId = stockId;
-		CompanyName = companyName;
-		TickerSymbol = tickerSymbol;
-		CurrentValue = currentValue;
-		Status = status;
-		Timezone = timezone;
-		CreatedDate = createdDate;
+		this.StockId = stockId;
+		this.CompanyName = companyName;
+		this.TickerSymbol = tickerSymbol;
+		this.CurrentValue = currentValue;
+		this.Status = status;
+		this.Timezone = timezone;
+		this.CreatedDate = createdDate;
 	}
 
 	public int getStockId() {
