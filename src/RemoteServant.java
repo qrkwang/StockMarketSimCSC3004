@@ -54,7 +54,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		sgDb = new SGDbScript(); // Start the RabbitMQ Receiver that's in main method
 		usaDb = new USADbScript(); // Start the RabbitMQ Receiver that's in main method
 		logMap = new HashMap<>(); // for log (will be server name and generation number)
-		listServer = new ArrayList<>(Arrays.asList("192.168.210.128", "192.168.210.129", "192.168.210.130"));
+		listServer = new ArrayList<>(Arrays.asList("192.168.87.54", "192.168.87.55", "192.168.87.56"));
 		leaseAlive = false;
 
 		try {
@@ -84,10 +84,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		int generation = 0; // increase everytime it election a new leader 
 		if(leaseAlive == false && serverNo == null) {	// running for first time 
 		    serverNo = electionLeader(listServer, null , generation); 
-		    if(serverNo.isEmpty() || serverNo == null) {
+		    if(serverNo == null) {
 				System.out.println("Fail to find any working server , please restart application or check server status");
 		    }else {
-		    	System.out.println("Set up server for first time  " + serverNo);
+		    	System.out.println("Set up server " + serverNo);
 		    }	
 		}
 	}
@@ -209,9 +209,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				boolean connectionResult = checkConnection(serverlist.get(i), "root", "root", "AccountDetailsServer");
 				long endTime = System.nanoTime();
 				long total = endTime - startTime;
-				System.out.println("total time for " + total + " server running" + serverlist.get(i));
+				System.out.println("total time for " + total + " server running = " + serverlist.get(i));
 				System.out.println(
-						"server result connection " + connectionResult + " what server is running" + serverlist.get(i));
+						"server result connection " + connectionResult);
 				if (connectionResult == true) {
 					rankListServer.put(serverlist.get(i), total); // adding result that pass the connection
 				}
@@ -227,7 +227,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				selectedserver = sortedServerList.keySet().stream().findFirst().get();// get the first key
 				logMap.put(selectedserver, generation); // add the generation and log map
 				setLease(selectedserver, "root", "root"); // once elected leader start the lease time
-				System.out.println("Selected Server as a leader is " + selectedserver + "generation no" + generation);
+				System.out.println("Selected Server as a leader is " + selectedserver + " current generation no " + generation);
 			}
 
 		} catch (Exception e) {
@@ -286,7 +286,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 						String[] serverDetailsLog = getLogResult(logMap);
 						restartServer(serverDetailsLog[0] , "wh1901877" ,  "accountServer.py"); // try to restart server 
 						String resultElection = electionLeader(listServer,  ipname , Integer.parseInt(serverDetailsLog[1])); //call for election again to get new leader 
-						if(resultElection.isEmpty() || resultElection != null) {
+						if(resultElection.isEmpty() || resultElection == null) {
 							System.out.println("Fail to find any working server , please restart application or check server status");
 						}
 					}
@@ -301,7 +301,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		};
 		leaseAlive = true;
 		System.out.println("lease have been renew");
-		timer.schedule(task, 0, 300); // to trigger to reschedule the lease will repeat itself till the condition is
+		timer.schedule(task, 0, 3000); // to trigger to reschedule the lease will repeat itself till the condition is
 										// met
 	}
 
