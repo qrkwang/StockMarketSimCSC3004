@@ -1,8 +1,5 @@
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
@@ -44,7 +41,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	private HashMap<String, Integer> logMap; // for log (will be server name and generation number)
 	private List<String> listServer;
-
+	private String accountServer;
+	private String accountServer2;
+	private String accountServer3;
 	private boolean leaseAlive;
 
 	public RemoteServant() throws RemoteException {
@@ -54,7 +53,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		sgDb = new SGDbScript(); // Start the RabbitMQ Receiver that's in main method
 		usaDb = new USADbScript(); // Start the RabbitMQ Receiver that's in main method
 		logMap = new HashMap<>(); // for log (will be server name and generation number)
-		listServer = new ArrayList<>(Arrays.asList("192.168.87.54", "192.168.87.55", "192.168.87.56"));
+	    accountServer ="192.168.87.54";
+		 accountServer2 = "192.168.87.55";
+		accountServer3 = "192.168.87.56";
+		listServer = new ArrayList<>(Arrays.asList(accountServer, accountServer2,accountServer3 ));
 		leaseAlive = false;
 
 		try {
