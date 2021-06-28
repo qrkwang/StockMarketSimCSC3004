@@ -3,6 +3,7 @@ import java.sql.CallableStatement;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.concurrent.TimeoutException;
@@ -77,8 +78,50 @@ public class HKDbScript {
 
 	}
 
-	public void receiveOrder(String message) throws SQLException {
+	public String receiveOrder(String message) throws SQLException {
+		String[] splitArray = message.split(",");
+		int stockId = Integer.parseInt(splitArray[0]);
+		int sellerId = Integer.parseInt(splitArray[1]);
+		int buyerId = Integer.parseInt(splitArray[2]);
+		int qty = Integer.parseInt(splitArray[3]);
+		float price = Float.parseFloat(splitArray[4]);
 
+		// IN stockId Int, In sellerId Int, In buyerId Int, In quantity Int, In price
+		// Double, In transactionDate DATETIME
+
+		Connection con = null;
+
+		try {
+			Class.forName(DRIVER_CLASS);
+			con = (Connection) DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+			System.out.println("Connected to DB");
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return "offline";
+
+		}
+
+		String query = "{CALL InsertToMarketPending(?,?,?,?,?,?)}";
+		CallableStatement stmt = con.prepareCall(query); // prepare to call
+		stmt.setInt(1, stockId);
+		stmt.setInt(2, sellerId);
+		stmt.setInt(3, buyerId);
+		stmt.setInt(4, qty);
+		stmt.setFloat(5, price);
+		stmt.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
+
+		ResultSet rs = stmt.executeQuery();
+
+		while (rs.next()) {
+			System.out.println(rs.getString(1));
+
+		}
+		return "success";
+	}
+
+	public ArrayList<?> getOwnedStocks() throws SQLException {
+		ArrayList<?> arrayListOwned = null;
 		Connection con = null;
 		try {
 			Class.forName(DRIVER_CLASS);
@@ -100,6 +143,8 @@ public class HKDbScript {
 		while (rs.next()) {
 
 		}
+		return arrayListOwned;
+
 	}
 
 	public ArrayList<Stock> getAllStocks() throws SQLException {
@@ -222,19 +267,15 @@ public class HKDbScript {
 			if (count == 0) {
 				arrayListOrders = new ArrayList<MarketComplete>(); // initialize arraylist if results to be found
 			}
-			MarketComplete marketOrder = new MarketComplete();
-
-			marketOrder.setMarketCompleteId(rs.getInt("MarketCompleteId"));
-			marketOrder.setStockId(rs.getInt("StockId"));
-			marketOrder.setSellerId(rs.getInt("SellerId"));
-			marketOrder.setBuyerId(rs.getInt("BuyerId"));
-			marketOrder.setQuantity(rs.getInt("Quantity"));
-			marketOrder.setPrice(rs.getFloat("Price"));
-
 			java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("TransactionDate");
 			LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
-			marketOrder.setTransactionDate(localDateTime);
 
+			MarketComplete marketOrder = new MarketComplete(rs.getInt("MarketCompletedId"), rs.getInt("StockId"),
+					rs.getInt("SellerId"), rs.getInt("BuyerId"), rs.getInt("Quantity"), rs.getFloat("Price"),
+					localDateTime);
+
+			System.out.println("Market Completed: ");
+			System.out.println(marketOrder.toString());
 			arrayListOrders.add(marketOrder);
 			count++;
 		}

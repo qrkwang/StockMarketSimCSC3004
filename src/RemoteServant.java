@@ -38,7 +38,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private List<String> listServer;
 
 	private boolean leaseAlive;
-	
+
 	public RemoteServant() throws RemoteException {
 		super();
 		accountDetailsDb = new AccountDetailsDbScript(); // Start the RabbitMQ Receiver that's in main method
@@ -46,11 +46,15 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		sgDb = new SGDbScript(); // Start the RabbitMQ Receiver that's in main method
 		usaDb = new USADbScript(); // Start the RabbitMQ Receiver that's in main method
 		logMap = new HashMap<>(); // for log (will be server name and generation number)
-		listServer = new ArrayList<>(Arrays.asList("192.168.210.128", "192.168.210.129" , "192.168.210.130"));
+		listServer = new ArrayList<>(Arrays.asList("192.168.210.128", "192.168.210.129", "192.168.210.130"));
 		leaseAlive = false;
-		
+
 		try {
 			accountDetailsDb.startWaitForMsg();
+			hkDb.startWaitForMsg();
+			sgDb.startWaitForMsg();
+			usaDb.startWaitForMsg();
+
 		} catch (SQLException e) {
 			System.out.println("error start wait for msg");
 			// TODO Auto-generated catch block
@@ -59,7 +63,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 		System.out.format("Creating server object\n"); // Print to client that server object is being created once
 														// constructor called.
-
 	}
 
 	@Override
@@ -70,21 +73,20 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	public void startLeaderElectionAlgo() throws RemoteException {
 		List<String> serverNo = null;
-		int generation = 0; // increase everytime it election a new leader 
-		if(leaseAlive == false && serverNo == null) {	// running for first time 
-		    serverNo = electionLeader(listServer, null , generation); 
-		    if(serverNo.isEmpty()) {
-				System.out.println("Fail to find any working server , please restart application or check server status");
-		    }else {
-		    	System.out.println("Set up server for first time  " + serverNo);
-		    }
-			
+		int generation = 0; // increase everytime it election a new leader
+		if (leaseAlive == false && serverNo == null) { // running for first time
+			serverNo = electionLeader(listServer, null, generation);
+			if (serverNo.isEmpty()) {
+				System.out
+						.println("Fail to find any working server , please restart application or check server status");
+			} else {
+				System.out.println("Set up server for first time  " + serverNo);
+			}
 		}
-
 	}
 
 	@Override
-	public String getAccountDetailsByUsernameAndPW(String username, String pw) throws RemoteException {
+	public String getAccountDetailsByUsernameAndPW(ClientInt cc, String username, String pw) throws RemoteException {
 		System.out.println("servantgetaccountdetailsybusernameandpw " + username + pw);
 		ObjectMapper objectMapper = new ObjectMapper();
 
@@ -113,44 +115,41 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			e.printStackTrace();
 			return "problem";
 		}
-
 	}
 
 	@Override
 	public ArrayList getAccountHoldingsById(int accountId) throws RemoteException {
-		// TODO Auto-generated method stub
+
 		// price and stock is combined, price is avg price.
 
 		return null;
 	}
 
 	@Override
-	public String sendOrder(int accountId, String order) throws RemoteException {
+	public String sendOrder(int accountId, String market, String order) throws RemoteException {
 		System.out.println("sending order");
 		ConnectionFactory factory = new ConnectionFactory();
 		factory.setHost("localhost");
 
 		String QUEUE_NAME = "";
-		String[] splitArray = order.split(",");
-		String market = splitArray[0];
+
 		if (market.equals("US")) {
-			QUEUE_NAME = "US";
+			QUEUE_NAME = "USMarket";
 
 		} else if (market.equals("HK")) {
-			QUEUE_NAME = "HK";
+			QUEUE_NAME = "HKMarket";
 
 		} else {
-			QUEUE_NAME = "SG";
+			QUEUE_NAME = "SGMarket";
 
 		}
 
 		try (com.rabbitmq.client.Connection connection = factory.newConnection();
 				Channel channel = connection.createChannel()) {
 			channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-			String message = "Hello World!";
-			channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
+			channel.basicPublish("", QUEUE_NAME, null, order.getBytes());
 
-			System.out.println(" [x] Sent '" + message + "'");
+			System.out.println(" [x] Sent '" + order + "'");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -161,8 +160,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return null;
 	}
 
-
-
 	public List<String> electionLeader(List<String> listServer, String currServer, int generation) {
 		String selectedserver = null;
 		List<String> serverlist = new ArrayList<String>(listServer);
@@ -170,13 +167,12 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		List<String> ranked = new ArrayList<String>();
 
 		try {
-			
+
 			/*
-			if (!logMap.isEmpty()) { //should be remove due to the server can restart 
-				int index = serverlist.indexOf(currServer);// remove the server that unable to run temp
-				serverlist.remove(index);
-			}
-			*/
+			 * if (!logMap.isEmpty()) { //should be remove due to the server can restart int
+			 * index = serverlist.indexOf(currServer);// remove the server that unable to
+			 * run temp serverlist.remove(index); }
+			 */
 			for (int i = 0; i < serverlist.size(); i++) {
 				// rank them by the faster server speed
 				long startTime = System.nanoTime();
@@ -191,11 +187,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				}
 			}
 			// sorting of map to get the best time result smaller to the bigger
-			Map<String, Long> sortedServerList = rankListServer.entrySet().stream().sorted(Entry.comparingByValue()).collect(
-							Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+			Map<String, Long> sortedServerList = rankListServer.entrySet().stream().sorted(Entry.comparingByValue())
+					.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 
 			System.out.println(Arrays.asList(sortedServerList));
-			for (String key : sortedServerList.keySet()) { // get back first key instead //  follow stackover flow
+			for (String key : sortedServerList.keySet()) { // get back first key instead // follow stackover flow
 				ranked.add(key);
 				System.out.println("printing key to enter " + key);
 			}
@@ -212,9 +208,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		if(leaseAlive == true && !logMap.isEmpty()) { // call the script once the node is ready to be called 
-			accountDetailsDb.setConnString(selectedserver ,"AccountDetailsServer");
+
+		if (leaseAlive == true && !logMap.isEmpty()) { // call the script once the node is ready to be called
+			accountDetailsDb.setConnString(selectedserver, "AccountDetailsServer");
 			System.out.println("running the accountDetailsDb leader");
 		}
 		return ranked; // return the leader
@@ -234,7 +230,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		// restart the server
 		// will know which one leader
 		// maybe can try to use process to execute the command to restart server
-		// need to see if can pass java code execute on the vm command 
+		// need to see if can pass java code execute on the vm command
 	}
 
 	// set a lease to run in backgroup for the leader
@@ -252,14 +248,16 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 						leaseAlive = false;
 						System.out.println("time out unable to lease due to error");
 						String[] serverDetailsLog = getLogResult(logMap);
-						// restartServer() try to restart server 
+						// restartServer() try to restart server
 						// maybe check if the server manage to reset ?
-						// once if reset , add back to ranking? but last one 
+						// once if reset , add back to ranking? but last one
 						// or just leave it to be?
 						// get back into the list server to run
-						List<String> resultElection = electionLeader(listServer,  ipname , Integer.parseInt(serverDetailsLog[1])); //call for election again to get new leader 
-						if(resultElection.isEmpty()) {
-							System.out.println("Fail to find any working server , please restart application or check server status");
+						List<String> resultElection = electionLeader(listServer, ipname,
+								Integer.parseInt(serverDetailsLog[1])); // call for election again to get new leader
+						if (resultElection.isEmpty()) {
+							System.out.println(
+									"Fail to find any working server , please restart application or check server status");
 						}
 					}
 				} catch (SQLException e) {
@@ -273,7 +271,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		};
 		leaseAlive = true;
 		System.out.println("lease have been renew");
-		timer.schedule(task, 0, 300); // to trigger to reschedule the lease will repeat itself till the condition is met
+		timer.schedule(task, 0, 300); // to trigger to reschedule the lease will repeat itself till the condition is
+										// met
 	}
 
 	// act like heartbeat to check if connection exist or not
@@ -297,13 +296,14 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	public String[] getLogResult(HashMap<String, Integer> log) {
 		String logMapResult = log.entrySet().toArray()[log.size() - 1].toString(); // trying to get last value
-		String[] resultgenserver = logMapResult.split("="); // get back the last election leader server & generation number
+		String[] resultgenserver = logMapResult.split("="); // get back the last election leader server & generation
+															// number
 		return resultgenserver;
 	}
 
 	@SuppressWarnings("resource")
 	@Override
-	public String retrievePendingOrders(String market, int stockId) throws RemoteException {
+	public String retrievePendingOrders(int accountId, String market, int stockId) throws RemoteException {
 		StringBuilder sb = new StringBuilder();
 
 		if (market.equals("US")) {
@@ -369,7 +369,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	@SuppressWarnings("resource")
 	@Override
-	public String retrieveCompletedOrders(String market, int stockId) throws RemoteException {
+	public String retrieveCompletedOrders(int accountId, String market, int stockId) throws RemoteException {
 		StringBuilder sb = new StringBuilder();
 
 		if (market.equals("US")) {

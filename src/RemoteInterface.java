@@ -11,15 +11,15 @@ public interface RemoteInterface extends Remote {
 
 	public String getAllStocksByMarket(String market) throws RemoteException;
 
-	public String getAccountDetailsByUsernameAndPW(String username, String pw) throws RemoteException;
+	public String getAccountDetailsByUsernameAndPW(ClientInt cc, String username, String pw) throws RemoteException;
 
 	public ArrayList getAccountHoldingsById(int accountId) throws RemoteException;
 
-	public String sendOrder(int accountId, String order) throws RemoteException;
+	public String sendOrder(int accountId, String market, String order) throws RemoteException;
 
-	public String retrievePendingOrders(String market, int stockId) throws RemoteException;
+	public String retrievePendingOrders(int accountId, String market, int stockId) throws RemoteException;
 
-	public String retrieveCompletedOrders(String market, int stockId) throws RemoteException;
+	public String retrieveCompletedOrders(int accountId, String market, int stockId) throws RemoteException;
 
 	public void startLeaderElectionAlgo() throws RemoteException;
 }
