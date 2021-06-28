@@ -1,11 +1,16 @@
+import java.io.IOException;
 import java.sql.CallableStatement;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.concurrent.TimeoutException;
 
 import com.mysql.jdbc.Connection;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.DeliverCallback;
 
 import classes.MarketComplete;
 import classes.MarketPending;
@@ -24,6 +29,47 @@ public class SGDbScript {
 
 	public static void setConnString(String ipandPort, String dbName) {
 		CONN_STRING = "jdbc:mysql//" + ipandPort + dbName;
+	}
+
+	public void startWaitForMsg() {
+		System.out.println("starting wait for msg function");
+
+		try {
+			ConnectionFactory factory = new ConnectionFactory();
+			factory.setHost("localhost");
+			com.rabbitmq.client.Connection connection;
+			connection = factory.newConnection();
+
+			Channel channel = connection.createChannel();
+
+			channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+			System.out.println(" [*] HKDbScript waiting for msg.");
+
+			DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+				String message = new String(delivery.getBody(), "UTF-8");
+				System.out.println(" [x] Received '" + message + "'");
+				try {
+					receiveOrder(message);
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			};
+			channel.basicConsume(QUEUE_NAME, true, deliverCallback, consumerTag -> {
+			});
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TimeoutException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	private void receiveOrder(String message) throws SQLException {
+		// TODO Auto-generated method stub
+
 	}
 
 	public ArrayList<Stock> getAllStocks() throws SQLException {

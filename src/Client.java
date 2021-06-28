@@ -76,6 +76,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 		try {
 			RemoteInterface remoteObj = (RemoteInterface) Naming.lookup("rmi://localhost:1099/RemoteServer");
+			ClientInt cc = new Client();
 
 			// Interface for login
 			String username = "demo";
@@ -85,7 +86,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			String secondInput = null;
 
 			System.out.println("before call method");
-			String resAccountDetails = remoteObj.getAccountDetailsByUsernameAndPW(username, pw);
+			String resAccountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc, username, pw);
 			System.out.println("after call method");
 			System.out.println("result in client is " + resAccountDetails);
 			// convert json string to object
@@ -164,8 +165,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				// When go into a stock page by itself:
 				// retrieve order list per stock, retrieve price per stock
 
-				String stockOrderList = remoteObj.retrievePendingOrders("SG", 4); // Retrieve By StockId
-				String orderCompleted = remoteObj.retrieveCompletedOrders("SG", 4); // Retrieve By StockId
+				String stockOrderList = remoteObj.retrievePendingOrders(accountId, "SG", 4); // Retrieve By StockId
+				String orderCompleted = remoteObj.retrieveCompletedOrders(accountId, "SG", 4); // Retrieve By StockId
 				if (stockOrderList.equals("empty")) {
 
 				} else if (stockOrderList.equals("error fetching")) {
@@ -194,9 +195,9 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			}
 
 			// Send Order
-			// Please send in format ("US", "StockId", "SellerId", "BuyerId", "Qty",
-			// "Price"), or u can just do true/false on 3rd parameter.
-			remoteObj.sendOrder(1, "US,1,5,0,100,23.3"); // 0 to indicate null, i will change to null on backend.
+			// Please send in format (accountId, "US", "StockId, SellerId, BuyerId, Qty,
+			// Price")
+			remoteObj.sendOrder(1, "US", "5,-1,2,100,23.3"); // -1 to indicate null, i will change to null on backend.
 
 		} catch (Exception e) {
 			System.out.format("Error obtaining remoteServer/remoteInterface from registry");
