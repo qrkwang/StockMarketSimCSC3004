@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -34,12 +33,14 @@ import com.rabbitmq.client.ConnectionFactory;
 import classes.MarketComplete;
 import classes.MarketPending;
 import classes.Stock;
+import classes.StockOwned;
 
 public class RemoteServant extends UnicastRemoteObject implements RemoteInterface {
 	private AccountDetailsDbScript accountDetailsDb;
 	private HKDbScript hkDb;
 	private SGDbScript sgDb;
 	private USADbScript usaDb;
+	private HashMap<Integer, ClientInt> clientHashMap = new HashMap<>(); // accountId and clientInterface
 
 	private HashMap<String, Integer> logMap; // for log (will be server name and generation number)
 	private List<String> listServer;
@@ -104,11 +105,15 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 			JsonNode jsonNodeRoot = objectMapper.readTree(resAccountDetail);
 			JsonNode jsonNodePW = jsonNodeRoot.get("password");
+			JsonNode jsonNodeAccountId = jsonNodeRoot.get("accountId");
 			String password = jsonNodePW.asText();
+			int accountId = Integer.parseInt(jsonNodeAccountId.asText());
+
 			System.out.println(password);
 
 			if (password.equals(pw)) {
 				System.out.println("passwword match");
+				clientHashMap.put(accountId, cc);
 				return resAccountDetail;
 			} else {
 				System.out.println("passwword not match");
@@ -124,7 +129,27 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	@Override
-	public ArrayList getAccountHoldingsById(int accountId) throws RemoteException {
+	public ArrayList<StockOwned> getAccountHoldingsById(int accountId) throws RemoteException {
+		System.out.println(" in remote srevant account id " + accountId);
+		try {
+			ArrayList<StockOwned> stockOwnedHk = hkDb.getOwnedStocks(accountId);
+			ArrayList<StockOwned> stockOwnedSg = sgDb.getOwnedStocks(accountId);
+			ArrayList<StockOwned> stockOwnedUsa = usaDb.getOwnedStocks(accountId);
+
+			stockOwnedHk.addAll(stockOwnedUsa);
+			stockOwnedHk.addAll(stockOwnedSg);
+
+			System.out.println("printing stock owned by account id " + accountId);
+
+			stockOwnedHk.forEach(item -> {
+				System.out.println(item);
+			});
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
 
 		// price and stock is combined, price is avg price.
 
@@ -166,8 +191,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return null;
 	}
 
-
-
 	public String electionLeader(List<String> listServer, String currServer, int generation) {
 		String selectedserver = null;
 		List<String> serverlist = new ArrayList<String>(listServer);
@@ -198,10 +221,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 					.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 
 			System.out.println(Arrays.asList(sortedServerList));
-			
+
 			generation = generation + 1; // increase count every new election with leader
 			if (!rankListServer.isEmpty()) {
-				selectedserver = sortedServerList.keySet().stream().findFirst().get();// get the first key 
+				selectedserver = sortedServerList.keySet().stream().findFirst().get();// get the first key
 				logMap.put(selectedserver, generation); // add the generation and log map
 				setLease(selectedserver, "root", "root"); // once elected leader start the lease time
 				System.out.println("Selected Server as a leader is " + selectedserver + "generation no" + generation);

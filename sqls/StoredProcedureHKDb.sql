@@ -132,7 +132,7 @@ USE `HKStockMarket`$$
 CREATE PROCEDURE `getTotalHoldingsByAccountId`(IN inputBuyerId int)
 BEGIN
 
-SELECT s.CompanyName,s.StockId, sum(m.Quantity), avg(m.Price)
+SELECT s.CompanyName,s.StockId, s.TickerSymbol, sum(m.Quantity), avg(m.Price)
 FROM stock s
 INNER JOIN marketcompleted m 
 ON s.StockId = m.StockId

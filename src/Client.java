@@ -18,6 +18,12 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 	}
 
+	// Unicast from server to client to print whatever.
+	public void printToClient(String s) throws java.rmi.RemoteException {
+
+		System.out.println(s);
+	}
+
 	private static int accountId;
 
 	// Client will need to display account details, send buy/sell order, list of
@@ -85,10 +91,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			String input = null;
 			String secondInput = null;
 
-			System.out.println("before call method");
 			String resAccountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc, username, pw);
-			System.out.println("after call method");
-			System.out.println("result in client is " + resAccountDetails);
 			// convert json string to object
 			if (resAccountDetails.equals("not found")) {
 				System.out.println("your username does not exist. Try again.");
@@ -107,9 +110,11 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				// Unmarshall json string to object.
 				AccountDetails accountDetailsObj = objectMapper.readValue(resAccountDetails, AccountDetails.class);
 
+				//
+				System.out.println("AFTER GET ACCOUNT DETAILS!!" + accountDetailsObj);
 				// Assign accountId value to global variable so can use on other
 				// methods.
-				accountId = accountDetailsObj.getAccountId(); // not done yet
+				accountId = accountDetailsObj.getAccountId();
 				remoteObj.getAccountHoldingsById(accountId);
 
 				String returnedHkStocks = remoteObj.getAllStocksByMarket("HK");
@@ -126,8 +131,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				} else {
 					ArrayList<Stock> arrayListHkStocks = (ArrayList<Stock>) deserializeString(returnedHkStocks,
 							"stock");
-					System.out.println("after deserialize HK");
-					System.out.println(arrayListHkStocks.toString());
+//					System.out.println("after deserialize HK");
+//					System.out.println(arrayListHkStocks.toString());
 
 				}
 
@@ -141,8 +146,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				} else {
 					ArrayList<Stock> arrayListUSStocks = (ArrayList<Stock>) deserializeString(returnedUSStocks,
 							"stock");
-					System.out.println("after deserialize US");
-					System.out.println(arrayListUSStocks.toString());
+//					System.out.println("after deserialize US");
+//					System.out.println(arrayListUSStocks.toString());
 
 				}
 
@@ -156,8 +161,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				} else {
 					ArrayList<Stock> arrayListSGStocks = (ArrayList<Stock>) deserializeString(returnedSGkStocks,
 							"stock");
-					System.out.println("after deserialize SG ");
-					System.out.println(arrayListSGStocks.toString());
+//					System.out.println("after deserialize SG ");
+//					System.out.println(arrayListSGStocks.toString());
 
 				}
 
@@ -175,8 +180,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 					ArrayList<MarketPending> arrayListPendingOrders = (ArrayList<MarketPending>) deserializeString(
 							stockOrderList, "pendingOrders");
 
-					System.out.println("PENDING ORDERS ");
-					System.out.println(arrayListPendingOrders.toString());
+//					System.out.println("PENDING ORDERS ");
+//					System.out.println(arrayListPendingOrders.toString());
 
 				}
 
@@ -188,8 +193,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 					ArrayList<MarketComplete> arrayListCompleteOrders = (ArrayList<MarketComplete>) deserializeString(
 							orderCompleted, "completeOrders");
-					System.out.println("COMPLETED ORDERS");
-					System.out.println(arrayListCompleteOrders.toString());
+//					System.out.println("COMPLETED ORDERS");
+//					System.out.println(arrayListCompleteOrders.toString());
 
 				}
 			}
