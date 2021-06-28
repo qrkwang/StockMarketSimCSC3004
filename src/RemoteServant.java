@@ -53,10 +53,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		sgDb = new SGDbScript(); // Start the RabbitMQ Receiver that's in main method
 		usaDb = new USADbScript(); // Start the RabbitMQ Receiver that's in main method
 		logMap = new HashMap<>(); // for log (will be server name and generation number)
-	    accountServer ="192.168.87.54";
-		 accountServer2 = "192.168.87.55";
+		accountServer = "192.168.87.54";
+		accountServer2 = "192.168.87.55";
 		accountServer3 = "192.168.87.56";
-		listServer = new ArrayList<>(Arrays.asList(accountServer, accountServer2,accountServer3 ));
+		listServer = new ArrayList<>(Arrays.asList(accountServer, accountServer2, accountServer3));
 		leaseAlive = false;
 
 		try {
@@ -75,13 +75,16 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 														// constructor called.
 	}
 
-	public void addToHashMap(ClientInt cc, int accountId) {
+	public void addToClientHashMap(ClientInt cc, int accountId) {
 		clientHashMap.put(accountId, cc);
 	}
 
 	@Override
-	public void removeFromHashMap(int accountId) throws RemoteException {
+	public void removeFromClientHashMap(int accountId) throws RemoteException {
+		if (clientHashMap.containsKey(accountId)) {
+			clientHashMap.remove(accountId);
 
+		}
 	}
 
 	public void startLeaderElectionAlgo() throws RemoteException {
@@ -119,7 +122,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 			if (password.equals(pw)) {
 				System.out.println("passwword match");
-				addToHashMap(cc, accountId);
+				addToClientHashMap(cc, accountId);
 				return resAccountDetail;
 			} else {
 				System.out.println("passwword not match");

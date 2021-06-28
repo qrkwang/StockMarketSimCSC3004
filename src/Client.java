@@ -205,7 +205,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			remoteObj.sendOrder(1, "US", "5,-1,2,100,23.3"); // -1 to indicate null, i will change to null on backend.
 
 			// Exit
-			remoteObj.removeFromHashMap(accountId);
+			remoteObj.removeFromClientHashMap(accountId);
 		} catch (Exception e) {
 			System.out.format("Error obtaining remoteServer/remoteInterface from registry");
 			e.printStackTrace();
