@@ -69,6 +69,7 @@ public class USADbScript {
 	}
 
 	private void receiveOrder(String message) throws SQLException {
+
 		// Split message and see whether buy or sell first
 
 		// After that then retrieve seller / buyer entries.
