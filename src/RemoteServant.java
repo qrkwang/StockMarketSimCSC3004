@@ -30,6 +30,7 @@ import com.rabbitmq.client.ConnectionFactory;
 import classes.MarketComplete;
 import classes.MarketPending;
 import classes.Stock;
+import classes.StockOwned;
 
 public class RemoteServant extends UnicastRemoteObject implements RemoteInterface {
 	private AccountDetailsDbScript accountDetailsDb;
@@ -124,7 +125,25 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	@Override
-	public ArrayList getAccountHoldingsById(int accountId) throws RemoteException {
+	public ArrayList<StockOwned> getAccountHoldingsById(int accountId) throws RemoteException {
+		System.out.println(" in remote srevant account id " + accountId);
+		try {
+			ArrayList<StockOwned> stockOwnedHk = hkDb.getOwnedStocks(accountId);
+			ArrayList<StockOwned> stockOwnedSg = sgDb.getOwnedStocks(accountId);
+			ArrayList<StockOwned> stockOwnedUsa = usaDb.getOwnedStocks(accountId);
+
+			stockOwnedHk.addAll(stockOwnedUsa);
+			stockOwnedHk.addAll(stockOwnedSg);
+
+			stockOwnedHk.forEach(item -> {
+				System.out.println(item);
+			});
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
 
 		// price and stock is combined, price is avg price.
 

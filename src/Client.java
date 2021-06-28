@@ -18,6 +18,12 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 	}
 
+	// Unicast from server to client to print whatever.
+	public void printToClient(String s) throws java.rmi.RemoteException {
+
+		System.out.println(s);
+	}
+
 	private static int accountId;
 
 	// Client will need to display account details, send buy/sell order, list of
@@ -107,9 +113,11 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				// Unmarshall json string to object.
 				AccountDetails accountDetailsObj = objectMapper.readValue(resAccountDetails, AccountDetails.class);
 
+				//
+				System.out.println("AFTER GET ACCOUNT DETAILS!!" + accountDetailsObj);
 				// Assign accountId value to global variable so can use on other
 				// methods.
-				accountId = accountDetailsObj.getAccountId(); // not done yet
+				accountId = accountDetailsObj.getAccountId();
 				remoteObj.getAccountHoldingsById(accountId);
 
 				String returnedHkStocks = remoteObj.getAllStocksByMarket("HK");

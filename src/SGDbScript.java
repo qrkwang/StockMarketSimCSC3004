@@ -15,6 +15,7 @@ import com.rabbitmq.client.DeliverCallback;
 import classes.MarketComplete;
 import classes.MarketPending;
 import classes.Stock;
+import classes.StockOwned;
 
 //Put db connection and queries for Hk market db here.
 //Put rabbitMQ receiver here to receive from their own market topic. Will receive from servant.java
@@ -69,6 +70,44 @@ public class SGDbScript {
 
 	private void receiveOrder(String message) throws SQLException {
 		// TODO Auto-generated method stub
+
+	}
+
+	public ArrayList<StockOwned> getOwnedStocks(int accountId) throws SQLException {
+		ArrayList<StockOwned> arrayListOwned = null;
+		Connection con = null;
+		try {
+			Class.forName(DRIVER_CLASS);
+			con = (Connection) DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+			System.out.println("Connected to DB");
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		String query = "{CALL getTotalHoldingsByAccountId(?)}";
+		CallableStatement stmt = con.prepareCall(query); // prepare to call
+
+		stmt.setInt(1, accountId); // Set the parameter
+		ResultSet rs = stmt.executeQuery();
+
+		System.out.println("before while loop");
+
+		int count = 0;
+		while (rs.next()) {
+			if (count == 0) {
+				arrayListOwned = new ArrayList<StockOwned>(); // initialize arraylist if results to be found
+
+			}
+
+			StockOwned stockOwnedItem = new StockOwned(rs.getInt("StockId"), rs.getString("CompanyName"),
+					rs.getString("TickerSymbol"), rs.getInt(4), rs.getInt(5));
+			System.out.println(stockOwnedItem.toString());
+			arrayListOwned.add(stockOwnedItem);
+			count++;
+
+		}
+		return arrayListOwned;
 
 	}
 
