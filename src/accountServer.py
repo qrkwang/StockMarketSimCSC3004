@@ -1,7 +1,9 @@
 import paramiko
+import sys
 
-host = "192.168.87.55"
-username = "wh1901877"
+host = sys.argv[1] #ip address
+username = sys.argv[2] # username for ip address 
+print(sys.argv[2])
 command = "sudo systemctl restart mysql"
 
 try:
@@ -19,5 +21,5 @@ except:
     print("error")
 
 
-
+#python accountServer.py 192.168.87.56 wh1901877 example for calling
 #https://phpraxis.wordpress.com/2016/09/27/enable-sudo-without-password-in-ubuntudebian/
