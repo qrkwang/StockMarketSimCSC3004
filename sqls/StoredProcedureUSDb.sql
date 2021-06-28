@@ -189,6 +189,42 @@ where StockId = inputStockId;
 END$$
 DELIMITER ;
 
+USE `USStockMarket`;
+DROP PROCEDURE IF EXISTS `getPendingSellOrdersRequiredForNewInsertion`;
 
+DELIMITER $$
+USE `USStockMarket`$$
+
+CREATE PROCEDURE `getPendingSellOrdersRequiredForNewInsertion`(IN inputStockId int, In inputPrice double)
+BEGIN
+
+SELECT * 
+FROM marketpending
+where StockId = inputStockId
+AND SellerId is null 
+AND Price <= inputPrice
+ORDER BY Price;
+
+END$$
+DELIMITER ;
+
+USE `USStockMarket`;
+DROP PROCEDURE IF EXISTS `getPendingBuyOrdersRequiredForNewInsertion`;
+
+DELIMITER $$
+USE `USStockMarket`$$
+
+CREATE PROCEDURE `getPendingBuyOrdersRequiredForNewInsertion`(IN inputStockId int, In inputPrice double)
+BEGIN
+
+SELECT * 
+FROM marketpending
+where StockId = inputStockId
+AND BuyerId is null 
+AND Price >= inputPrice
+ORDER BY Price;
+
+END$$
+DELIMITER ;
 
 

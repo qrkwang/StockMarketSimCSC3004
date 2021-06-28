@@ -190,6 +190,46 @@ where StockId = inputStockId;
 END$$
 DELIMITER ;
 
+USE `HKStockMarket`;
+DROP PROCEDURE IF EXISTS `getPendingSellOrdersRequiredForNewInsertion`;
+
+DELIMITER $$
+USE `HKStockMarket`$$
+
+CREATE PROCEDURE `getPendingSellOrdersRequiredForNewInsertion`(IN inputStockId int, In inputPrice double)
+BEGIN
+
+SELECT * 
+FROM marketpending
+where StockId = inputStockId
+AND SellerId is null 
+AND Price <= inputPrice
+ORDER BY Price;
+
+END$$
+DELIMITER ;
+
+USE `HKStockMarket`;
+DROP PROCEDURE IF EXISTS `getPendingBuyOrdersRequiredForNewInsertion`;
+
+DELIMITER $$
+USE `HKStockMarket`$$
+
+CREATE PROCEDURE `getPendingBuyOrdersRequiredForNewInsertion`(IN inputStockId int, In inputPrice double)
+BEGIN
+
+SELECT * 
+FROM marketpending
+where StockId = inputStockId
+AND BuyerId is null 
+AND Price >= inputPrice
+ORDER BY Price;
+
+END$$
+DELIMITER ;
+
+
+
 
 
 

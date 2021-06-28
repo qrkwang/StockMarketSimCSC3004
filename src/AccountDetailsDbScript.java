@@ -51,20 +51,11 @@ public class AccountDetailsDbScript {
 		while (rs.next()) {
 			System.out.println("there's result");
 
-			AccountDetails accountDetail = new AccountDetails();
+			AccountDetails accountDetail = new AccountDetails(rs.getInt("accountId"), rs.getString("userName"),
+					rs.getString("password"), rs.getString("email"), rs.getFloat("totalAccountValue"),
+					rs.getFloat("totalSecurityValue"), rs.getFloat("availableCash"));
 
-			accountDetail.setAccountId(rs.getInt("accountId"));
-			accountDetail.setUserName(rs.getString("userName"));
-			accountDetail.setPassword(rs.getString("password"));
-			accountDetail.setEmail(rs.getString("email"));
-			accountDetail.setTotalAccountValue(rs.getFloat("totalAccountValue"));
-			accountDetail.setTotalSecurityValue(rs.getFloat("totalSecurityValue"));
-			accountDetail.setAvailableCash(rs.getFloat("availableCash"));
-
-			// Assign values to object
-			System.out.println(rs.getInt("accountId") + " " + rs.getString("userName") + rs.getString("password")
-					+ rs.getString("email") + rs.getFloat("totalAccountValue") + rs.getFloat("totalSecurityValue")
-					+ rs.getFloat("availableCash"));
+			System.out.println(accountDetail);
 
 			// Convert object to string to return as string:
 			ObjectMapper objectMapper = new ObjectMapper();

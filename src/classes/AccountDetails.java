@@ -9,6 +9,22 @@ public class AccountDetails {
 	private float totalSecurityValue;
 	private float availableCash;
 
+	public AccountDetails(int accountId, String userName, String password, String email, float totalAccountValue,
+			float totalSecurityValue, float availableCash) {
+		super();
+		this.accountId = accountId;
+		this.userName = userName;
+		this.password = password;
+		this.email = email;
+		this.totalAccountValue = totalAccountValue;
+		this.totalSecurityValue = totalSecurityValue;
+		this.availableCash = availableCash;
+	}
+
+	public AccountDetails() {
+		super();
+	}
+
 	public int getAccountId() {
 		return accountId;
 	}
@@ -63,6 +79,13 @@ public class AccountDetails {
 
 	public void setAvailableCash(float availableCash) {
 		this.availableCash = availableCash;
+	}
+
+	@Override
+	public String toString() {
+		return "AccountId: " + accountId + "\nuserName: " + userName + "\nPassword : " + password + "\nEmail: " + email
+				+ "\ntotalAccountValue: " + totalAccountValue + "\ntotalSecurityValue" + totalSecurityValue
+				+ "\navailableCash: " + availableCash;
 	}
 
 }
