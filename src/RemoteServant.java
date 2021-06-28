@@ -1,4 +1,8 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
@@ -76,17 +80,16 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	public void startLeaderElectionAlgo() throws RemoteException {
-		restartServer();
-		/*
-		 * String serverNo = null; int generation = 0; // increase everytime it election
-		 * a new leader if(leaseAlive == false && serverNo == null) { // running for
-		 * first time serverNo = electionLeader(listServer, null , generation);
-		 * if(serverNo.isEmpty() || serverNo == null) { System.out.
-		 * println("Fail to find any working server , please restart application or check server status"
-		 * ); }else { System.out.println("Set up server for first time  " + serverNo); }
-		 * 
-		 * }
-		 */
+		String serverNo = null;
+		int generation = 0; // increase everytime it election a new leader 
+		if(leaseAlive == false && serverNo == null) {	// running for first time 
+		    serverNo = electionLeader(listServer, null , generation); 
+		    if(serverNo.isEmpty() || serverNo == null) {
+				System.out.println("Fail to find any working server , please restart application or check server status");
+		    }else {
+		    	System.out.println("Set up server for first time  " + serverNo);
+		    }	
+		}
 	}
 
 	@Override
@@ -239,32 +242,31 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return selectedserver; // return the leader
 	}
 
-	public boolean restartServer() {
+	public void restartServer(String ipAddr ,String username , String fileName) {
 		try {
+			String path = new File(fileName).getAbsolutePath();
+			String newPath = new File(path).getParent();
+			String[] cmd = {"python", newPath + "\\src\\" + fileName, ipAddr , username };
+			Process process = Runtime.getRuntime().exec(cmd);
+
 			String result;
 			String error;
-			Process process = Runtime.getRuntime().exec("cmd /c python accountServer.py");
-			System.out.println("running program");
+			
 			BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-			BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-			while ((result = stdout.readLine()) != null) {
-				System.out.println(result);
-			}
-			System.out.println("error running here");
-			while ((error = stdError.readLine()) != null) {
-				System.out.println(error);
-			}
+			
+			  BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+			  while ((result = stdout.readLine()) != null) {
+	                System.out.println(result);	                
+	            }
+			  
+			  while ((error = stdError.readLine()) != null) {
+	                System.out.println(error);
+	            }
+		
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		return true;
-		// restart the server
-		// will know which one leader
-		// maybe can try to use process to execute the command to restart server
-		// need to see if can pass java code execute on the vm command
 	}
 
 	// set a lease to run in backgroup for the leader
@@ -282,16 +284,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 						leaseAlive = false;
 						System.out.println("time out unable to lease due to error");
 						String[] serverDetailsLog = getLogResult(logMap);
-						// restartServer() try to restart server
-						// maybe check if the server manage to reset ?
-						// once if reset , add back to ranking? but last one
-						// or just leave it to be?
-						// get back into the list server to run
-						String resultElection = electionLeader(listServer, ipname,
-								Integer.parseInt(serverDetailsLog[1])); // call for election again to get new leader
-						if (resultElection.isEmpty() || resultElection != null) {
-							System.out.println(
-									"Fail to find any working server , please restart application or check server status");
+						restartServer(serverDetailsLog[0] , "wh1901877" ,  "accountServer.py"); // try to restart server 
+						String resultElection = electionLeader(listServer,  ipname , Integer.parseInt(serverDetailsLog[1])); //call for election again to get new leader 
+						if(resultElection.isEmpty() || resultElection != null) {
+							System.out.println("Fail to find any working server , please restart application or check server status");
 						}
 					}
 				} catch (SQLException e) {
