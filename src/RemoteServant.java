@@ -36,6 +36,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private HKDbScript hkDb;
 	private SGDbScript sgDb;
 	private USADbScript usaDb;
+	private HashMap<Integer, ClientInt> clientHashMap = new HashMap<>(); // accountId and clientInterface
 
 	private HashMap<String, Integer> logMap; // for log (will be server name and generation number)
 	private List<String> listServer;
@@ -101,11 +102,15 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 			JsonNode jsonNodeRoot = objectMapper.readTree(resAccountDetail);
 			JsonNode jsonNodePW = jsonNodeRoot.get("password");
+			JsonNode jsonNodeAccountId = jsonNodeRoot.get("accountId");
 			String password = jsonNodePW.asText();
+			int accountId = Integer.parseInt(jsonNodeAccountId.asText());
+
 			System.out.println(password);
 
 			if (password.equals(pw)) {
 				System.out.println("passwword match");
+				clientHashMap.put(accountId, cc);
 				return resAccountDetail;
 			} else {
 				System.out.println("passwword not match");
