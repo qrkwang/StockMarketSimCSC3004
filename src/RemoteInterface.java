@@ -7,8 +7,6 @@ public interface RemoteInterface extends Remote {
 	// account stock holdings, polling of stock price per interval (not necessarily
 	// need polling, can be on update) when on that page, stock page orders.
 
-	public String testMethod(String s) throws RemoteException;
-
 	public String getAllStocksByMarket(String market) throws RemoteException;
 
 	public String getAccountDetailsByUsernameAndPW(ClientInt cc, String username, String pw) throws RemoteException;
@@ -22,4 +20,7 @@ public interface RemoteInterface extends Remote {
 	public String retrieveCompletedOrders(int accountId, String market, int stockId) throws RemoteException;
 
 	public void startLeaderElectionAlgo() throws RemoteException;
+
+	public void removeFromHashMap(int accountId) throws RemoteException;
+
 }

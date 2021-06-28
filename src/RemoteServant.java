@@ -1,8 +1,5 @@
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
@@ -73,22 +70,26 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 														// constructor called.
 	}
 
+	public void addToHashMap(ClientInt cc, int accountId) {
+		clientHashMap.put(accountId, cc);
+	}
+
 	@Override
-	public String testMethod(String s) throws RemoteException {
-		System.out.println(s);
-		return "printed";
+	public void removeFromHashMap(int accountId) throws RemoteException {
+
 	}
 
 	public void startLeaderElectionAlgo() throws RemoteException {
 		String serverNo = null;
-		int generation = 0; // increase everytime it election a new leader 
-		if(leaseAlive == false && serverNo == null) {	// running for first time 
-		    serverNo = electionLeader(listServer, null , generation); 
-		    if(serverNo == null) {
-				System.out.println("Fail to find any working server , please restart application or check server status");
-		    }else {
-		    	System.out.println("Set up server " + serverNo);
-		    }	
+		int generation = 0; // increase everytime it election a new leader
+		if (leaseAlive == false && serverNo == null) { // running for first time
+			serverNo = electionLeader(listServer, null, generation);
+			if (serverNo == null) {
+				System.out
+						.println("Fail to find any working server , please restart application or check server status");
+			} else {
+				System.out.println("Set up server " + serverNo);
+			}
 		}
 	}
 
@@ -113,7 +114,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 			if (password.equals(pw)) {
 				System.out.println("passwword match");
-				clientHashMap.put(accountId, cc);
+				addToHashMap(cc, accountId);
 				return resAccountDetail;
 			} else {
 				System.out.println("passwword not match");
@@ -210,8 +211,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				long endTime = System.nanoTime();
 				long total = endTime - startTime;
 				System.out.println("total time for " + total + " server running = " + serverlist.get(i));
-				System.out.println(
-						"server result connection " + connectionResult);
+				System.out.println("server result connection " + connectionResult);
 				if (connectionResult == true) {
 					rankListServer.put(serverlist.get(i), total); // adding result that pass the connection
 				}
@@ -227,7 +227,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				selectedserver = sortedServerList.keySet().stream().findFirst().get();// get the first key
 				logMap.put(selectedserver, generation); // add the generation and log map
 				setLease(selectedserver, "root", "root"); // once elected leader start the lease time
-				System.out.println("Selected Server as a leader is " + selectedserver + " current generation no " + generation);
+				System.out.println(
+						"Selected Server as a leader is " + selectedserver + " current generation no " + generation);
 			}
 
 		} catch (Exception e) {
@@ -242,27 +243,27 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return selectedserver; // return the leader
 	}
 
-	public void restartServer(String ipAddr ,String username , String fileName) {
+	public void restartServer(String ipAddr, String username, String fileName) {
 		try {
 			String path = new File(fileName).getAbsolutePath();
 			String newPath = new File(path).getParent();
-			String[] cmd = {"python", newPath + "\\src\\" + fileName, ipAddr , username };
+			String[] cmd = { "python", newPath + "\\src\\" + fileName, ipAddr, username };
 			Process process = Runtime.getRuntime().exec(cmd);
 
 			String result;
 			String error;
-			
+
 			BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			
-			  BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-			  while ((result = stdout.readLine()) != null) {
-	                System.out.println(result);	                
-	            }
-			  
-			  while ((error = stdError.readLine()) != null) {
-	                System.out.println(error);
-	            }
-		
+
+			BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+			while ((result = stdout.readLine()) != null) {
+				System.out.println(result);
+			}
+
+			while ((error = stdError.readLine()) != null) {
+				System.out.println(error);
+			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -284,10 +285,12 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 						leaseAlive = false;
 						System.out.println("time out unable to lease due to error");
 						String[] serverDetailsLog = getLogResult(logMap);
-						restartServer(serverDetailsLog[0] , "wh1901877" ,  "accountServer.py"); // try to restart server 
-						String resultElection = electionLeader(listServer,  ipname , Integer.parseInt(serverDetailsLog[1])); //call for election again to get new leader 
-						if(resultElection.isEmpty() || resultElection == null) {
-							System.out.println("Fail to find any working server , please restart application or check server status");
+						restartServer(serverDetailsLog[0], "wh1901877", "accountServer.py"); // try to restart server
+						String resultElection = electionLeader(listServer, ipname,
+								Integer.parseInt(serverDetailsLog[1])); // call for election again to get new leader
+						if (resultElection.isEmpty() || resultElection == null) {
+							System.out.println(
+									"Fail to find any working server , please restart application or check server status");
 						}
 					}
 				} catch (SQLException e) {
@@ -528,4 +531,5 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		}
 	}
+
 }
