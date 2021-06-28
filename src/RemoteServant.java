@@ -1,6 +1,5 @@
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -78,18 +77,15 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	public void startLeaderElectionAlgo() throws RemoteException {
 		restartServer();
 		/*
-		String serverNo = null;
-		int generation = 0; // increase everytime it election a new leader 
-		if(leaseAlive == false && serverNo == null) {	// running for first time 
-		    serverNo = electionLeader(listServer, null , generation); 
-		    if(serverNo.isEmpty() || serverNo == null) {
-				System.out.println("Fail to find any working server , please restart application or check server status");
-		    }else {
-		    	System.out.println("Set up server for first time  " + serverNo);
-		    }
-			
-		}
-*/
+		 * String serverNo = null; int generation = 0; // increase everytime it election
+		 * a new leader if(leaseAlive == false && serverNo == null) { // running for
+		 * first time serverNo = electionLeader(listServer, null , generation);
+		 * if(serverNo.isEmpty() || serverNo == null) { System.out.
+		 * println("Fail to find any working server , please restart application or check server status"
+		 * ); }else { System.out.println("Set up server for first time  " + serverNo); }
+		 * 
+		 * }
+		 */
 	}
 
 	@Override
@@ -134,6 +130,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 			stockOwnedHk.addAll(stockOwnedUsa);
 			stockOwnedHk.addAll(stockOwnedSg);
+
+			System.out.println("printing stock owned by account id " + accountId);
 
 			stockOwnedHk.forEach(item -> {
 				System.out.println(item);
@@ -185,8 +183,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return null;
 	}
 
-
-
 	public String electionLeader(List<String> listServer, String currServer, int generation) {
 		String selectedserver = null;
 		List<String> serverlist = new ArrayList<String>(listServer);
@@ -217,10 +213,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 					.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 
 			System.out.println(Arrays.asList(sortedServerList));
-			
+
 			generation = generation + 1; // increase count every new election with leader
 			if (!rankListServer.isEmpty()) {
-				selectedserver = sortedServerList.keySet().stream().findFirst().get();// get the first key 
+				selectedserver = sortedServerList.keySet().stream().findFirst().get();// get the first key
 				logMap.put(selectedserver, generation); // add the generation and log map
 				setLease(selectedserver, "root", "root"); // once elected leader start the lease time
 				System.out.println("Selected Server as a leader is " + selectedserver + "generation no" + generation);
@@ -245,15 +241,15 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			Process process = Runtime.getRuntime().exec("cmd /c python accountServer.py");
 			System.out.println("running program");
 			BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			
-			  BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-			  while ((result = stdout.readLine()) != null) {
-	                System.out.println(result);
-	            }
-	            System.out.println("error running here");
-			  while ((error = stdError.readLine()) != null) {
-	                System.out.println(error);
-	            }
+
+			BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+			while ((result = stdout.readLine()) != null) {
+				System.out.println(result);
+			}
+			System.out.println("error running here");
+			while ((error = stdError.readLine()) != null) {
+				System.out.println(error);
+			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -286,9 +282,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 						// once if reset , add back to ranking? but last one
 						// or just leave it to be?
 						// get back into the list server to run
-						String resultElection = electionLeader(listServer,  ipname , Integer.parseInt(serverDetailsLog[1])); //call for election again to get new leader 
-						if(resultElection.isEmpty() || resultElection != null) {
-							System.out.println("Fail to find any working server , please restart application or check server status");
+						String resultElection = electionLeader(listServer, ipname,
+								Integer.parseInt(serverDetailsLog[1])); // call for election again to get new leader
+						if (resultElection.isEmpty() || resultElection != null) {
+							System.out.println(
+									"Fail to find any working server , please restart application or check server status");
 						}
 					}
 				} catch (SQLException e) {
