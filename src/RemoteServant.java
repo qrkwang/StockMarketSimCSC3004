@@ -31,6 +31,8 @@ import classes.MarketComplete;
 import classes.MarketPending;
 import classes.Stock;
 import classes.StockOwned;
+import redis.clients.jedis.Jedis;
+
 
 public class RemoteServant extends UnicastRemoteObject implements RemoteInterface {
 	private AccountDetailsDbScript accountDetailsDb;
@@ -46,6 +48,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private String accountServer3;
 	private String accountUser;
 	private boolean leaseAlive;
+	
+	private Jedis jedis;
 
 	public RemoteServant() throws RemoteException {
 		super();
@@ -60,7 +64,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		accountUser = "wh1901877";
 		listServer = new ArrayList<>(Arrays.asList(accountServer, accountServer2, accountServer3));
 		leaseAlive = false;
-
+		jedis = new Jedis();
 		try {
 			accountDetailsDb.startWaitForMsg();
 			hkDb.startWaitForMsg();
@@ -541,5 +545,19 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		}
 	}
-
+	
+	public void caching(String market, int stockid, String value) {
+		String key = market+stockid;
+		jedis.set(key, value);
+		
+	}
+	
+	public String retrieveCache(String market, int stockid) throws RemoteException {
+		String key = market+stockid;
+		if(jedis.exists(key))
+			return jedis.get(key);
+		else
+			//Retrieve from database and cache if not found
+			return "";
+	}
 }
