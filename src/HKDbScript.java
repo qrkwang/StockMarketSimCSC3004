@@ -79,7 +79,8 @@ public class HKDbScript {
 
 	}
 
-	public ArrayList<MarketPending> retrieveOrdersToMatch(boolean isBuy, float orderPrice) throws SQLException {
+	public ArrayList<MarketPending> retrieveOrdersToMatch(boolean isBuy, int stockId, float orderPrice)
+			throws SQLException {
 		Connection con = null;
 		ArrayList<MarketPending> retrievedOrders = null;
 		try {
@@ -91,30 +92,59 @@ public class HKDbScript {
 			e.printStackTrace();
 		}
 
-		String query = "{CALL getTotalHoldingsByAccountId(?)}";
-		CallableStatement stmt = con.prepareCall(query); // prepare to call
+		if (isBuy) {
+			String query = "{CALL getPendingSellOrdersRequiredForNewInsertion(?, ?);}";
+			// stock id and input price
+			CallableStatement stmt = con.prepareCall(query); // prepare to call
 
-//		stmt.setInt(1, accountId); // Set the parameter
-		ResultSet rs = stmt.executeQuery();
+//			stmt.setInt(1, accountId); // Set the parameter
+			ResultSet rs = stmt.executeQuery();
 
-		System.out.println("before while loop");
+			System.out.println("before while loop");
 
-		int count = 0;
-		while (rs.next()) {
-			if (count == 0) {
-				retrievedOrders = new ArrayList<MarketPending>(); // initialize arraylist if results to be found
+			int count = 0;
+			while (rs.next()) {
+				if (count == 0) {
+					retrievedOrders = new ArrayList<MarketPending>(); // initialize arraylist if results to be found
+
+				}
+				// see if can split into 2 and then return the corresponding arraylist for it.
+
+				java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("CreatedDate");
+				LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
+				MarketPending marketOrder = new MarketPending(rs.getInt("MarketPendingId"), rs.getInt("StockId"),
+						rs.getInt("SellerId"), rs.getInt("BuyerId"), rs.getInt("Quantity"), rs.getFloat("Price"),
+						localDateTime);
+				retrievedOrders.add(marketOrder);
+				count++;
 
 			}
-			// see if can split into 2 and then return the corresponding arraylist for it.
+		} else {
+			String query = "{CALL getPendingBuyOrdersRequiredForNewInsertion(?, ?);}";
+			CallableStatement stmt = con.prepareCall(query); // prepare to call
 
-			java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("CreatedDate");
-			LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
-			MarketPending marketOrder = new MarketPending(rs.getInt("MarketPendingId"), rs.getInt("StockId"),
-					rs.getInt("SellerId"), rs.getInt("BuyerId"), rs.getInt("Quantity"), rs.getFloat("Price"),
-					localDateTime);
-			retrievedOrders.add(marketOrder);
-			count++;
+//			stmt.setInt(1, accountId); // Set the parameter
+			ResultSet rs = stmt.executeQuery();
 
+			System.out.println("before while loop");
+
+			int count = 0;
+			while (rs.next()) {
+				if (count == 0) {
+					retrievedOrders = new ArrayList<MarketPending>(); // initialize arraylist if results to be found
+
+				}
+				// see if can split into 2 and then return the corresponding arraylist for it.
+
+				java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("CreatedDate");
+				LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
+				MarketPending marketOrder = new MarketPending(rs.getInt("MarketPendingId"), rs.getInt("StockId"),
+						rs.getInt("SellerId"), rs.getInt("BuyerId"), rs.getInt("Quantity"), rs.getFloat("Price"),
+						localDateTime);
+				retrievedOrders.add(marketOrder);
+				count++;
+
+			}
 		}
 
 		return null;
@@ -131,12 +161,12 @@ public class HKDbScript {
 
 		if (sellerId == -1 && buyerId != -1) {
 			// its a buy order
-			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(true, price);
+			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(true, stockId, price);
 			// after that match entries
 
 		} else {
 			// its a sell order
-			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(false, price);
+			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(false, stockId, price);
 			// after that match entries
 
 		}
