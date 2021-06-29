@@ -12,18 +12,34 @@ do
     esac
 done
 
+
 myCount=$(mysql -s -N $databaseName -u$dbUser -p$dbPassword -e"SELECT Count(*) FROM stock")
 
 count=$(($myCount/2))
-mysqldump --user=$dbUser --password=$dbPassword --databases $databaseName --no-create-db --routines -w "StockId <$count" >$fileNamePart1
+if mysqldump --user=$dbUser --password=$dbPassword --databases $databaseName --no-create-db --routines -w "StockId <$count" >$fileNamePart1; then
 
-echo "Successfully backing up the first part";
+	echo SUCCESS
+else
+	echo "Fail: could not back up the first part"
+fi
 
-scp $fileNamePart1 $destinationServerPart1
-echo "Successfully transferring the first part";
+if scp $fileNamePart1 $destinationServerPart1; then
 
-mysqldump --user=$dbUser --password=$dbPassword --databases $databaseName --no-create-db -t -w "StockId >=$count" >$fileNamePart2 
-echo "Successfully backing up the second part";
+	echo SUCCESS
+else
+	echo "Fail: could not transfer the first part"
+fi
 
-scp $fileNamePart2 $destinationServerPart2
-echo "Successfully transferring the second part";
+if mysqldump --user=$dbUser --password=$dbPassword --databases $databaseName --no-create-db -t -w "StockId >=$count" >$fileNamePart2; then
+
+	echo SUCCESS
+else
+	echo "Fail: could not back up the second part"
+fi
+
+if scp $fileNamePart2 $destinationServerPart2; then
+
+	echo SUCCESS
+else
+	echo "Fail: could not transfer the second part"
+fi

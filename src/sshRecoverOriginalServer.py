@@ -5,7 +5,7 @@ import sys
 # drop the temporary database and recover the original db
 
 # Database that was failed previously, going to recover now
-recoveringServer = sys.argv[0]
+recoveringServer = sys.argv[1]
 
 # initialize the SSH client
 client = paramiko.SSHClient()
@@ -17,7 +17,7 @@ dbUser = "root"
 dbPassword = "root"
 
 # Server that temporary running the hk database
-hkTempServer = "joy@192.168.1.16"
+hkTempServer = "192.168.1.16"
 hkDatabaseName = "HKStockMarket"
 hkFileName = "HKBackup.sql"
 # File location to send back to the HK server
@@ -26,7 +26,7 @@ hkDestinationServer = "joy@192.168.1.18:/home/joy/HKBackup.sql"
 hkDestinationIP = "joy@192.168.1.18"
 
 # Server that temporary running the sg database
-sgTempServer = "joy@192.168.1.18"
+sgTempServer = "192.168.1.18"
 sgDatabaseName = "SGStockMarket"
 sgFileName = "SGBackup.sql"
 # File location to send back to the SG server
@@ -35,7 +35,7 @@ sgDestinationServer = "joy@192.168.1.17:/home/joy/SGBackup.sql"
 sgDestinationIP = "joy@192.168.1.17"
 
 # Server that temporary running the US database
-usTempServer = "joy@192.168.1.17"
+usTempServer = "192.168.1.17"
 usDatabaseName = "USStockMarket"
 usFileName = "USBackup.sql"
 # File location to send back to the US server
@@ -85,7 +85,7 @@ try:
         client.connect(hostname=usTempServer, username=username)
         print("SG Server Connected successfully")
         # Command to execute bash script
-        execCommand = "bash RecoverSG.sh -a '" + usDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + usFileName + "' -e '" + usDestinationServer + "' -f '" + usDestinationIP + "'"
+        execCommand = "bash RecoverUS.sh -a '" + usDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + usFileName + "' -e '" + usDestinationServer + "' -f '" + usDestinationIP + "'"
         # execute the BASH script
         stdin, stdout, stderr = client.exec_command(execCommand)
         # read the standard output and print it

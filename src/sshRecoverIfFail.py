@@ -13,7 +13,7 @@ client = paramiko.SSHClient()
 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
 # Server that fail
-failedServer = sys.argv[0]
+failedServer = sys.argv[1]
 username = "joy"
 # Database password
 dbUser = "root"
