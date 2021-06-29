@@ -555,6 +555,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		if(jedis.exists(key))
 			return jedis.get(key);
 		else
+			//Retrieve from database and cache if not found
 			return "";
 	}
 }
