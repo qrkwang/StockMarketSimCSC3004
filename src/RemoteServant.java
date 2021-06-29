@@ -550,7 +550,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		
 	}
 	
-	public String retrieveCache(String market, int stockid) {
+	public String retrieveCache(String market, int stockid) throws RemoteException {
 		String key = market+stockid;
 		if(jedis.exists(key))
 			return jedis.get(key);
