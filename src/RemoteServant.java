@@ -44,6 +44,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private String accountServer;
 	private String accountServer2;
 	private String accountServer3;
+	private String accountUser;
 	private boolean leaseAlive;
 
 	public RemoteServant() throws RemoteException {
@@ -56,6 +57,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		accountServer = "192.168.87.54";
 		accountServer2 = "192.168.87.55";
 		accountServer3 = "192.168.87.56";
+		accountUser = "wh1901877";
 		listServer = new ArrayList<>(Arrays.asList(accountServer, accountServer2, accountServer3));
 		leaseAlive = false;
 
@@ -293,7 +295,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 						leaseAlive = false;
 						System.out.println("time out unable to lease due to error");
 						String[] serverDetailsLog = getLogResult(logMap);
-						restartServer(serverDetailsLog[0], "wh1901877", "accountServer.py"); // try to restart server
+						restartServer(serverDetailsLog[0], accountUser, "accountServer.py"); // try to restart server
 						String resultElection = electionLeader(listServer, ipname,
 								Integer.parseInt(serverDetailsLog[1])); // call for election again to get new leader
 						if (resultElection.isEmpty() || resultElection == null) {
