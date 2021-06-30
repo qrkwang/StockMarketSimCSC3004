@@ -368,7 +368,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	@SuppressWarnings("resource")
 	@Override
-	public String retrievePendingOrders(int accountId, String market, int stockId) throws RemoteException {
+	public String retrievePendingOrders(String market, int stockId) throws RemoteException {
 		StringBuilder sb = new StringBuilder();
 
 		if (market.equals("US")) {
@@ -434,7 +434,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	@SuppressWarnings("resource")
 	@Override
-	public String retrieveCompletedOrders(int accountId, String market, int stockId) throws RemoteException {
+	public String retrieveCompletedOrders(String market, int stockId) throws RemoteException {
 		StringBuilder sb = new StringBuilder();
 
 		if (market.equals("US")) {

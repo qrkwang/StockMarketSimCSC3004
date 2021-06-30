@@ -15,14 +15,14 @@ public interface RemoteInterface extends Remote {
 
 	public String sendOrder(int accountId, String market, String order) throws RemoteException;
 
-	public String retrievePendingOrders(int accountId, String market, int stockId) throws RemoteException;
+	public String retrievePendingOrders(String market, int stockId) throws RemoteException;
 
-	public String retrieveCompletedOrders(int accountId, String market, int stockId) throws RemoteException;
+	public String retrieveCompletedOrders(String market, int stockId) throws RemoteException;
 
 	public void startLeaderElectionAlgo() throws RemoteException;
 
 	public void removeFromClientHashMap(int accountId) throws RemoteException;
-	
+
 	public String retrieveCache(String market, int stockid) throws RemoteException;
 
 }
