@@ -21,6 +21,8 @@ import classes.StockOwned;
 //Put rabbitMQ receiver here to receive from their own market topic. Will receive from servant.java
 
 public class SGDbScript {
+	private boolean isOnline = true; // will be true unless algo detected offline in RemoteServant.java
+	private ClientInt currentClientInt;
 	private final static String QUEUE_NAME = "SGMarket";
 	public static final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
 	private static final String USERNAME = "root";
@@ -30,6 +32,22 @@ public class SGDbScript {
 
 	public static void setConnString(String ipandPort, String dbName) {
 		CONN_STRING = "jdbc:mysql//" + ipandPort + dbName;
+	}
+
+	public boolean isOnline() {
+		return isOnline;
+	}
+
+	public void setOnline(boolean isOnline) {
+		this.isOnline = isOnline;
+	}
+
+	public ClientInt getCurrentClientInt() {
+		return currentClientInt;
+	}
+
+	public void setCurrentClientInt(ClientInt currentClientInt) {
+		this.currentClientInt = currentClientInt;
 	}
 
 	public void startWaitForMsg() {
@@ -44,7 +62,7 @@ public class SGDbScript {
 			Channel channel = connection.createChannel();
 
 			channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-			System.out.println(" [*] HKDbScript waiting for msg.");
+			System.out.println(" [*] SGDDbScript waiting for msg.");
 
 			DeliverCallback deliverCallback = (consumerTag, delivery) -> {
 				String message = new String(delivery.getBody(), "UTF-8");

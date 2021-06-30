@@ -197,15 +197,17 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 //					System.out.println(arrayListCompleteOrders.toString());
 
 				}
+
+				// Send Order
+				// Please send in format (accountId, "US", "StockId, SellerId, BuyerId, Qty,
+				// Price")
+				remoteObj.sendOrder(2, "HK", "5,-1,2,100,23.3"); // -1 to indicate null, i will change to null on
+																	// backend.
+
+				// Exit
+				remoteObj.removeFromClientHashMap(accountId);
 			}
 
-			// Send Order
-			// Please send in format (accountId, "US", "StockId, SellerId, BuyerId, Qty,
-			// Price")
-			remoteObj.sendOrder(1, "US", "5,-1,2,100,23.3"); // -1 to indicate null, i will change to null on backend.
-
-			// Exit
-			remoteObj.removeFromClientHashMap(accountId);
 		} catch (Exception e) {
 			System.out.format("Error obtaining remoteServer/remoteInterface from registry");
 			e.printStackTrace();

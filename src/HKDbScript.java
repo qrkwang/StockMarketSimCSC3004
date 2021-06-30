@@ -1,4 +1,3 @@
-import java.io.IOException;
 import java.sql.CallableStatement;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -6,7 +5,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.concurrent.TimeoutException;
 
 import com.mysql.jdbc.Connection;
 import com.rabbitmq.client.Channel;
@@ -22,16 +20,8 @@ import classes.StockOwned;
 //Put rabbitMQ receiver here to receive from their own market topic. Will receive from servant.java
 
 public class HKDbScript {
-	private boolean isOnline = true; // will be true unless leasing algo detected offline in RemoteServant.java
-
-	public boolean isOnline() {
-		return isOnline;
-	}
-
-	public void setOnline(boolean isOnline) {
-		this.isOnline = isOnline;
-	}
-
+	private boolean isOnline = true; // will be true unless algo detected offline in RemoteServant.java
+	private ClientInt currentClientInt;
 	private final static String QUEUE_NAME = "HKMarket";
 	public static final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
 	private static final String USERNAME = "root";
@@ -41,6 +31,22 @@ public class HKDbScript {
 
 	public static void setConnString(String ipandPort, String dbName) {
 		CONN_STRING = "jdbc:mysql//" + ipandPort + dbName;
+	}
+
+	public boolean isOnline() {
+		return isOnline;
+	}
+
+	public void setOnline(boolean isOnline) {
+		this.isOnline = isOnline;
+	}
+
+	public ClientInt getCurrentClientInt() {
+		return currentClientInt;
+	}
+
+	public void setCurrentClientInt(ClientInt currentClientInt) {
+		this.currentClientInt = currentClientInt;
 	}
 
 	public void startWaitForMsg() {
@@ -62,18 +68,18 @@ public class HKDbScript {
 				System.out.println(" [x] Received '" + message + "'");
 				try {
 					receiveOrder(message);
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
+				} catch (Exception e) {
+
+					// Call back to client
+					this.getCurrentClientInt().printToClient("Transaction failed while processing order.");
+					System.out.println("start wait for msg exception");
 					e.printStackTrace();
 				}
 			};
 			channel.basicConsume(QUEUE_NAME, true, deliverCallback, consumerTag -> {
 			});
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TimeoutException e) {
-			// TODO Auto-generated catch block
+		} catch (Exception e) {
+			System.out.println("server cannot connect");
 			e.printStackTrace();
 		}
 
@@ -93,11 +99,13 @@ public class HKDbScript {
 		}
 
 		if (isBuy) {
-			String query = "{CALL getPendingSellOrdersRequiredForNewInsertion(?, ?);}";
+			String query = "{CALL getPendingSellOrdersRequiredForNewInsertion(?, ?)}";
 			// stock id and input price
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 
-//			stmt.setInt(1, accountId); // Set the parameter
+			stmt.setInt(1, stockId); // Set the parameter
+			stmt.setFloat(2, orderPrice); // Set the parameter
+
 			ResultSet rs = stmt.executeQuery();
 
 			System.out.println("before while loop");
@@ -120,10 +128,12 @@ public class HKDbScript {
 
 			}
 		} else {
-			String query = "{CALL getPendingBuyOrdersRequiredForNewInsertion(?, ?);}";
+			String query = "{CALL getPendingBuyOrdersRequiredForNewInsertion(?, ?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 
-//			stmt.setInt(1, accountId); // Set the parameter
+			stmt.setInt(1, stockId); // Set the parameter
+			stmt.setFloat(2, orderPrice); // Set the parameter
+
 			ResultSet rs = stmt.executeQuery();
 
 			System.out.println("before while loop");
@@ -134,7 +144,6 @@ public class HKDbScript {
 					retrievedOrders = new ArrayList<MarketPending>(); // initialize arraylist if results to be found
 
 				}
-				// see if can split into 2 and then return the corresponding arraylist for it.
 
 				java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("CreatedDate");
 				LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
@@ -147,7 +156,7 @@ public class HKDbScript {
 			}
 		}
 
-		return null;
+		return retrievedOrders;
 
 	}
 
@@ -160,14 +169,33 @@ public class HKDbScript {
 		float price = Float.parseFloat(splitArray[4]);
 
 		if (sellerId == -1 && buyerId != -1) {
+
 			// its a buy order
 			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(true, stockId, price);
-			// after that match entries
+			if (fetchedOrders == null) {
+				// No orders to match with, he want to buy but there's no one selling under his
+				// buy price or equals to
+
+				// If return no entry, create a marketpending order and insert.
+
+			}
+			fetchedOrders.forEach(item -> {
+				System.out.println(item);
+			});
 
 		} else {
 			// its a sell order
 			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(false, stockId, price);
-			// after that match entries
+			if (fetchedOrders == null) {
+				// No orders to match with, he want to sell but there's no one buying above his
+				// sell price or equals to.
+
+				// If return no entry, create a marketpending order and insert.
+
+			}
+			fetchedOrders.forEach(item -> {
+				System.out.println(item);
+			});
 
 		}
 

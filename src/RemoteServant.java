@@ -33,7 +33,6 @@ import classes.Stock;
 import classes.StockOwned;
 import redis.clients.jedis.Jedis;
 
-
 public class RemoteServant extends UnicastRemoteObject implements RemoteInterface {
 	private AccountDetailsDbScript accountDetailsDb;
 	private HKDbScript hkDb;
@@ -48,7 +47,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private String accountServer3;
 	private String accountUser;
 	private boolean leaseAlive;
-	
+
 	private Jedis jedis;
 
 	public RemoteServant() throws RemoteException {
@@ -71,7 +70,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			sgDb.startWaitForMsg();
 			usaDb.startWaitForMsg();
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			System.out.println("error start wait for msg");
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -83,6 +82,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	public void addToClientHashMap(ClientInt cc, int accountId) {
 		clientHashMap.put(accountId, cc);
+
 	}
 
 	@Override
@@ -91,6 +91,18 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			clientHashMap.remove(accountId);
 
 		}
+	}
+
+	public ClientInt retrieveClientIntFromHashMap(int accountId) {
+		ClientInt retrievedClientInt = null;
+		System.out.println("retrieve from hashmap print");
+		System.out.println(clientHashMap);
+
+		if (clientHashMap.containsKey(accountId)) {
+			retrievedClientInt = clientHashMap.get(accountId);
+
+		}
+		return retrievedClientInt;
 	}
 
 	public void startLeaderElectionAlgo() throws RemoteException {
@@ -179,15 +191,21 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 		String QUEUE_NAME = "";
 
+		// Get the clientInt of that accountId first then set on the DB class.
+
 		if (market.equals("US")) {
 			QUEUE_NAME = "USMarket";
+			ClientInt user = this.retrieveClientIntFromHashMap(accountId);
+			hkDb.setCurrentClientInt(user);
 
 		} else if (market.equals("HK")) {
 			QUEUE_NAME = "HKMarket";
-
+			ClientInt user = this.retrieveClientIntFromHashMap(accountId);
+			hkDb.setCurrentClientInt(user);
 		} else {
 			QUEUE_NAME = "SGMarket";
-
+			ClientInt user = this.retrieveClientIntFromHashMap(accountId);
+			hkDb.setCurrentClientInt(user);
 		}
 
 		try (com.rabbitmq.client.Connection connection = factory.newConnection();
@@ -545,19 +563,19 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		}
 	}
-	
+
 	public void caching(String market, int stockid, String value) {
-		String key = market+stockid;
+		String key = market + stockid;
 		jedis.set(key, value);
-		
+
 	}
-	
+
 	public String retrieveCache(String market, int stockid) throws RemoteException {
-		String key = market+stockid;
-		if(jedis.exists(key))
+		String key = market + stockid;
+		if (jedis.exists(key))
 			return jedis.get(key);
 		else
-			//Retrieve from database and cache if not found
+			// Retrieve from database and cache if not found
 			return "";
 	}
 }
