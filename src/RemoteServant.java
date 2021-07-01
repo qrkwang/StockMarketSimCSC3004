@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private HKDbScript hkDb;
 	private SGDbScript sgDb;
 	private USADbScript usaDb;
-	private HashMap<Integer, ClientInt> clientHashMap = new HashMap<>(); // accountId and clientInterface
+	private HashMap<Integer, ClientInt> clientHashMap; // accountId and clientInterface
 
 	private HashMap<String, Integer> logMap; // for log (will be server name and generation number)
 	private List<String> listServer;
@@ -49,6 +50,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private boolean leaseAlive;
 
 	private Jedis jedis;
+	private HashMap<String, Long> lastSearchTimestamp;
+	private final String DELIMITER = "|"; 
 
 	public RemoteServant() throws RemoteException {
 		super();
@@ -56,14 +59,19 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		hkDb = new HKDbScript(); // Start the RabbitMQ Receiver that's in main method
 		sgDb = new SGDbScript(); // Start the RabbitMQ Receiver that's in main method
 		usaDb = new USADbScript(); // Start the RabbitMQ Receiver that's in main method
-		logMap = new HashMap<>(); // for log (will be server name and generation number)
+		clientHashMap = new HashMap<Integer, ClientInt>();
+		
+		logMap = new HashMap<String, Integer>(); // for log (will be server name and generation number)
 		accountServer = "192.168.87.54";
 		accountServer2 = "192.168.87.55";
 		accountServer3 = "192.168.87.56";
 		accountUser = "wh1901877";
 		listServer = new ArrayList<>(Arrays.asList(accountServer, accountServer2, accountServer3));
 		leaseAlive = false;
+		
 		jedis = new Jedis();
+		lastSearchTimestamp = new HashMap<String, Long>();
+		
 		try {
 			accountDetailsDb.startWaitForMsg();
 			hkDb.startWaitForMsg();
@@ -367,8 +375,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	@SuppressWarnings("resource")
-	@Override
-	public String retrievePendingOrders(String market, int stockId) throws RemoteException {
+	public String retrievePendingOrders(String market, int stockId){
 		StringBuilder sb = new StringBuilder();
 
 		if (market.equals("US")) {
@@ -433,8 +440,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	@SuppressWarnings("resource")
-	@Override
-	public String retrieveCompletedOrders(String market, int stockId) throws RemoteException {
+	public String retrieveCompletedOrders(String market, int stockId){
 		StringBuilder sb = new StringBuilder();
 
 		if (market.equals("US")) {
@@ -564,18 +570,52 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		}
 	}
 
-	public void caching(String market, int stockid, String value) {
-		String key = market + stockid;
+	public void startCache() {
+		Thread thread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					checkForCache();
+					Thread.sleep(60000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void checkForCache() {
+		Iterator it = lastSearchTimestamp.entrySet().iterator();
+		while(it.hasNext()) {
+			Entry<String, Long> entry = (Entry<String, Long>) it.next();
+			if(System.currentTimeMillis() - entry.getValue() > 600000) {
+				it.remove();
+			}else {
+				caching(entry.getKey());
+			}
+		}
+	}
+	
+	public String caching(String key) {
+		String[] keySplit = key.split(DELIMITER);
+		String market = keySplit[0];
+		int stockid = Integer.parseInt(keySplit[1]);
+		String value = retrieveCompletedOrders(market, stockid);
 		jedis.set(key, value);
-
+		return value;
 	}
 
 	public String retrieveCache(String market, int stockid) throws RemoteException {
 		String key = market + stockid;
+		lastSearchTimestamp.put(key, System.currentTimeMillis());
 		if (jedis.exists(key))
 			return jedis.get(key);
-		else
+		else {
 			// Retrieve from database and cache if not found
-			return "";
+			String res = caching(key);
+			return res;
+		}
 	}
 }

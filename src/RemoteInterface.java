@@ -15,10 +15,6 @@ public interface RemoteInterface extends Remote {
 
 	public String sendOrder(int accountId, String market, String order) throws RemoteException;
 
-	public String retrievePendingOrders(String market, int stockId) throws RemoteException;
-
-	public String retrieveCompletedOrders(String market, int stockId) throws RemoteException;
-
 	public void startLeaderElectionAlgo() throws RemoteException;
 
 	public void removeFromClientHashMap(int accountId) throws RemoteException;
