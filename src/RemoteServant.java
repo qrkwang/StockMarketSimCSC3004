@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.rmi.RemoteException;
+import java.rmi.UnknownHostException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -47,6 +49,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private String accountServer2;
 	private String accountServer3;
 	private String accountUser;
+	private String USServerIPAddress;
+	private String SGServerIPAddress;
+	private String HKServerIPAddress;
 	private boolean leaseAlive;
 
 	private Jedis jedis;
@@ -62,6 +67,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		clientHashMap = new HashMap<Integer, ClientInt>();
 		
 		logMap = new HashMap<String, Integer>(); // for log (will be server name and generation number)
+		USServerIPAddress = "192.168.1.16";
+		SGServerIPAddress = "192.168.1.17";
+		HKServerIPAddress = "192.168.1.18";
+		
 		accountServer = "192.168.87.54";
 		accountServer2 = "192.168.87.55";
 		accountServer3 = "192.168.87.56";
@@ -126,6 +135,44 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		}
 	}
+	
+	public static void executeFile(String fileName, String failedServer)
+	{
+		try {
+			String[] cmd = {
+				      "python",
+				      fileName,
+				      failedServer
+				    };
+			
+			Process p = Runtime.getRuntime().exec(cmd);
+
+			BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			String line = "";
+			System.out.println("running file " + fileName);
+		
+			while ((line = reader.readLine()) != null) {
+			    System.out.println(line + "\n");
+			}
+		}
+		catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		
+	
+	}
+	
+	public static boolean sendPingRequest(String ipAddress)
+            throws UnknownHostException, IOException
+		{
+		  InetAddress host = InetAddress.getByName(ipAddress);
+		  
+		  System.out.println("Sending Ping Request to " + ipAddress);
+		  if (host.isReachable(5000))
+		   return true;
+		  else
+		    return false;
+		}
 
 	@Override
 	public String getAccountDetailsByUsernameAndPW(ClientInt cc, String username, String pw) throws RemoteException {
