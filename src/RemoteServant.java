@@ -174,111 +174,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		    return false;
 		}
 
-	@Override
-	public String getAccountDetailsByUsernameAndPW(ClientInt cc, String username, String pw) throws RemoteException {
-		System.out.println("servantgetaccountdetailsybusernameandpw " + username + pw);
-		ObjectMapper objectMapper = new ObjectMapper();
-
-		try {
-			String resAccountDetail = accountDetailsDb.getAccountDetails(username);
-			System.out.println("result from db script" + resAccountDetail);
-			if (resAccountDetail == "not found") {
-				return "not found";
-			}
-			JsonNode jsonNodeRoot = objectMapper.readTree(resAccountDetail);
-			JsonNode jsonNodePW = jsonNodeRoot.get("password");
-			JsonNode jsonNodeAccountId = jsonNodeRoot.get("accountId");
-			String password = jsonNodePW.asText();
-			int accountId = Integer.parseInt(jsonNodeAccountId.asText());
-
-			System.out.println(password);
-
-			if (password.equals(pw)) {
-				System.out.println("passwword match");
-				addToClientHashMap(cc, accountId);
-				return resAccountDetail;
-			} else {
-				System.out.println("passwword not match");
-
-				return "wrong pw";
-			}
-		} catch (SQLException | JsonProcessingException e) {
-			// TODO Auto-generated catch block
-			System.out.println("sql or json processing exception");
-			e.printStackTrace();
-			return "problem";
-		}
-	}
-
-	@Override
-	public ArrayList<StockOwned> getAccountHoldingsById(int accountId) throws RemoteException {
-		System.out.println(" in remote srevant account id " + accountId);
-		try {
-			ArrayList<StockOwned> stockOwnedHk = hkDb.getOwnedStocks(accountId);
-			ArrayList<StockOwned> stockOwnedSg = sgDb.getOwnedStocks(accountId);
-			ArrayList<StockOwned> stockOwnedUsa = usaDb.getOwnedStocks(accountId);
-
-			stockOwnedHk.addAll(stockOwnedUsa);
-			stockOwnedHk.addAll(stockOwnedSg);
-
-			System.out.println("printing stock owned by account id " + accountId);
-
-			stockOwnedHk.forEach(item -> {
-				System.out.println(item);
-			});
-
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
-		}
-
-		// price and stock is combined, price is avg price.
-
-		return null;
-	}
-
-	@Override
-	public String sendOrder(int accountId, String market, String order) throws RemoteException {
-		System.out.println("sending order");
-		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost("localhost");
-
-		String QUEUE_NAME = "";
-
-		// Get the clientInt of that accountId first then set on the DB class.
-
-		if (market.equals("US")) {
-			QUEUE_NAME = "USMarket";
-			ClientInt user = this.retrieveClientIntFromHashMap(accountId);
-			hkDb.setCurrentClientInt(user);
-
-		} else if (market.equals("HK")) {
-			QUEUE_NAME = "HKMarket";
-			ClientInt user = this.retrieveClientIntFromHashMap(accountId);
-			hkDb.setCurrentClientInt(user);
-		} else {
-			QUEUE_NAME = "SGMarket";
-			ClientInt user = this.retrieveClientIntFromHashMap(accountId);
-			hkDb.setCurrentClientInt(user);
-		}
-
-		try (com.rabbitmq.client.Connection connection = factory.newConnection();
-				Channel channel = connection.createChannel()) {
-			channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-			channel.basicPublish("", QUEUE_NAME, null, order.getBytes());
-
-			System.out.println(" [x] Sent '" + order + "'");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TimeoutException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
-	}
-
 	public String electionLeader(List<String> listServer, String currServer, int generation) {
 		String selectedserver = null;
 		List<String> serverlist = new ArrayList<String>(listServer);
@@ -421,6 +316,111 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return resultgenserver;
 	}
 
+	@Override
+	public String getAccountDetailsByUsernameAndPW(ClientInt cc, String username, String pw) throws RemoteException {
+		System.out.println("servantgetaccountdetailsybusernameandpw " + username + pw);
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		try {
+			String resAccountDetail = accountDetailsDb.getAccountDetails(username);
+			System.out.println("result from db script" + resAccountDetail);
+			if (resAccountDetail == "not found") {
+				return "not found";
+			}
+			JsonNode jsonNodeRoot = objectMapper.readTree(resAccountDetail);
+			JsonNode jsonNodePW = jsonNodeRoot.get("password");
+			JsonNode jsonNodeAccountId = jsonNodeRoot.get("accountId");
+			String password = jsonNodePW.asText();
+			int accountId = Integer.parseInt(jsonNodeAccountId.asText());
+
+			System.out.println(password);
+
+			if (password.equals(pw)) {
+				System.out.println("passwword match");
+				addToClientHashMap(cc, accountId);
+				return resAccountDetail;
+			} else {
+				System.out.println("passwword not match");
+
+				return "wrong pw";
+			}
+		} catch (SQLException | JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			System.out.println("sql or json processing exception");
+			e.printStackTrace();
+			return "problem";
+		}
+	}
+
+	@Override
+	public ArrayList<StockOwned> getAccountHoldingsById(int accountId) throws RemoteException {
+		System.out.println(" in remote srevant account id " + accountId);
+		try {
+			ArrayList<StockOwned> stockOwnedHk = hkDb.getOwnedStocks(accountId);
+			ArrayList<StockOwned> stockOwnedSg = sgDb.getOwnedStocks(accountId);
+			ArrayList<StockOwned> stockOwnedUsa = usaDb.getOwnedStocks(accountId);
+
+			stockOwnedHk.addAll(stockOwnedUsa);
+			stockOwnedHk.addAll(stockOwnedSg);
+
+			System.out.println("printing stock owned by account id " + accountId);
+
+			stockOwnedHk.forEach(item -> {
+				System.out.println(item);
+			});
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+
+		// price and stock is combined, price is avg price.
+
+		return null;
+	}
+
+	@Override
+	public String sendOrder(int accountId, String market, String order) throws RemoteException {
+		System.out.println("sending order");
+		ConnectionFactory factory = new ConnectionFactory();
+		factory.setHost("localhost");
+
+		String QUEUE_NAME = "";
+
+		// Get the clientInt of that accountId first then set on the DB class.
+
+		if (market.equals("US")) {
+			QUEUE_NAME = "USMarket";
+			ClientInt user = this.retrieveClientIntFromHashMap(accountId);
+			hkDb.setCurrentClientInt(user);
+
+		} else if (market.equals("HK")) {
+			QUEUE_NAME = "HKMarket";
+			ClientInt user = this.retrieveClientIntFromHashMap(accountId);
+			hkDb.setCurrentClientInt(user);
+		} else {
+			QUEUE_NAME = "SGMarket";
+			ClientInt user = this.retrieveClientIntFromHashMap(accountId);
+			hkDb.setCurrentClientInt(user);
+		}
+
+		try (com.rabbitmq.client.Connection connection = factory.newConnection();
+				Channel channel = connection.createChannel()) {
+			channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+			channel.basicPublish("", QUEUE_NAME, null, order.getBytes());
+
+			System.out.println(" [x] Sent '" + order + "'");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TimeoutException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	@SuppressWarnings("resource")
 	public String retrievePendingOrders(String market, int stockId){
 		StringBuilder sb = new StringBuilder();
