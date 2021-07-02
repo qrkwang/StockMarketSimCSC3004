@@ -170,43 +170,44 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				// When go into a stock page by itself:
 				// retrieve order list per stock, retrieve price per stock
 
-				String stockOrderList = remoteObj.retrievePendingOrders(accountId, "SG", 4); // Retrieve By StockId
-				String orderCompleted = remoteObj.retrieveCompletedOrders(accountId, "SG", 4); // Retrieve By StockId
-				if (stockOrderList.equals("empty")) {
-
-				} else if (stockOrderList.equals("error fetching")) {
-
-				} else {
-					ArrayList<MarketPending> arrayListPendingOrders = (ArrayList<MarketPending>) deserializeString(
-							stockOrderList, "pendingOrders");
-
-//					System.out.println("PENDING ORDERS ");
-//					System.out.println(arrayListPendingOrders.toString());
-
-				}
-
-				if (orderCompleted.equals("empty")) {
-
-				} else if (orderCompleted.equals("error fetching")) {
-
-				} else {
-
-					ArrayList<MarketComplete> arrayListCompleteOrders = (ArrayList<MarketComplete>) deserializeString(
-							orderCompleted, "completeOrders");
-//					System.out.println("COMPLETED ORDERS");
-//					System.out.println(arrayListCompleteOrders.toString());
-
-				}
-
-				// Send Order
-				// Please send in format (accountId, "US", "StockId, SellerId, BuyerId, Qty,
-				// Price")
-				remoteObj.sendOrder(2, "HK", "5,-1,2,100,23.3"); // -1 to indicate null, i will change to null on
-																	// backend.
-
-				// Exit
-				remoteObj.removeFromClientHashMap(accountId);
-			}
+				
+//				String stockOrderList = remoteObj.retrievePendingOrders(accountId, "SG", 4); // Retrieve By StockId
+//				String orderCompleted = remoteObj.retrieveCompletedOrders(accountId, "SG", 4); // Retrieve By StockId
+//				if (stockOrderList.equals("empty")) {
+//
+//				} else if (stockOrderList.equals("error fetching")) {
+//
+//				} else {
+//					ArrayList<MarketPending> arrayListPendingOrders = (ArrayList<MarketPending>) deserializeString(
+//							stockOrderList, "pendingOrders");
+//
+////					System.out.println("PENDING ORDERS ");
+////					System.out.println(arrayListPendingOrders.toString());
+//
+//				}
+//
+//				if (orderCompleted.equals("empty")) {
+//
+//				} else if (orderCompleted.equals("error fetching")) {
+//
+//				} else {
+//
+//					ArrayList<MarketComplete> arrayListCompleteOrders = (ArrayList<MarketComplete>) deserializeString(
+//							orderCompleted, "completeOrders");
+////					System.out.println("COMPLETED ORDERS");
+////					System.out.println(arrayListCompleteOrders.toString());
+//
+//				}
+//
+//				// Send Order
+//				// Please send in format (accountId, "US", "StockId, SellerId, BuyerId, Qty,
+//				// Price")
+//				remoteObj.sendOrder(2, "HK", "5,-1,2,100,23.3"); // -1 to indicate null, i will change to null on
+//																	// backend.
+//
+//				// Exit
+//				remoteObj.removeFromClientHashMap(accountId);
+//			}
 
 		} catch (Exception e) {
 			System.out.format("Error obtaining remoteServer/remoteInterface from registry");
