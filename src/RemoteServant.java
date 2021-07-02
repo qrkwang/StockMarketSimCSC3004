@@ -49,9 +49,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private String accountServer2;
 	private String accountServer3;
 	private String accountUser;
-	private String USServerIPAddress;
-	private String SGServerIPAddress;
-	private String HKServerIPAddress;
+	private static String USServerIPAddress;
+	private static String SGServerIPAddress;
+	private static String HKServerIPAddress;
+
+
 	private boolean leaseAlive;
 
 	private Jedis jedis;
@@ -80,7 +82,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		
 		jedis = new Jedis();
 		lastSearchTimestamp = new HashMap<String, Long>();
-		
+
 		try {
 			accountDetailsDb.startWaitForMsg();
 			hkDb.startWaitForMsg();
@@ -92,7 +94,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
+		
+		this.startDataRedundancyAlgo();
+		
 		System.out.format("Creating server object\n"); // Print to client that server object is being created once
 														// constructor called.
 	}
@@ -160,6 +164,80 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		}
 		
 	
+	}
+	
+	public void startDataRedundancyAlgo() {
+		String failedServer = null;
+		boolean usRequiredRecovery = false;
+		boolean hkRequiredRecovery = false;
+		boolean sgRequiredRecovery = false;
+		
+
+		while(true) {
+			try {
+				if(sendPingRequest(USServerIPAddress) == false) {
+					failedServer = "US";
+					System.out.println("Cannot ping US");
+					usaDb.setOnline(false);
+				}
+				else {
+					usaDb.setOnline(true);
+				}
+				if(sendPingRequest(SGServerIPAddress) == false) {
+					failedServer = "SG";
+					System.out.println("Cannot ping SG");
+					sgDb.setOnline(false);
+				}
+				else {
+					sgDb.setOnline(true);
+				}
+				if (sendPingRequest(HKServerIPAddress) == false) {
+					failedServer = "HK";
+					System.out.println("Cannot ping HK");
+					hkDb.setOnline(false);
+				}
+				else {
+					hkDb.setOnline(true);
+				}
+				
+				if (failedServer != null && usRequiredRecovery == false && sgRequiredRecovery == false && hkRequiredRecovery == false)
+				{
+					executeFile( "src/sshRecoverAfterFail.py",failedServer);
+					if(failedServer.equals("US"))
+					{
+						usRequiredRecovery = true;
+					}
+					else if (failedServer.equals("HK"))
+					{
+						hkRequiredRecovery = true;
+					}
+					else if (failedServer.equals("SG")) 
+					{
+						sgRequiredRecovery = true;
+					}
+					
+				}
+				if((usRequiredRecovery == true && usaDb.isOnline() == true) ||( sgDb.isOnline()  == true && sgRequiredRecovery == true) || (hkDb.isOnline() == true && hkRequiredRecovery == true)) {
+					executeFile( "src/sshRecoverOriginalServer.py", failedServer);
+					failedServer = null;
+					usRequiredRecovery = false;
+					sgRequiredRecovery = false;
+					hkRequiredRecovery = false;
+					
+				}
+				Thread.sleep(5);
+				
+			} catch (UnknownHostException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	public static boolean sendPingRequest(String ipAddress)

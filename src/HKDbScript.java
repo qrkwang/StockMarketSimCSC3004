@@ -206,6 +206,9 @@ public class HKDbScript {
 				}
 				return "success";
 
+			} else {
+				//if there are orders fetched for matching.
+				
 			}
 
 			fetchedOrders.forEach(item -> {
@@ -235,6 +238,9 @@ public class HKDbScript {
 					System.out.println(rs.getString(1));
 
 				}
+			} else {
+				//if there are orders fetched for matching.
+				
 			}
 			fetchedOrders.forEach(item -> {
 				System.out.println(item);
@@ -248,7 +254,7 @@ public class HKDbScript {
 		// Do market algo first, pull entries first.
 
 		// later
-
+		return "success"; // remove later, this is here to remove error.
 	}
 
 	public ArrayList<StockOwned> getOwnedStocks(int accountId) throws SQLException {
