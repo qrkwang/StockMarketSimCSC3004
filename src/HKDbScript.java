@@ -3,6 +3,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
@@ -167,43 +168,6 @@ public class HKDbScript {
 		int buyerId = Integer.parseInt(splitArray[2]);
 		int qty = Integer.parseInt(splitArray[3]);
 		float price = Float.parseFloat(splitArray[4]);
-
-		if (sellerId == -1 && buyerId != -1) {
-
-			// its a buy order
-			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(true, stockId, price);
-			if (fetchedOrders == null) {
-				// No orders to match with, he want to buy but there's no one selling under his
-				// buy price or equals to
-
-				// If return no entry, create a marketpending order and insert.
-
-			}
-			fetchedOrders.forEach(item -> {
-				System.out.println(item);
-			});
-
-		} else {
-			// its a sell order
-			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(false, stockId, price);
-			if (fetchedOrders == null) {
-				// No orders to match with, he want to sell but there's no one buying above his
-				// sell price or equals to.
-
-				// If return no entry, create a marketpending order and insert.
-
-			}
-			fetchedOrders.forEach(item -> {
-				System.out.println(item);
-			});
-
-		}
-
-		// IN stockId Int, In sellerId Int, In buyerId Int, In quantity Int, In price
-		// Double, In transactionDate DATETIME
-
-		// Do market algo first, pull entries first.
-
 		Connection con = null;
 
 		try {
@@ -216,25 +180,75 @@ public class HKDbScript {
 			return "offline";
 
 		}
+		if (sellerId == -1 && buyerId != -1) {
+			// its a buy order
+
+			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(true, stockId, price);
+			if (fetchedOrders == null) {
+				// No orders to match with, he want to buy but there's no one selling under his
+				// buy price or equals to
+
+				// If return no entry, create a marketpending order and insert.
+				String query = "{CALL InsertToMarketPending(?,?,?,?,?,?)}";
+				CallableStatement stmt = con.prepareCall(query); // prepare to call
+				stmt.setInt(1, stockId);
+				stmt.setNull(2, Types.NULL);
+				stmt.setInt(3, buyerId);
+				stmt.setInt(4, qty);
+				stmt.setFloat(5, price);
+				stmt.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
+
+				ResultSet rs = stmt.executeQuery();
+
+				while (rs.next()) {
+					System.out.println(rs.getString(1));
+
+				}
+				return "success";
+
+			}
+
+			fetchedOrders.forEach(item -> {
+				System.out.println(item);
+			});
+
+		} else {
+			// its a sell order
+			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(false, stockId, price);
+			if (fetchedOrders == null) {
+				// No orders to match with, he want to sell but there's no one buying above his
+				// sell price or equals to.
+
+				// If return no entry, create a marketpending order and insert.
+				String query = "{CALL InsertToMarketPending(?,?,?,?,?,?)}";
+				CallableStatement stmt = con.prepareCall(query); // prepare to call
+				stmt.setInt(1, stockId);
+				stmt.setInt(2, sellerId);
+				stmt.setNull(3, Types.NULL);
+				stmt.setInt(4, qty);
+				stmt.setFloat(5, price);
+				stmt.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
+
+				ResultSet rs = stmt.executeQuery();
+
+				while (rs.next()) {
+					System.out.println(rs.getString(1));
+
+				}
+			}
+			fetchedOrders.forEach(item -> {
+				System.out.println(item);
+			});
+
+		}
+
+		// IN stockId Int, In sellerId Int, In buyerId Int, In quantity Int, In price
+		// Double, In transactionDate DATETIME
+
+		// Do market algo first, pull entries first.
 
 		// later
 
-		String query = "{CALL InsertToMarketPending(?,?,?,?,?,?)}";
-		CallableStatement stmt = con.prepareCall(query); // prepare to call
-		stmt.setInt(1, stockId);
-		stmt.setInt(2, sellerId);
-		stmt.setInt(3, buyerId);
-		stmt.setInt(4, qty);
-		stmt.setFloat(5, price);
-		stmt.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
-
-		ResultSet rs = stmt.executeQuery();
-
-		while (rs.next()) {
-			System.out.println(rs.getString(1));
-
-		}
-		return "success";
 	}
 
 	public ArrayList<StockOwned> getOwnedStocks(int accountId) throws SQLException {
