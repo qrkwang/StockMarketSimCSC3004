@@ -172,7 +172,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 				
 //				String stockOrderList = remoteObj.retrievePendingOrders(accountId, "SG", 4); // Retrieve By StockId
-//				String orderCompleted = remoteObj.retrieveCompletedOrders(accountId, "SG", 4); // Retrieve By StockId
+//				String orderCompleted = remoteObsj.retrieveCompletedOrders(accountId, "SG", 4); // Retrieve By StockId
 //				if (stockOrderList.equals("empty")) {
 //
 //				} else if (stockOrderList.equals("error fetching")) {
@@ -198,16 +198,16 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 ////					System.out.println(arrayListCompleteOrders.toString());
 //
 //				}
-//
-//				// Send Order
-//				// Please send in format (accountId, "US", "StockId, SellerId, BuyerId, Qty,
-//				// Price")
-//				remoteObj.sendOrder(2, "HK", "5,-1,2,100,23.3"); // -1 to indicate null, i will change to null on
-//																	// backend.
-//
-//				// Exit
-//				remoteObj.removeFromClientHashMap(accountId);
-//			}
+
+				// Send Order
+				// Please send in format (accountId, "US", "StockId, SellerId, BuyerId, Qty,
+				// Price")
+				remoteObj.sendOrder(2, "HK", "5,-1,2,100,23.3"); // -1 to indicate null, i will change to null on
+																	// backend.
+
+				// Exit
+				remoteObj.removeFromClientHashMap(accountId);
+			}
 
 		} catch (Exception e) {
 			System.out.format("Error obtaining remoteServer/remoteInterface from registry");
