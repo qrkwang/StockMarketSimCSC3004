@@ -21,31 +21,31 @@ dbPassword = "root"
 
 # enter HK server to make a temporary DB for SG
 # SG server is down
-sgHostname = "192.168.1.18"
+sgHostname = "192.168.43.74"
 sgDatabaseName = "SGStockMarket"
 sgReceivingFile = "SGPart2.sql"
 # Retrieve the other half of the file
-sgReceivingServer = "joy@192.168.1.16:/home/joy/SGPart2.sql"
+sgReceivingServer = "joy@192.168.43.185:/home/joy/SGPart2.sql"
 # the file has already stored in hk server
 sgCurrentFile = "SGPart1.sql"
 
 # enter SG server to make a temporary DB for US
 # US server is down
-usHostname = "192.168.1.17"
+usHostname = "192.168.43.210"
 usDatabaseName = "USStockMarket"
 usReceivingFile = "USPart2.sql"
 # Retrieve the other half of the file
-usReceivingServer = "joy@192.168.1.18:/home/joy/USPart2.sql"
+usReceivingServer = "joy@192.168.43.74:/home/joy/USPart2.sql"
 # the file has already stored in SG server
 usCurrentFile = "USPart1.sql"
 
 # enter US server to make a temporary DB for HK
 # HK server is down
-hkHostname = "192.168.1.16"
+hkHostname = "192.168.43.185"
 hkDatabaseName = "HKStockMarket"
 hkReceivingFile = "HKPart2.sql"
 # Retrieve the other half of the file
-hkReceivingServer = "joy@192.168.1.17:/home/joy/HKPart2.sql"
+hkReceivingServer = "joy@192.168.43.210:/home/joy/HKPart2.sql"
 # the file has already stored in US server
 hkCurrentFile = "HKPart1.sql"
 try:
@@ -71,7 +71,7 @@ try:
         client.connect(hostname=usHostname, username=username)
         print("SG Server Connected successfully")
         # Command to execute bash script
-        execCommand = "bash UKServerRecoveryInSG.sh -a '" + usDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + usReceivingFile + "' -e '" + usReceivingServer + "' -f '" + usCurrentFile + "'"
+        execCommand = "bash USServerRecoveryInSG.sh -a '" + usDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + usReceivingFile + "' -e '" + usReceivingServer + "' -f '" + usCurrentFile + "'"
         # execute the BASH script
         stdin, stdout, stderr = client.exec_command(execCommand)
         # read the standard output and print it

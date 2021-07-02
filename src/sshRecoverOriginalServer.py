@@ -17,31 +17,31 @@ dbUser = "root"
 dbPassword = "root"
 
 # Server that temporary running the hk database
-hkTempServer = "192.168.1.16"
+hkTempServer = "192.168.43.185"
 hkDatabaseName = "HKStockMarket"
 hkFileName = "HKBackup.sql"
 # File location to send back to the HK server
-hkDestinationServer = "joy@192.168.1.18:/home/joy/HKBackup.sql"
+hkDestinationServer = "192.168.43.74:/home/joy/HKBackup.sql"
 # The original HK server
-hkDestinationIP = "joy@192.168.1.18"
+hkDestinationIP = "joy@192.168.43.74"
 
 # Server that temporary running the sg database
-sgTempServer = "192.168.1.18"
+sgTempServer = "192.168.43.74"
 sgDatabaseName = "SGStockMarket"
 sgFileName = "SGBackup.sql"
 # File location to send back to the SG server
-sgDestinationServer = "joy@192.168.1.17:/home/joy/SGBackup.sql"
+sgDestinationServer = "joy@192.168.43.210:/home/joy/SGBackup.sql"
 # The original SG server
-sgDestinationIP = "joy@192.168.1.17"
+sgDestinationIP = "joy@192.168.43.210"
 
 # Server that temporary running the US database
-usTempServer = "192.168.1.17"
+usTempServer = "192.168.43.210"
 usDatabaseName = "USStockMarket"
 usFileName = "USBackup.sql"
 # File location to send back to the US server
-usDestinationServer = "joy@192.168.1.16:/home/joy/USBackup.sql"
+usDestinationServer = "joy@192.168.43.185:/home/joy/USBackup.sql"
 # The original US server
-usDestinationIP = "joy@192.168.1.16"
+usDestinationIP = "joy@192.168.43.185"
 
 try:
     # bringing HK DB back to the original server

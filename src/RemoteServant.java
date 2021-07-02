@@ -69,9 +69,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		clientHashMap = new HashMap<Integer, ClientInt>();
 		
 		logMap = new HashMap<String, Integer>(); // for log (will be server name and generation number)
-		USServerIPAddress = "192.168.1.16";
-		SGServerIPAddress = "192.168.1.17";
-		HKServerIPAddress = "192.168.1.18";
+		USServerIPAddress = "192.168.43.185";
+		SGServerIPAddress = "192.168.43.210";
+		HKServerIPAddress = "192.168.43.74";
 		
 		accountServer = "192.168.87.54";
 		accountServer2 = "192.168.87.55";
@@ -167,7 +167,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 	
 	public void startDataRedundancyAlgo() {
-		String failedServer = null;
+		
+	    String failedServer = null;
 		boolean usRequiredRecovery = false;
 		boolean hkRequiredRecovery = false;
 		boolean sgRequiredRecovery = false;
@@ -202,7 +203,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				
 				if (failedServer != null && usRequiredRecovery == false && sgRequiredRecovery == false && hkRequiredRecovery == false)
 				{
-					executeFile( "src/sshRecoverAfterFail.py",failedServer);
+					executeFile( "sshRecoverIfFail.py",failedServer);
 					if(failedServer.equals("US"))
 					{
 						usRequiredRecovery = true;
@@ -218,14 +219,14 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 					
 				}
 				if((usRequiredRecovery == true && usaDb.isOnline() == true) ||( sgDb.isOnline()  == true && sgRequiredRecovery == true) || (hkDb.isOnline() == true && hkRequiredRecovery == true)) {
-					executeFile( "src/sshRecoverOriginalServer.py", failedServer);
+					executeFile( "sshRecoverOriginalServer.py", failedServer);
 					failedServer = null;
 					usRequiredRecovery = false;
 					sgRequiredRecovery = false;
 					hkRequiredRecovery = false;
 					
 				}
-				Thread.sleep(5);
+				Thread.sleep(60);
 				
 			} catch (UnknownHostException e) {
 				// TODO Auto-generated catch block
