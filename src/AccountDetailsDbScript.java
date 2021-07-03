@@ -25,7 +25,7 @@ public class AccountDetailsDbScript {
 	private static String CONN_STRING = "jdbc:mysql://localhost:3306/accountdetailsserver"; // jdbc:mysql://ip:3306/DBNAME
 
 	public void setConnString(String ipandPort, String dbName) {
-		CONN_STRING = "jdbc:mysql//" + ipandPort + dbName;
+		CONN_STRING = "jdbc:mysql://" + ipandPort + "/" + dbName;
 	}
 
 	public String getAccountDetails(String userName) throws SQLException {
