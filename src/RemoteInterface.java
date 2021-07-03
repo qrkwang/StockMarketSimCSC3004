@@ -17,6 +17,8 @@ public interface RemoteInterface extends Remote {
 
 	public void startLeaderElectionAlgo() throws RemoteException;
 
+	public void startDataRedundancyAlgo() throws RemoteException;
+
 	public void removeFromClientHashMap(int accountId) throws RemoteException;
 
 	public String retrieveCache(String market, int stockid) throws RemoteException;

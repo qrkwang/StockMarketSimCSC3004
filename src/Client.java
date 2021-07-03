@@ -170,7 +170,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				// When go into a stock page by itself:
 				// retrieve order list per stock, retrieve price per stock
 
-				
 //				String stockOrderList = remoteObj.retrievePendingOrders(accountId, "SG", 4); // Retrieve By StockId
 //				String orderCompleted = remoteObsj.retrieveCompletedOrders(accountId, "SG", 4); // Retrieve By StockId
 //				if (stockOrderList.equals("empty")) {

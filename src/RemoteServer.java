@@ -20,6 +20,8 @@ public class RemoteServer {
 			System.out.format("Advertising completed\n");
 
 			remoteObj.startLeaderElectionAlgo();
+			remoteObj.startDataRedundancyAlgo();
+
 		} catch (Exception e) {
 			System.out.format("export exception - %s\n", e.getMessage());
 			e.printStackTrace();

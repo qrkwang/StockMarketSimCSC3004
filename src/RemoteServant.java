@@ -53,12 +53,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private static String SGServerIPAddress;
 	private static String HKServerIPAddress;
 
-
 	private boolean leaseAlive;
 
 	private Jedis jedis;
 	private HashMap<String, Long> lastSearchTimestamp;
-	private final String DELIMITER = "|"; 
+	private final String DELIMITER = "|";
 
 	public RemoteServant() throws RemoteException {
 		super();
@@ -67,19 +66,19 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		sgDb = new SGDbScript(); // Start the RabbitMQ Receiver that's in main method
 		usaDb = new USADbScript(); // Start the RabbitMQ Receiver that's in main method
 		clientHashMap = new HashMap<Integer, ClientInt>();
-		
+
 		logMap = new HashMap<String, Integer>(); // for log (will be server name and generation number)
 		USServerIPAddress = "192.168.43.185";
 		SGServerIPAddress = "192.168.43.210";
 		HKServerIPAddress = "192.168.43.74";
-		
+
 		accountServer = "192.168.87.54";
 		accountServer2 = "192.168.87.55";
 		accountServer3 = "192.168.87.56";
 		accountUser = "wh1901877";
 		listServer = new ArrayList<>(Arrays.asList(accountServer, accountServer2, accountServer3));
 		leaseAlive = false;
-		
+
 		jedis = new Jedis();
 		lastSearchTimestamp = new HashMap<String, Long>();
 
@@ -94,9 +93,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		this.startDataRedundancyAlgo();
-		
+
 		System.out.format("Creating server object\n"); // Print to client that server object is being created once
 														// constructor called.
 	}
@@ -139,95 +136,81 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		}
 	}
-	
-	public static void executeFile(String fileName, String failedServer)
-	{
+
+	public static void executeFile(String fileName, String failedServer) {
 		try {
-			String[] cmd = {
-				      "python",
-				      fileName,
-				      failedServer
-				    };
-			
+			String[] cmd = { "python", fileName, failedServer };
+
 			Process p = Runtime.getRuntime().exec(cmd);
 
 			BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
 			String line = "";
 			System.out.println("running file " + fileName);
-		
+
 			while ((line = reader.readLine()) != null) {
-			    System.out.println(line + "\n");
+				System.out.println(line + "\n");
 			}
-		}
-		catch (Exception ex) {
+		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-		
-	
+
 	}
-	
-	public void startDataRedundancyAlgo() {
-		
-	    String failedServer = null;
+
+	public void startDataRedundancyAlgo() throws RemoteException {
+
+		String failedServer = null;
 		boolean usRequiredRecovery = false;
 		boolean hkRequiredRecovery = false;
 		boolean sgRequiredRecovery = false;
-		
 
-		while(true) {
+		while (true) {
 			try {
-				if(sendPingRequest(USServerIPAddress) == false) {
+				if (sendPingRequest(USServerIPAddress) == false) {
 					failedServer = "US";
 					System.out.println("Cannot ping US");
 					usaDb.setOnline(false);
-				}
-				else {
+				} else {
 					usaDb.setOnline(true);
 				}
-				if(sendPingRequest(SGServerIPAddress) == false) {
+				if (sendPingRequest(SGServerIPAddress) == false) {
 					failedServer = "SG";
 					System.out.println("Cannot ping SG");
 					sgDb.setOnline(false);
-				}
-				else {
+				} else {
 					sgDb.setOnline(true);
 				}
 				if (sendPingRequest(HKServerIPAddress) == false) {
 					failedServer = "HK";
 					System.out.println("Cannot ping HK");
 					hkDb.setOnline(false);
-				}
-				else {
+				} else {
 					hkDb.setOnline(true);
 				}
-				
-				if (failedServer != null && usRequiredRecovery == false && sgRequiredRecovery == false && hkRequiredRecovery == false)
-				{
-					executeFile( "sshRecoverIfFail.py",failedServer);
-					if(failedServer.equals("US"))
-					{
+
+				if (failedServer != null && usRequiredRecovery == false && sgRequiredRecovery == false
+						&& hkRequiredRecovery == false) {
+					executeFile("sshRecoverIfFail.py", failedServer);
+					if (failedServer.equals("US")) {
 						usRequiredRecovery = true;
-					}
-					else if (failedServer.equals("HK"))
-					{
+					} else if (failedServer.equals("HK")) {
 						hkRequiredRecovery = true;
-					}
-					else if (failedServer.equals("SG")) 
-					{
+					} else if (failedServer.equals("SG")) {
 						sgRequiredRecovery = true;
 					}
-					
+
 				}
-				if((usRequiredRecovery == true && usaDb.isOnline() == true) ||( sgDb.isOnline()  == true && sgRequiredRecovery == true) || (hkDb.isOnline() == true && hkRequiredRecovery == true)) {
-					executeFile( "sshRecoverOriginalServer.py", failedServer);
+				if ((usRequiredRecovery == true && usaDb.isOnline() == true)
+						|| (sgDb.isOnline() == true && sgRequiredRecovery == true)
+						|| (hkDb.isOnline() == true && hkRequiredRecovery == true)) {
+					executeFile("sshRecoverOriginalServer.py", failedServer);
 					failedServer = null;
 					usRequiredRecovery = false;
 					sgRequiredRecovery = false;
 					hkRequiredRecovery = false;
-					
+
 				}
 				Thread.sleep(360);
-				
+
 			} catch (UnknownHostException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -240,18 +223,16 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		}
 	}
-	
-	public static boolean sendPingRequest(String ipAddress)
-            throws UnknownHostException, IOException
-		{
-		  InetAddress host = InetAddress.getByName(ipAddress);
-		  
-		  System.out.println("Sending Ping Request to " + ipAddress);
-		  if (host.isReachable(5000))
-		   return true;
-		  else
-		    return false;
-		}
+
+	public static boolean sendPingRequest(String ipAddress) throws UnknownHostException, IOException {
+		InetAddress host = InetAddress.getByName(ipAddress);
+
+//		  System.out.println("Sending Ping Request to " + ipAddress);
+		if (host.isReachable(5000))
+			return true;
+		else
+			return false;
+	}
 
 	public String electionLeader(List<String> listServer, String currServer, int generation) {
 		String selectedserver = null;
@@ -499,9 +480,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		}
 		return null;
 	}
-	
+
 	@SuppressWarnings("resource")
-	public String retrievePendingOrders(String market, int stockId){
+	public String retrievePendingOrders(String market, int stockId) {
 		StringBuilder sb = new StringBuilder();
 
 		if (market.equals("US")) {
@@ -566,7 +547,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	@SuppressWarnings("resource")
-	public String retrieveCompletedOrders(String market, int stockId){
+	public String retrieveCompletedOrders(String market, int stockId) {
 		StringBuilder sb = new StringBuilder();
 
 		if (market.equals("US")) {
@@ -710,20 +691,20 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		});
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public void checkForCache() {
 		Iterator it = lastSearchTimestamp.entrySet().iterator();
-		while(it.hasNext()) {
+		while (it.hasNext()) {
 			Entry<String, Long> entry = (Entry<String, Long>) it.next();
-			if(System.currentTimeMillis() - entry.getValue() > 600000) {
+			if (System.currentTimeMillis() - entry.getValue() > 600000) {
 				it.remove();
-			}else {
+			} else {
 				caching(entry.getKey());
 			}
 		}
 	}
-	
+
 	public String caching(String key) {
 		String[] keySplit = key.split(DELIMITER);
 		String market = keySplit[0];
