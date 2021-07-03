@@ -209,7 +209,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 					hkRequiredRecovery = false;
 
 				}
-				Thread.sleep(360);
+				Thread.sleep(60000);
 
 			} catch (UnknownHostException e) {
 				// TODO Auto-generated catch block
