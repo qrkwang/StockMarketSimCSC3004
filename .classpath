@@ -15,5 +15,6 @@
 	<classpathentry kind="lib" path="lib/slf4j-simple-1.7.26.jar"/>
 	<classpathentry kind="lib" path="lib/xchart-3.8.0.jar"/>
 	<classpathentry kind="lib" path="lib/jedis-3.6.1.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
