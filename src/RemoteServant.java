@@ -123,19 +123,22 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return retrievedClientInt;
 	}
 
-	public void startLeaderElectionAlgo() throws RemoteException {
+	public boolean startLeaderElectionAlgo() throws RemoteException {
 		String serverNo = null;
+		boolean result = false;
 		int generation = 0; // increase everytime it election a new leader
 		if (leaseAlive == false && serverNo == null) { // running for first time
 			serverNo = electionLeader(listServer, null, generation);
 			if (serverNo == null) {
-				System.out
-						.println("Fail to find any working server , please restart application or check server status");
+				System.out.println("Fail to find any working server , please restart application or check server status");
 			} else {
 				System.out.println("Set up server " + serverNo);
+				result = true;
 			}
 		}
+		return result;
 	}
+
 
 	public static void executeFile(String fileName, String failedServer) {
 		try {
