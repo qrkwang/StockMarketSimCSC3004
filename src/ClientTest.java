@@ -13,14 +13,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class ClientTest extends java.rmi.server.UnicastRemoteObject {
+public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements ClientInt {
 	
 	private RemoteInterface remoteObj;
+	private ClientInt cc = new Client();
 	public ClientTest() throws RemoteException {
 		remoteObj = new RemoteServant();
 	}
 
-//static
 	@Before
 	public void setUpBeforeClass() throws Exception , RemoteException {
 		int port = 1099;
@@ -48,8 +48,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject {
 		try {
 			algoResult = remoteObj.startLeaderElectionAlgo();
 			System.out.println("testing inside");
-			Assert.assertFalse("Fail to run the leader election (no leader server is selected)",algoResult);
-			System.out.println(algoResult);
+			Assert.assertFalse("Fail to run the leader election (no leader server is selected)",algoResult == false);	
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -65,7 +64,15 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject {
 
 	@Test
 	public void testGetAccountDetailsByUsernameAndPW() {
-		fail("Not yet implemented");
+		String username = "demo";
+		String pw = "password";
+		try {
+			String accountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc,  username, pw);
+			Assert.assertFalse("Fail to get accountDetails", accountDetails.isEmpty());	
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Test
@@ -81,6 +88,12 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject {
 	@Test
 	public void testRetrieveCache() {
 		fail("Not yet implemented");
+	}
+
+	@Override
+	public void printToClient(String s) throws RemoteException {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
