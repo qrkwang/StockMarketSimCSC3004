@@ -1,6 +1,10 @@
 import static org.junit.Assert.*;
 
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -13,33 +17,28 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject {
 	
 	private RemoteInterface remoteObj;
 	public ClientTest() throws RemoteException {
+		remoteObj = new RemoteServant();
 	}
 
-
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
+//static
+	@Before
+	public void setUpBeforeClass() throws Exception , RemoteException {
+		int port = 1099;
 		try {
 			RemoteServer server = new RemoteServer();
-			server.main(null); // calling the main method to trigger the server and registry
+			LocateRegistry.createRegistry(port);
+			Naming.rebind("rmi://localhost:" + port + "/RemoteServer", remoteObj);
+			remoteObj = (RemoteInterface) Naming.lookup("rmi://localhost:1099/RemoteServer");
 		} catch (Exception e) {
 			throw e;
 		}
 	}
 
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
-	@Before
-	public void setUp() throws Exception {
-	}
-
-	@After
-	public void tearDown() throws Exception {
-	}
+	
 
 	@Test
 	public void testRemoveFromClientHashMap() {
+		System.out.println("testing 1234567890");
 		fail("Not yet implemented");
 	}
 
@@ -48,18 +47,21 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject {
 		boolean algoResult = false;
 		try {
 			algoResult = remoteObj.startLeaderElectionAlgo();
+			System.out.println("testing inside");
 			Assert.assertFalse("Fail to run the leader election (no leader server is selected)",algoResult);
-			
+			System.out.println(algoResult);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
+	/*
 	@Test
 	public void testStartDataRedundancyAlgo() {
 		fail("Not yet implemented");
 	}
+	*/
 
 	@Test
 	public void testGetAccountDetailsByUsernameAndPW() {
