@@ -38,12 +38,12 @@ DELIMITER $$
 USE `HKStockMarket`$$
 
 CREATE PROCEDURE `InsertToMarketPending`(
-IN stockId Int, In sellerId Int, In buyerId Int, In quantity Int, In price Double, In transactionDate DATETIME
+IN stockId Int, In sellerId Int, In buyerId Int, In quantity Int, In price Double, In createdDate DATETIME
 )
 BEGIN
 
-INSERT INTO marketPending (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
-VALUES(stockId,sellerId, buyerId, quantity,price, transactionDate);
+INSERT INTO marketPending (StockId, SellerId, BuyerId, Quantity, Price, CreatedDate)
+VALUES(stockId,sellerId, buyerId, quantity,price, createdDate);
 
 END$$
 DELIMITER ;
