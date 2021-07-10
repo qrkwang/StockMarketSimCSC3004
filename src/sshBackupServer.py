@@ -3,6 +3,11 @@ import paramiko
 # backup all the databases and split the database into two part
 # each part go into one db server
 
+# Declare a constant Ip Address
+usIPAddress = "192.168.43.185"
+sgIPAddress = "192.168.43.210"
+HkIPaddress = "192.168.43.74"
+
 
 # initialize the SSH client
 client = paramiko.SSHClient()
@@ -15,28 +20,28 @@ dbUser = "root"
 dbPassword = "root"
 
 # US Server Info
-usHostname = "192.168.1.16"
+usHostname = usIPAddress
 usDatabaseName = "USStockMarket"
 usFileNamePart1 = "USPart1.sql"
-usDestinationServerPart1 = "joy@192.168.1.17:/home/joy/USPart1.sql"
+usDestinationServerPart1 = "joy@" + sgIPAddress + ":/home/joy/USPart1.sql"
 usFileNamePart2 = "USPart2.sql"
-usDestinationServerPart2 = "joy@192.168.1.18:/home/joy/USPart2.sql"
+usDestinationServerPart2 = "joy@" + HkIPaddress + ":/home/joy/USPart2.sql"
 
 # SG Server Info
-sgHostname = "192.168.1.17"
+sgHostname = sgIPAddress
 sgDatabaseName = "SGStockMarket"
 sgFileNamePart1 = "SGPart1.sql"
-sgDestinationServerPart1 = "joy@192.168.1.18:/home/joy/SGPart1.sql"
+sgDestinationServerPart1 = "joy@" + HkIPaddress + ":/home/joy/SGPart1.sql"
 sgFileNamePart2 = "SGPart2.sql"
-sgDestinationServerPart2 = "joy@192.168.1.16:/home/joy/SGPart2.sql"
+sgDestinationServerPart2 = "joy@"+usIPAddress+":/home/joy/SGPart2.sql"
 
 # HK Server Info
-hkHostname = "192.168.1.18"
+hkHostname = HkIPaddress
 hkDatabaseName = "HKStockMarket"
 hkFileNamePart1 = "HKPart1.sql"
-hkDestinationServerPart1 = "joy@192.168.1.16:/home/joy/HKPart1.sql"
+hkDestinationServerPart1 = "joy@"+usIPAddress+":/home/joy/HKPart1.sql"
 hkFileNamePart2 = "HKPart2.sql"
-hkDestinationServerPart2 = "joy@192.168.1.17:/home/joy/HKPart2.sql"
+hkDestinationServerPart2 = "joy@"+sgIPAddress+":/home/joy/HKPart2.sql"
 
 try:
     # Connecting to US server via SSH

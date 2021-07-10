@@ -1,0 +1,21 @@
+To create a cron job, ensure that the cron is installed
+1) sudo apt install cron
+2) sudo systemctl enable cron
+3) crontab -e to edit the command
+
+For US Server:
+File USPart1 will be send to SG Server
+File USPart2 will be send to HK Server
+The file will auto run and back up those file every 5 mins
+
+*/5 * * * * bash USServerBackup.sh -a USStockMarket -b root -c root -d USPart1.sql -e joy@192.168.1.17:/home/joy/USPart1.sql -f USPart2.sql -g joy@192.168.1.18:/home/joy/USPart2.sql
+
+For SG Server:
+File SGPart 1 will be send to HK Server
+File SGPart 2 will be send to SG Server
+/5 * * * * bash SGServerBackup.sh -a SGStockMarket -b root -c root -d SGPart1.sql -e joy@192.168.1.18:/home/joy/SGPart1.sql -f SGPart2.sql -g joy@192.168.1.16:/home/joy/SGPart2.sql
+
+For HK Server:
+*/5 * * * * bash HKServerBackup.sh -a HKStockMarket -b root -c root -d HKPart1.sql -e joy@192.168.1.16:/home/joy/HKPart1.sql -f HKPart2.sql -g joy@192.168.1.17:/home/joy/HKPart2.sql
+
+
