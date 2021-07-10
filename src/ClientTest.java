@@ -20,10 +20,9 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	
 	private RemoteInterface remoteObj;
 	private ClientInt cc = new Client();
+	
 	public ClientTest() throws RemoteException {
-		remoteObj = new RemoteServant();
-		System.out.println("runnning set up claassssssssssssssssssssssssssssssssssssss heeeeeeeeeeeeeeeeeeeeee");
-		
+		remoteObj = new RemoteServant();	
 	}
 
 	public void setUp() throws Exception , RemoteException {
@@ -37,15 +36,6 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		} catch (Exception e) {
 			throw e;
 		}
-	}
-
-	
-
-	@Test
-	public void testRemoveFromClientHashMap() {
-		// no return value . will need to check again
-		System.out.println("testing 1234567890");
-		fail("Not yet implemented");
 	}
 
 	
@@ -64,11 +54,6 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	}
 
 	
-	@Test
-	public void testStartDataRedundancyAlgo() {
-		// no return value and will keep on running in background
-		fail("Not yet implemented");
-	}
 	
 
 	@Test
@@ -100,7 +85,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	
 	@Test
 	public void testGetAccountHoldingsById_TrueCondition() {
-		int accountId = 0;
+		int accountId = 2;
 		// cant test yet
 		try {
 			ArrayList<StockOwned> resultAccount = remoteObj.getAccountHoldingsById(accountId);
@@ -114,7 +99,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	@Test
 	public void testGetAccountHoldingsById_FalseCondition() {
 		// cant test yet 
-		int accountId = 0;
+		int accountId = 3;
 		try {
 			ArrayList<StockOwned> resultAccount = remoteObj.getAccountHoldingsById(accountId);
 			Assert.assertNull("The account Id is wrong", resultAccount);	
@@ -152,7 +137,36 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 			e.printStackTrace();
 		}
 	}
+
+	@Test
+	public void testgetAllStocksByMarket_TrueCondition() {
+		String market = "HK";
+		String getStock;
+		try {
+			getStock = remoteObj.getAllStocksByMarket(market);
+		
+			Assert.assertNotEquals("Fail to get back the stock market", getStock ,"empty");
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+		//	e.printStackTrace();
+		}
+	}
 	
+	@Test
+	public void testgetAllStocksByMarket_FailCondition() {
+		String market = "Test";
+		String getStock;
+		try {
+			getStock = remoteObj.getAllStocksByMarket(market);
+			Assert.assertEquals("Stock Market is current empty", getStock , "empty");	
+			Assert.assertEquals("Fail to get back the sotck market", getStock , "error fetching");	
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+		//	e.printStackTrace();
+		}
+	}
+
+	// not too sure for retrieve cache
 /*
 	@Test
 	public void testRetrieveCache() {
@@ -166,6 +180,21 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 			e.printStackTrace();
 		}
 		// not sure what is the value in for stockId and market
+	}
+	
+
+	@Test
+	public void testRemoveFromClientHashMap() {
+		// no return value . will need to check again
+		System.out.println("testing 1234567890");
+		fail("Not yet implemented");
+	}
+
+	
+@Test
+	public void testStartDataRedundancyAlgo() {
+		// no return value and will keep on running in background
+		fail("Not yet implemented");
 	}
 */
 	
