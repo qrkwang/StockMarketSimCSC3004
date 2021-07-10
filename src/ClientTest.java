@@ -19,10 +19,12 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	private ClientInt cc = new Client();
 	public ClientTest() throws RemoteException {
 		remoteObj = new RemoteServant();
+		System.out.println("runnning set up claassssssssssssssssssssssssssssssssssssss heeeeeeeeeeeeeeeeeeeeee");
+		
 	}
 
-	@Before
-	public void setUpBeforeClass() throws Exception , RemoteException {
+	public void setUp() throws Exception , RemoteException {
+		System.out.println("runnning set up claassssssssssssssssssssssssssssssssssssss heeeeeeeeeeeeeeeeeeeeee");
 		int port = 1099;
 		try {
 			RemoteServer server = new RemoteServer();
@@ -42,13 +44,15 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		fail("Not yet implemented");
 	}
 
+	
+	
 	@Test
 	public void testStartLeaderElectionAlgo() {
 		boolean algoResult = false;
 		try {
 			algoResult = remoteObj.startLeaderElectionAlgo();
 			System.out.println("testing inside");
-			Assert.assertFalse("Fail to run the leader election (no leader server is selected)",algoResult == false);	
+			Assert.assertFalse("Fail to run the leader election (no leader server is selected)",algoResult);	
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -60,8 +64,8 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	public void testStartDataRedundancyAlgo() {
 		fail("Not yet implemented");
 	}
-	*/
-
+	
+*/
 	@Test
 	public void testGetAccountDetailsByUsernameAndPW() {
 		String username = "demo";
@@ -75,6 +79,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		}
 	}
 
+	/*
 	@Test
 	public void testGetAccountHoldingsById() {
 		fail("Not yet implemented");
@@ -89,11 +94,12 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	public void testRetrieveCache() {
 		fail("Not yet implemented");
 	}
-
+*/
+	
 	@Override
 	public void printToClient(String s) throws RemoteException {
-		// TODO Auto-generated method stub
-		
+		// TODO Auto-generated method stub	
 	}
 
+	
 }
