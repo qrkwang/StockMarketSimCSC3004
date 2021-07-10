@@ -5,6 +5,7 @@ import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
+import java.util.ArrayList;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -12,6 +13,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import classes.StockOwned;
 
 public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements ClientInt {
 	
@@ -40,6 +43,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 
 	@Test
 	public void testRemoveFromClientHashMap() {
+		// no return value . will need to check again
 		System.out.println("testing 1234567890");
 		fail("Not yet implemented");
 	}
@@ -59,15 +63,28 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		}
 	}
 
-	/*
+	
 	@Test
 	public void testStartDataRedundancyAlgo() {
+		// no return value and will keep on running in background
 		fail("Not yet implemented");
 	}
 	
-*/
+
 	@Test
-	public void testGetAccountDetailsByUsernameAndPW() {
+	public void testGetAccountDetailsByUsernameAndPW_FalseCondition() {
+		String username = "demo";
+		String pw = "";
+		try {
+			String accountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc,  username, pw);
+			Assert.assertFalse("Fail to get accountDetails", accountDetails.isEmpty());	
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	@Test
+	public void testGetAccountDetailsByUsernameAndPW_TrueCondition() {
 		String username = "demo";
 		String pw = "password";
 		try {
@@ -78,18 +95,39 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 			e.printStackTrace();
 		}
 	}
-
-	/*
+	
+	
+	
 	@Test
-	public void testGetAccountHoldingsById() {
-		fail("Not yet implemented");
+	public void testGetAccountHoldingsById_TrueCondition() {
+		int accountId = 0;
+		try {
+			ArrayList<StockOwned> resultAccount = remoteObj.getAccountHoldingsById(accountId);
+			Assert.assertNotNull("The account Id exist", resultAccount);	
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testGetAccountHoldingsById_FalseCondition() {
+		int accountId = 0;
+		try {
+			ArrayList<StockOwned> resultAccount = remoteObj.getAccountHoldingsById(accountId);
+			Assert.assertNull("The account Id is wrong", resultAccount);	
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Test
 	public void testSendOrder() {
 		fail("Not yet implemented");
 	}
-
+	
+/*
 	@Test
 	public void testRetrieveCache() {
 		fail("Not yet implemented");
