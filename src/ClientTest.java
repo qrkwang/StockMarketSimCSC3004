@@ -101,6 +101,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	@Test
 	public void testGetAccountHoldingsById_TrueCondition() {
 		int accountId = 0;
+		// cant test yet
 		try {
 			ArrayList<StockOwned> resultAccount = remoteObj.getAccountHoldingsById(accountId);
 			Assert.assertNotNull("The account Id exist", resultAccount);	
@@ -112,6 +113,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	
 	@Test
 	public void testGetAccountHoldingsById_FalseCondition() {
+		// cant test yet 
 		int accountId = 0;
 		try {
 			ArrayList<StockOwned> resultAccount = remoteObj.getAccountHoldingsById(accountId);
@@ -123,14 +125,47 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	}
 
 	@Test
-	public void testSendOrder() {
-		fail("Not yet implemented");
+	public void testSendOrder_TrueCondition() {
+		int accountId = 2;
+		String market = "HK";
+		String order = "5,-1,2,100,23.3";
+		try {
+		String orderDetails = remoteObj.sendOrder(accountId, market, order);		
+			Assert.assertNull("Unable to send the current order", orderDetails);	
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//String sendOrder(int accountId, String market, String order)
+	}
+	
+	@Test
+	public void testSendOrder_FalseCondition() {
+		int accountId = 0;
+		String market = "JP";
+		String order = "5,-1,2,100,23.3";
+		try {
+		String orderDetails = remoteObj.sendOrder(accountId, market, order);		
+			Assert.assertNotNull("Order is sended", orderDetails);	
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 /*
 	@Test
 	public void testRetrieveCache() {
-		fail("Not yet implemented");
+		String market = "";
+		int stockid	 = 0;	
+		try {
+			String cacheResult = remoteObj.retrieveCache(market, stockid);
+			Assert.assertNotNull("Cache result have been recieved", cacheResult);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// not sure what is the value in for stockId and market
 	}
 */
 	
