@@ -11,6 +11,8 @@ do
     esac
 done
 
+start_time="$(date -u +%s)"
+
 # Backing up the whole database
 mysqldump --user=$dbUser --password=$dbPassword --databases $databaseName --no-create-db --routines > $fileName
 
@@ -24,7 +26,10 @@ scp $fileName $destinationServer
 ssh $destinationIP "mysql -u $dbUser -p$dbPassword -e'DROP DATABASE if EXISTS $databaseName; CREATE DATABASE $databaseName';
 mysql -u $dbUser -p$dbPassword   < $fileName $databaseName"
 
+end_time="$(date -u +%s)"
 
+elapsed="$(($end_time-$start_time))"
+echo "The process took $elapsed seconds to run"
 
 
 

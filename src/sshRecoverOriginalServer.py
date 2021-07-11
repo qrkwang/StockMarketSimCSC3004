@@ -3,6 +3,10 @@ import sys
 
 # When the server is up, back up the temporary database and send it back to the original db
 # drop the temporary database and recover the original db
+# Declare a constant Ip Address
+usIPAddress = "192.168.43.185"
+sgIPAddress = "192.168.43.210"
+HkIPaddress = "192.168.43.74"
 
 # Database that was failed previously, going to recover now
 recoveringServer = sys.argv[1]
@@ -17,31 +21,31 @@ dbUser = "root"
 dbPassword = "root"
 
 # Server that temporary running the hk database
-hkTempServer = "192.168.43.185"
+hkTempServer = usIPAddress
 hkDatabaseName = "HKStockMarket"
 hkFileName = "HKBackup.sql"
 # File location to send back to the HK server
-hkDestinationServer = "192.168.43.74:/home/joy/HKBackup.sql"
+hkDestinationServer = "joy@" + HkIPaddress + ":/home/joy/HKBackup.sql"
 # The original HK server
-hkDestinationIP = "joy@192.168.43.74"
+hkDestinationIP = "joy@" + HkIPaddress
 
 # Server that temporary running the sg database
-sgTempServer = "192.168.43.74"
+sgTempServer = HkIPaddress
 sgDatabaseName = "SGStockMarket"
 sgFileName = "SGBackup.sql"
 # File location to send back to the SG server
-sgDestinationServer = "joy@192.168.43.210:/home/joy/SGBackup.sql"
+sgDestinationServer = "joy@" + sgIPAddress + ":/home/joy/SGBackup.sql"
 # The original SG server
-sgDestinationIP = "joy@192.168.43.210"
+sgDestinationIP = "joy@"+sgIPAddress
 
 # Server that temporary running the US database
-usTempServer = "192.168.43.210"
+usTempServer = sgIPAddress
 usDatabaseName = "USStockMarket"
 usFileName = "USBackup.sql"
 # File location to send back to the US server
-usDestinationServer = "joy@192.168.43.185:/home/joy/USBackup.sql"
+usDestinationServer = "joy@"+ usIPAddress + ":/home/joy/USBackup.sql"
 # The original US server
-usDestinationIP = "joy@192.168.43.185"
+usDestinationIP = "joy@" + usIPAddress
 
 try:
     # bringing HK DB back to the original server

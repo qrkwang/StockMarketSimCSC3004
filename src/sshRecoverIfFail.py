@@ -7,6 +7,11 @@ import paramiko
 # SG died, Recover SG server in hk
 # HK died, Recover HK server in us
 
+# Declare a constant Ip Addresses
+usIPAddress = "192.168.43.185"
+sgIPAddress = "192.168.43.210"
+HkIPaddress = "192.168.43.74"
+
 # initialize the SSH client
 client = paramiko.SSHClient()
 # add to known hosts
@@ -21,31 +26,31 @@ dbPassword = "root"
 
 # enter HK server to make a temporary DB for SG
 # SG server is down
-sgHostname = "192.168.43.74"
+sgHostname = HkIPaddress
 sgDatabaseName = "SGStockMarket"
 sgReceivingFile = "SGPart2.sql"
 # Retrieve the other half of the file
-sgReceivingServer = "joy@192.168.43.185:/home/joy/SGPart2.sql"
+sgReceivingServer = "joy@" + usIPAddress + ":/home/joy/SGPart2.sql"
 # the file has already stored in hk server
 sgCurrentFile = "SGPart1.sql"
 
 # enter SG server to make a temporary DB for US
 # US server is down
-usHostname = "192.168.43.210"
+usHostname = sgIPAddress
 usDatabaseName = "USStockMarket"
 usReceivingFile = "USPart2.sql"
 # Retrieve the other half of the file
-usReceivingServer = "joy@192.168.43.74:/home/joy/USPart2.sql"
+usReceivingServer = "joy@"+HkIPaddress + ":/home/joy/USPart2.sql"
 # the file has already stored in SG server
 usCurrentFile = "USPart1.sql"
 
 # enter US server to make a temporary DB for HK
 # HK server is down
-hkHostname = "192.168.43.185"
+hkHostname = usIPAddress
 hkDatabaseName = "HKStockMarket"
 hkReceivingFile = "HKPart2.sql"
 # Retrieve the other half of the file
-hkReceivingServer = "joy@192.168.43.210:/home/joy/HKPart2.sql"
+hkReceivingServer = "joy@" + sgIPAddress + ":/home/joy/HKPart2.sql"
 # the file has already stored in US server
 hkCurrentFile = "HKPart1.sql"
 try:
@@ -54,7 +59,7 @@ try:
         client.connect(hostname=sgHostname, username=username)
         print("HK Server Connected successfully")
         # Command to execute bash script
-        execCommand = "bash SGServerRecoveryInHK.sh -a '" + sgDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + sgReceivingFile + "' -e '" + sgReceivingServer+"' -f '" + sgCurrentFile + "'"
+        execCommand = "bash SGServerRecoveryInHK.sh -a '" + sgDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + sgReceivingFile + "' -e '" + sgReceivingServer + "' -f '" + sgCurrentFile + "'"
         # execute the BASH script
         stdin, stdout, stderr = client.exec_command(execCommand)
         # read the standard output and print it

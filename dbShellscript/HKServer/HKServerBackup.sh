@@ -12,6 +12,7 @@ do
     esac
 done
 
+start_time="$(date -u +%s)"
 
 myCount=$(mysql -s -N $databaseName -u$dbUser -p$dbPassword -e"SELECT Count(*) FROM stock")
 
@@ -43,3 +44,8 @@ if scp $fileNamePart2 $destinationServerPart2; then
 else
 	echo "Fail: could not transfer the second part"
 fi
+
+end_time="$(date -u +%s)"
+
+elapsed="$(($end_time-$start_time))"
+echo "The process took $elapsed seconds to run"
