@@ -190,12 +190,6 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		fail("Not yet implemented");
 	}
 
-	
-@Test
-	public void testStartDataRedundancyAlgo() {
-		// no return value and will keep on running in background
-		fail("Not yet implemented");
-	}
 */
 	
 	@Override

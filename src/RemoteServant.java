@@ -66,16 +66,15 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		sgDb = new SGDbScript(); // Start the RabbitMQ Receiver that's in main method
 		usaDb = new USADbScript(); // Start the RabbitMQ Receiver that's in main method
 		clientHashMap = new HashMap<Integer, ClientInt>();
-
 		logMap = new HashMap<String, Integer>(); // for log (will be server name and generation number)
 		USServerIPAddress = "192.168.43.185";
 		SGServerIPAddress = "192.168.43.210";
 		HKServerIPAddress = "192.168.43.74";
 
-		accountServer = "192.168.87.54";
-		accountServer2 = "192.168.87.55";
-		accountServer3 = "192.168.87.56";
-		accountUser = "wh1901877";
+		accountServer = "192.168.43.250";  //192.168.87.54
+		accountServer2 = "192.168.43.168";   //192.168.87.55
+		accountServer3 = "192.168.43.199";   //192.168.87.56
+		accountUser = "a";
 		listServer = new ArrayList<>(Arrays.asList(accountServer, accountServer2, accountServer3));
 		leaseAlive = false;
 
@@ -126,6 +125,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	public boolean startLeaderElectionAlgo() throws RemoteException {
 		String serverNo = null;
 		boolean result = false;
+		long startTime = System.nanoTime();
+	
 		int generation = 0; // increase everytime it election a new leader
 		if (leaseAlive == false && serverNo == null) { // running for first time
 			serverNo = electionLeader(listServer, null, generation);
@@ -134,6 +135,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			} else {
 				System.out.println("Set up server " + serverNo);
 				result = true;
+				long endTime = System.nanoTime();
+				long totalTime = endTime - startTime;
+				System.out.println("total time for leader election to select a new sever - " + totalTime);
 			}
 		}
 		return result;
@@ -244,11 +248,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 		try {
 
-			/*
-			 * if (!logMap.isEmpty()) { //should be remove due to the server can restart int
-			 * index = serverlist.indexOf(currServer);// remove the server that unable to
-			 * run temp serverlist.remove(index); }
-			 */
 			for (int i = 0; i < serverlist.size(); i++) {
 				// rank them by the faster server speed
 				long startTime = System.nanoTime();
@@ -367,7 +366,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				con.close();
 			}
 		} catch (SQLException | ClassNotFoundException e) {
-			// e.printStackTrace();
+			 e.printStackTrace();
 		}
 		return result;
 	}
