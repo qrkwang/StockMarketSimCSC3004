@@ -184,6 +184,7 @@ public class HKDbScript {
 			// its a buy order
 
 			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(true, stockId, price);
+			// If return no entries for matching
 			if (fetchedOrders == null) {
 				// No orders to match with, he want to buy but there's no one selling under his
 				// buy price or equals to
@@ -199,23 +200,72 @@ public class HKDbScript {
 				stmt.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
 
 				ResultSet rs = stmt.executeQuery();
+				System.out.println(rs);
 
-				while (rs.next()) {
-					System.out.println(rs.getString(1));
-
-				}
 				return "success";
 
 			} else {
-				//if there are orders fetched for matching.
-				
+				// if there are orders fetched for matching.
+				// if got orders that has lower or same sell price than my buy price => matching
+				// need to find enough quantity first, if not enough then make a new order
+				// later.
+				// remember to minus quantity and
+
+				/*
+				 * If the buy price is higher than the lowest sell order, find the closest lower
+				 * few sell order that can match up to the quantity. (a) If it can match the
+				 * quantity, close those that can match, take note of avg price, then minus the
+				 * quantity of the last matched order. If the quantity becomes 0, delete that
+				 * order too. Lastly, create marketComplete entry (b) If cannot match the
+				 * quantity, minus the last closest lower few sell order quantity, create a new
+				 * market pending order with the quantity amount that’s left with buy order
+				 * price.
+				 */
+				int quantity = 0;
+				int buyOrderQuantity = qty;
+				int lastOrderQty;
+//				int counter = 0;
+				ArrayList<Integer> orderIds = new ArrayList<Integer>(); // get list of order IDs so later can use for
+																		// updating them in DB.
+
+				// add up the quantity of matched and see enough for my buy order or not.
+				for (int i = 0; i < fetchedOrders.size(); i++) {
+					MarketPending order = fetchedOrders.get(i);
+					// do everything in this loop
+					// minus my quantity here and see how much left.
+					// avg the price throughout when minus quantity?
+					if (buyOrderQuantity <= 0) { // If buyOrderQuantity reached 0 or lesser, break the loop.
+						break;
+					}
+
+					if (order.getQuantity() <= buyOrderQuantity) { // if the fetched order quantity is smaller or equal
+																	// to buyorderquantity
+						buyOrderQuantity -= order.getQuantity();
+						orderIds.add(order.getMarketPendingId());
+
+					} else if (order.getQuantity() > buyOrderQuantity) { // if fetched order qty bigger than
+																			// buyOrderQuantity
+//						lastOrderQty = order.
+
+					} else {
+
+					}
+					quantity += order.getQuantity();
+					System.out.println(quantity);
+
+				}
+
+				// check if my buy price higher than sell price
+
 			}
 
 			fetchedOrders.forEach(item -> {
 				System.out.println(item);
 			});
 
-		} else {
+		} else
+
+		{
 			// its a sell order
 			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(false, stockId, price);
 			if (fetchedOrders == null) {
@@ -233,14 +283,11 @@ public class HKDbScript {
 				stmt.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
 
 				ResultSet rs = stmt.executeQuery();
+				System.out.println(rs);
 
-				while (rs.next()) {
-					System.out.println(rs.getString(1));
-
-				}
 			} else {
-				//if there are orders fetched for matching.
-				
+				// if there are orders fetched for matching.
+
 			}
 			fetchedOrders.forEach(item -> {
 				System.out.println(item);
