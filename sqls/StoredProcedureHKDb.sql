@@ -204,7 +204,7 @@ FROM marketpending
 where StockId = inputStockId
 AND BuyerId is null 
 AND Price <= inputPrice
-ORDER BY Price;
+ORDER BY Price DESC;
 
 END$$
 DELIMITER ;
