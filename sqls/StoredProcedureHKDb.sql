@@ -202,7 +202,7 @@ BEGIN
 SELECT * 
 FROM marketpending
 where StockId = inputStockId
-AND SellerId is null 
+AND BuyerId is null 
 AND Price <= inputPrice
 ORDER BY Price;
 
@@ -221,7 +221,7 @@ BEGIN
 SELECT * 
 FROM marketpending
 where StockId = inputStockId
-AND BuyerId is null 
+AND SellerId is null 
 AND Price >= inputPrice
 ORDER BY Price;
 
