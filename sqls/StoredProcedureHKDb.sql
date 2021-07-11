@@ -42,7 +42,7 @@ IN stockId Int, In sellerId Int, In buyerId Int, In quantity Int, In price Doubl
 )
 BEGIN
 
-INSERT INTO marketPending (StockId, SellerId, BuyerId, Quantity, Price, CreatedDate)
+INSERT INTO marketpending (StockId, SellerId, BuyerId, Quantity, Price, CreatedDate)
 VALUES(stockId,sellerId, buyerId, quantity,price, createdDate);
 
 END$$

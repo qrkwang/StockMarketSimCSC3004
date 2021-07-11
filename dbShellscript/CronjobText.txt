@@ -16,6 +16,8 @@ File SGPart 2 will be send to SG Server
 /5 * * * * bash SGServerBackup.sh -a SGStockMarket -b root -c root -d SGPart1.sql -e joy@192.168.1.18:/home/joy/SGPart1.sql -f SGPart2.sql -g joy@192.168.1.16:/home/joy/SGPart2.sql
 
 For HK Server:
+File HKPart 1 will be send to US Server
+File HKPart 2 will be send to SG Server
 */5 * * * * bash HKServerBackup.sh -a HKStockMarket -b root -c root -d HKPart1.sql -e joy@192.168.1.16:/home/joy/HKPart1.sql -f HKPart2.sql -g joy@192.168.1.17:/home/joy/HKPart2.sql
 
 

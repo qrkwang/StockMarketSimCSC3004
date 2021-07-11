@@ -26,7 +26,6 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	}
 
 	public void setUp() throws Exception , RemoteException {
-		System.out.println("runnning set up claassssssssssssssssssssssssssssssssssssss heeeeeeeeeeeeeeeeeeeeee");
 		int port = 1099;
 		try {
 			RemoteServer server = new RemoteServer();
@@ -121,7 +120,6 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		//String sendOrder(int accountId, String market, String order)
 	}
 	
 	@Test
@@ -148,7 +146,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 			Assert.assertNotEquals("Fail to get back the stock market", getStock ,"empty");
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
-		//	e.printStackTrace();
+			e.printStackTrace();
 		}
 	}
 	
@@ -162,7 +160,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 			Assert.assertEquals("Fail to get back the sotck market", getStock , "error fetching");	
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
-		//	e.printStackTrace();
+			e.printStackTrace();
 		}
 	}
 
