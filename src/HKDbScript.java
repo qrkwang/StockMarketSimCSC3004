@@ -86,6 +86,130 @@ public class HKDbScript {
 
 	}
 
+	public void deleteMarketPendingOrder(int id) throws SQLException {
+		Connection con = null;
+
+		try {
+			Class.forName(DRIVER_CLASS);
+			con = (Connection) DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+			System.out.println("Connected to DB");
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+
+		}
+
+		String query = "{CALL DeleteMarketPending(?)}";
+		CallableStatement stmt = con.prepareCall(query); // prepare to call
+		stmt.setInt(1, id);
+
+		ResultSet rs = stmt.executeQuery();
+		System.out.println(rs);
+	}
+
+	public void updateLastMatchedMarketPendingOrder(int id, int lastQty) throws SQLException {
+		Connection con = null;
+
+		try {
+			Class.forName(DRIVER_CLASS);
+			con = (Connection) DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+			System.out.println("Connected to DB");
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+
+		}
+
+		String query = "{CALL UpdateMarketPendingQuantity(?, ?)}";
+		CallableStatement stmt = con.prepareCall(query); // prepare to call
+		stmt.setInt(1, id);
+		stmt.setInt(2, lastQty);
+
+		ResultSet rs = stmt.executeQuery();
+		System.out.println(rs);
+	}
+
+	public void addMarketCompleteOrder(boolean isBuy, int stockId, int sellerId, int buyerId, int totalQty,
+			float avgPrice) throws SQLException {
+		Connection con = null;
+
+		try {
+			Class.forName(DRIVER_CLASS);
+			con = (Connection) DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+			System.out.println("Connected to DB");
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+
+		}
+		String query = "{CALL InsertToMarketComplete(?,?,?,?,?,?)}";
+		CallableStatement stmt = con.prepareCall(query); // prepare to call
+		stmt.setInt(1, stockId);
+		stmt.setNull(2, Types.NULL);
+		stmt.setInt(3, buyerId);
+		stmt.setInt(4, totalQty);
+		stmt.setFloat(5, avgPrice);
+		stmt.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
+
+		ResultSet rs = stmt.executeQuery();
+		System.out.println(rs);
+
+	}
+
+	private void addMarketPendingOrder(boolean isBuy, int stockId, int transactionAccId, int totalQty, float avgPrice)
+			throws SQLException {
+		Connection con = null;
+
+		try {
+			Class.forName(DRIVER_CLASS);
+			con = (Connection) DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+			System.out.println("Connected to DB");
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+
+		}
+		String query = "{CALL InsertToMarketPending(?,?,?,?,?,?)}";
+		CallableStatement stmt = con.prepareCall(query); // prepare to call
+		stmt.setInt(1, stockId);
+		if (isBuy) {
+			stmt.setNull(2, Types.NULL);
+			stmt.setInt(3, transactionAccId);
+
+		} else {
+			stmt.setNull(2, transactionAccId);
+			stmt.setInt(3, Types.NULL);
+		}
+		stmt.setInt(4, totalQty);
+		stmt.setFloat(5, avgPrice);
+		stmt.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
+
+		ResultSet rs = stmt.executeQuery();
+		System.out.println(rs);
+
+	}
+
+	private void closeMarketPendingOrder(int marketPendingId, int buyerId) throws SQLException {
+		Connection con = null;
+
+		try {
+			Class.forName(DRIVER_CLASS);
+			con = (Connection) DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+			System.out.println("Connected to DB");
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+
+		}
+		String query = "{CALL CloseSellMarketPendingOrders(?,?)}";
+		CallableStatement stmt = con.prepareCall(query); // prepare to call
+
+		stmt.setInt(1, marketPendingId);
+		stmt.setInt(2, buyerId);
+		ResultSet rs = stmt.executeQuery();
+		System.out.println(rs);
+	}
+
 	public ArrayList<MarketPending> retrieveOrdersToMatch(boolean isBuy, int stockId, float orderPrice)
 			throws SQLException {
 		Connection con = null;
@@ -117,8 +241,6 @@ public class HKDbScript {
 					retrievedOrders = new ArrayList<MarketPending>(); // initialize arraylist if results to be found
 
 				}
-				// see if can split into 2 and then return the corresponding arraylist for it.
-
 				java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("CreatedDate");
 				LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
 				MarketPending marketOrder = new MarketPending(rs.getInt("MarketPendingId"), rs.getInt("StockId"),
@@ -205,57 +327,83 @@ public class HKDbScript {
 				return "success";
 
 			} else {
-				// if there are orders fetched for matching.
-				// if got orders that has lower or same sell price than my buy price => matching
-				// need to find enough quantity first, if not enough then make a new order
-				// later.
-				// remember to minus quantity and
 
-				/*
-				 * If the buy price is higher than the lowest sell order, find the closest lower
-				 * few sell order that can match up to the quantity. (a) If it can match the
-				 * quantity, close those that can match, take note of avg price, then minus the
-				 * quantity of the last matched order. If the quantity becomes 0, delete that
-				 * order too. Lastly, create marketComplete entry (b) If cannot match the
-				 * quantity, minus the last closest lower few sell order quantity, create a new
-				 * market pending order with the quantity amount that’s left with buy order
-				 * price.
-				 */
-				int quantity = 0;
 				int buyOrderQuantity = qty;
-				int lastOrderQty;
-//				int counter = 0;
+				int lastOrderQty = 0;
+				float avgPrice = 0; // average price throughout the filled orders
+
 				ArrayList<Integer> orderIds = new ArrayList<Integer>(); // get list of order IDs so later can use for
 																		// updating them in DB.
 
-				// add up the quantity of matched and see enough for my buy order or not.
+				// minus the quantity per order and then execute the update in SQL.
 				for (int i = 0; i < fetchedOrders.size(); i++) {
+					float moneyPaid = 0;
+					int totalQtyStocks = 0;
 					MarketPending order = fetchedOrders.get(i);
-					// do everything in this loop
+
 					// minus my quantity here and see how much left.
-					// avg the price throughout when minus quantity?
-					if (buyOrderQuantity <= 0) { // If buyOrderQuantity reached 0 or lesser, break the loop.
+					// avg the price throughout when minus quantity
+					if (buyOrderQuantity <= 0) { // If buyOrderQuantity reached 0 or lesser, break the loop. Don't
+													// search for more orders anymore.
+						avgPrice = moneyPaid / totalQtyStocks;
 						break;
 					}
 
 					if (order.getQuantity() <= buyOrderQuantity) { // if the fetched order quantity is smaller or equal
 																	// to buyorderquantity
+
 						buyOrderQuantity -= order.getQuantity();
-						orderIds.add(order.getMarketPendingId());
+						moneyPaid += order.getPrice() * order.getQuantity(); // accumulate the money paid by adding it
+																				// per order.
+						totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks bought by adding it
+																// per order.
+
+						orderIds.add(order.getMarketPendingId()); // keep array list of order ID so later can update
+																	// those orders through SQL.
 
 					} else if (order.getQuantity() > buyOrderQuantity) { // if fetched order qty bigger than
 																			// buyOrderQuantity
-//						lastOrderQty = order.
 
+						lastOrderQty = order.getQuantity() - buyOrderQuantity;
+						buyOrderQuantity = 0; // make buy order quantity 0 to break the loop, so will stop looking for
+						// more matches
+						moneyPaid += order.getPrice() * order.getQuantity(); // accumulate the money paid by adding it
+						// per order.
+						totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks bought by adding it
+						// per order.
+						orderIds.add(order.getMarketPendingId()); // keep array list of order ID so later can update
+						// those orders through SQL.
 					} else {
-
+						// Shouldn't reach here at all.
 					}
-					quantity += order.getQuantity();
-					System.out.println(quantity);
-
 				}
 
-				// check if my buy price higher than sell price
+				for (int i = 0; i < orderIds.size(); i++) { // loop through order IDs and update / delete them
+															// indicating match.
+					if (i == orderIds.size() - 1) {
+						// once reach last item, check if lastOrderQty has any value. If have, update
+						// the last order with that qty.
+
+						if (lastOrderQty != 0) {
+							// update last order here with that qty, call SQL function.
+							updateLastMatchedMarketPendingOrder(orderIds.get(i), lastOrderQty);
+						}
+					}
+					// call delete order function here. after deleting also need to add
+					// marketcomplete with same information with additional buyerId.
+//					deleteMarketPendingOrder(orderIds.get(i));
+					// add marketcomplete with same information but with additional buyerId
+
+					// call closemarketpendingOrder
+					closeMarketPendingOrder(orderIds.get(i), buyerId); // this will delete marketpending entries and create corresponding marketcomplete entries with buyerId.
+				}
+
+				if (buyOrderQuantity != 0) {
+					// means that the order cannot be fulfilled fully, still need more quantity,
+					// will create a new marketpending order for the rest of the qty.
+
+				}
+				// update the user account values.
 
 			}
 
