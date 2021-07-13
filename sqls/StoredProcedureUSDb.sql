@@ -260,5 +260,38 @@ VALUES(@stockId,@sellerId, inputBuyerId, @quantity,@price, now());
 END$$
 DELIMITER ;
 
+USE `USStockMarket`;
+DROP PROCEDURE IF EXISTS `closeBuyMarketPendingOrders`;
+
+DELIMITER $$
+
+USE `USStockMarket`$$
+CREATE PROCEDURE `closeBuyMarketPendingOrders` (In inputMarketPendingId int, In inputSellerId int)
+BEGIN
+SELECT @buyerId := BuyerId 
+FROM marketpending 
+WHERE MarketPendingId = inputMarketPendingId;
+
+SELECT @stockId := StockId 
+FROM marketpending 
+WHERE MarketPendingId = inputMarketPendingId;
+
+SELECT @quantity := Quantity 
+FROM marketpending 
+WHERE MarketPendingId = inputMarketPendingId;
+
+SELECT @price := Price 
+FROM marketpending
+WHERE MarketPendingId = inputMarketPendingId;
+
+DELETE FROM marketpending 
+where MarketPendingId = inputMarketPendingId;
+
+INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
+VALUES(@stockId, inputSellerId, @buyerId, @quantity,@price, now());
+
+END$$
+DELIMITER ;
+
 
 
