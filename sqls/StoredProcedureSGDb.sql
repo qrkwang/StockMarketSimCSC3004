@@ -230,5 +230,38 @@ ORDER BY Price;
 END$$
 DELIMITER ;
 
+USE `SGStockMarket`;
+DROP PROCEDURE IF EXISTS `closeSellMarketPendingOrders`;
+
+DELIMITER $$
+
+USE `SGStockMarket`$$
+CREATE PROCEDURE `closeSellMarketPendingOrders` (In inputMarketPendingId int, In inputBuyerId int)
+BEGIN
+SELECT @sellerId := SellerId 
+FROM marketpending 
+WHERE MarketPendingId = inputMarketPendingId;
+
+SELECT @stockId := StockId 
+FROM marketpending 
+WHERE MarketPendingId = inputMarketPendingId;
+
+SELECT @quantity := Quantity 
+FROM marketpending 
+WHERE MarketPendingId = inputMarketPendingId;
+
+SELECT @price := Price 
+FROM marketpending
+WHERE MarketPendingId = inputMarketPendingId;
+
+DELETE FROM marketpending 
+where MarketPendingId = inputMarketPendingId;
+
+INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
+VALUES(@stockId,@sellerId, inputBuyerId, @quantity,@price, now());
+
+END$$
+DELIMITER ;
+
 
 
