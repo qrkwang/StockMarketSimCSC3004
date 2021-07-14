@@ -384,28 +384,30 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		ObjectMapper objectMapper = new ObjectMapper();
 
 		try {
-			String resAccountDetail = accountDetailsDb.getAccountDetails(username);
+			String resAccountDetail = accountDetailsDb.getAccountDetails(username, pw);
 			System.out.println("result from db script" + resAccountDetail);
 			if (resAccountDetail == "not found") {
 				return "not found";
 			}
 			JsonNode jsonNodeRoot = objectMapper.readTree(resAccountDetail);
-			JsonNode jsonNodePW = jsonNodeRoot.get("password");
+//			JsonNode jsonNodePW = jsonNodeRoot.get("password");
 			JsonNode jsonNodeAccountId = jsonNodeRoot.get("accountId");
-			String password = jsonNodePW.asText();
+//			String password = jsonNodePW.asText();
 			int accountId = Integer.parseInt(jsonNodeAccountId.asText());
-
-			System.out.println(password);
-
-			if (password.equals(pw)) {
-				System.out.println("passwword match");
-				addToClientHashMap(cc, accountId);
-				return resAccountDetail;
-			} else {
-				System.out.println("passwword not match");
-
-				return "wrong pw";
-			}
+//
+//			System.out.println(password);
+//
+//			if (password.equals(pw)) {
+//				System.out.println("passwword match");
+//				addToClientHashMap(cc, accountId);
+//				return resAccountDetail;
+//			} else {
+//				System.out.println("passwword not match");
+//
+//				return "wrong pw";
+//			}
+			addToClientHashMap(cc, accountId);
+			return resAccountDetail;
 		} catch (SQLException | JsonProcessingException e) {
 			// TODO Auto-generated catch block
 			System.out.println("sql or json processing exception");
