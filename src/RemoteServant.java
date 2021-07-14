@@ -58,6 +58,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private Jedis jedis;
 	private HashMap<String, Long> lastSearchTimestamp;
 	private final String DELIMITER = "|";
+    private enum Market{
+    	SG,
+    	HK,
+    	US
+    }
 
 	public RemoteServant() throws RemoteException {
 		super();
@@ -96,6 +101,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		}
 		startLeaderElectionAlgo();
 		startDataRedundancyAlgo();
+		startCache();
 	}
 	/*
 	 * ----------------------LEADER ELECTION----------------------
@@ -361,7 +367,105 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			return false;
 	}
 	/*
-	 * ----------------------SERVER SERVANT----------------------
+	 * ----------------------CACHING----------------------
+	 * 
+	 */
+	public void startCache() {
+		Thread thread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					while(true) {
+						cacheMarket();
+						checkStockCache();
+						Thread.sleep(60000);
+					}
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	public void cacheMarket() {
+		jedis.set(Market.US.name(), getAllStocksByMarket(Market.US));
+		jedis.set(Market.HK.name(), getAllStocksByMarket(Market.HK));
+		jedis.set(Market.SG.name(), getAllStocksByMarket(Market.SG));
+	}
+	
+	public String retrieveMarketCache(String market, ClientInt client) throws RemoteException {
+		if (jedis.exists(market)) {
+			Thread thread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						Thread.sleep(60000);
+						client.updateMarket(market);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			});
+			return jedis.get(market);
+		}
+		else 
+			return null;
+	}
+	
+	public void checkStockCache() {
+		Iterator it = lastSearchTimestamp.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<String, Long> entry = (Entry<String, Long>) it.next();
+			if (System.currentTimeMillis() - entry.getValue() > 600000) {
+				it.remove();
+			} else {
+				cacheStock(entry.getKey());
+			}
+		}
+	}
+	
+	public String cacheStock(String key) {
+		String[] keySplit = key.split(DELIMITER);
+		String market = keySplit[0];
+		int stockid = Integer.parseInt(keySplit[1]);
+		String value = retrieveCompletedOrders(market, stockid);
+		jedis.set(key, value);
+		return value;
+	}
+	
+	public String retrieveStockCache(String market, int stockid, ClientInt client) throws RemoteException {
+		String key = market + stockid;
+		lastSearchTimestamp.put(key, System.currentTimeMillis());
+		Thread thread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(60000);
+					client.updateStock(market, stockid);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
+		if (jedis.exists(key))
+			return jedis.get(key);
+		else {
+			// Retrieve from database and cache if not found
+			String res = cacheStock(key);
+			return res;
+		}
+	}
+	/*
+	 * ----------------------DATABASE----------------------
 	 * 
 	 */
 	public void addToClientHashMap(ClientInt cc, int accountId) {
@@ -625,117 +729,36 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	@SuppressWarnings("resource")
-	@Override
-	public String getAllStocksByMarket(String market) throws RemoteException {
+	public String getAllStocksByMarket(Market market){
 		StringBuilder sb = new StringBuilder();
-
-		if (market.equals("US")) {
-			try {
-				ArrayList<Stock> arrayListStocks = usaDb.getAllStocks();
-				if (arrayListStocks == null) {
-					return "empty";
-				}
-				// Serialize list of object to string for returning to client.
-				new ObjectOutputStream(new OutputStream() {
-					@Override
-					public void write(int i) throws IOException {
-						sb.append((char) i);
-					}
-				}).writeObject(arrayListStocks);
-				return sb.toString();
-
-			} catch (SQLException | IOException e) {
-				e.printStackTrace();
-				return "error fetching";
+		ArrayList<Stock> arrayListStocks = null;
+		try {
+			if (market.equals(Market.US)) {
+				arrayListStocks = usaDb.getAllStocks();
+			} else if (market.equals(Market.HK)) {
+				arrayListStocks = hkDb.getAllStocks();
+			} else if (market.equals(Market.SG)) {
+				arrayListStocks = sgDb.getAllStocks();
 			}
-		} else if (market.equals("HK")) {
-			try {
-				ArrayList<Stock> arrayListStocks = hkDb.getAllStocks();
-				if (arrayListStocks == null) {
-					return "empty";
-				}
-				// Serialize list of object to string for returning to client.
-				new ObjectOutputStream(new OutputStream() {
-					@Override
-					public void write(int i) throws IOException {
-						sb.append((char) i);
-					}
-				}).writeObject(arrayListStocks);
-				return sb.toString();
-
-			} catch (SQLException | IOException e) {
-				e.printStackTrace();
-				return "error fetching";
+			if (arrayListStocks == null) {
+				return "empty";
 			}
-		} else {
-			// SG
-			try {
-				ArrayList<Stock> arrayListStocks = sgDb.getAllStocks();
-				if (arrayListStocks == null) {
-					return "empty";
+			// Serialize list of object to string for returning to client.
+			new ObjectOutputStream(new OutputStream() {
+				@Override
+				public void write(int i) throws IOException {
+					sb.append((char) i);
 				}
-				// Serialize list of object to string for returning to client.
-				new ObjectOutputStream(new OutputStream() {
-					@Override
-					public void write(int i) throws IOException {
-						sb.append((char) i);
-					}
-				}).writeObject(arrayListStocks);
-				return sb.toString();
+			}).writeObject(arrayListStocks);
 
-			} catch (SQLException | IOException e) {
-				e.printStackTrace();
-				return "error fetching";
-			}
+		} catch (SQLException | IOException e) {
+			e.printStackTrace();
+			return "error fetching";
 		}
+		return sb.toString();
 	}
-
-	public void startCache() {
-		Thread thread = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					checkForCache();
-					Thread.sleep(60000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		});
-	}
-
-	@SuppressWarnings("unchecked")
-	public void checkForCache() {
-		Iterator it = lastSearchTimestamp.entrySet().iterator();
-		while (it.hasNext()) {
-			Entry<String, Long> entry = (Entry<String, Long>) it.next();
-			if (System.currentTimeMillis() - entry.getValue() > 600000) {
-				it.remove();
-			} else {
-				caching(entry.getKey());
-			}
-		}
-	}
-
-	public String caching(String key) {
-		String[] keySplit = key.split(DELIMITER);
-		String market = keySplit[0];
-		int stockid = Integer.parseInt(keySplit[1]);
-		String value = retrieveCompletedOrders(market, stockid);
-		jedis.set(key, value);
-		return value;
-	}
-
-	public String retrieveCache(String market, int stockid) throws RemoteException {
-		String key = market + stockid;
-		lastSearchTimestamp.put(key, System.currentTimeMillis());
-		if (jedis.exists(key))
-			return jedis.get(key);
-		else {
-			// Retrieve from database and cache if not found
-			String res = caching(key);
-			return res;
-		}
-	}
+	/*
+	 * ----------------------RANDOM ORDER GENERATION----------------------
+	 * 
+	 */
 }

@@ -195,5 +195,17 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		// TODO Auto-generated method stub	
 	}
 
+	@Override
+	public void updateMarket(String market, String res) throws RemoteException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void updateStock(String s) throws RemoteException {
+		// TODO Auto-generated method stub
+		
+	}
+
 	
 }

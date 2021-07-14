@@ -7,16 +7,13 @@ public interface RemoteInterface extends Remote {
 	// account stock holdings, polling of stock price per interval (not necessarily
 	// need polling, can be on update) when on that page, stock page orders.
 
-	public String getAllStocksByMarket(String market) throws RemoteException;
-
 	public String getAccountDetailsByUsernameAndPW(ClientInt cc, String username, String pw) throws RemoteException;
-
 	public ArrayList getAccountHoldingsById(int accountId) throws RemoteException;
 
 	public String sendOrder(int accountId, String market, String order) throws RemoteException;
 
 	public void removeFromClientHashMap(int accountId) throws RemoteException;
-
-	public String retrieveCache(String market, int stockid) throws RemoteException;
-
+	
+	public String retrieveMarketCache(String market, ClientInt client)  throws RemoteException;
+	public String retrieveStockCache(String market, int stockid, ClientInt client) throws RemoteException;
 }
