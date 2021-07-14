@@ -19,9 +19,6 @@ public class RemoteServer {
 			Naming.rebind("rmi://localhost:" + port + "/RemoteServer", remoteObj);
 			System.out.format("Advertising completed\n");
 
-			remoteObj.startLeaderElectionAlgo();
-			remoteObj.startDataRedundancyAlgo();
-
 		} catch (Exception e) {
 			System.out.format("export exception - %s\n", e.getMessage());
 			e.printStackTrace();

@@ -61,6 +61,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	public RemoteServant() throws RemoteException {
 		super();
+		System.out.format("Creating server object\n"); // Print to client that server object is being created once
+		// constructor called.
 		accountDetailsDb = new AccountDetailsDbScript(); // Start the RabbitMQ Receiver that's in main method
 		hkDb = new StockDBScript("HKMarket", "localhost:3306", "hkstockmarket"); // Start the RabbitMQ Receiver that's in main method
 		sgDb = new StockDBScript("SGMarket", "localhost:3306", "sgstockmarket"); // Start the RabbitMQ Receiver that's in main method
@@ -77,7 +79,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		accountUser = "a";
 		listServer = new ArrayList<>(Arrays.asList(ACCOUNTSERVER, ACCOUNTSERVER2, ACCOUNTSERVER3));
 		leaseAlive = false;
-
+		
 		jedis = new Jedis();
 		lastSearchTimestamp = new HashMap<String, Long>();
 
@@ -92,14 +94,14 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		System.out.format("Creating server object\n"); // Print to client that server object is being created once
-														// constructor called.
+		startLeaderElectionAlgo();
+		startDataRedundancyAlgo();
 	}
 	/*
 	 * ----------------------LEADER ELECTION----------------------
+	 * 
 	 */
-	public boolean startLeaderElectionAlgo() throws RemoteException {
+	public boolean startLeaderElectionAlgo(){
 		String serverNo = null;
 		boolean result = false;
 		long startTime = System.nanoTime();
@@ -260,8 +262,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 	/*
 	 * ----------------------DATA REDUNDANCY----------------------
+	 * 
 	 */
-	public void startDataRedundancyAlgo() throws RemoteException {
+	public void startDataRedundancyAlgo(){
 
 		String failedServer = null;
 		boolean usRequiredRecovery = false;
@@ -359,6 +362,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 	/*
 	 * ----------------------SERVER SERVANT----------------------
+	 * 
 	 */
 	public void addToClientHashMap(ClientInt cc, int accountId) {
 		clientHashMap.put(accountId, cc);
