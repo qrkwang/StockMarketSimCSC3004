@@ -45,7 +45,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		try {
 			algoResult = remoteObj.startLeaderElectionAlgo();
 			System.out.println("testing inside");
-			Assert.assertFalse("Fail to run the leader election (no leader server is selected)",algoResult);	
+			Assert.assertTrue("Fail to run the leader election (no leader server is selected)",algoResult);	
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -61,7 +61,8 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		String pw = "";
 		try {
 			String accountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc,  username, pw);
-			Assert.assertFalse("Fail to get accountDetails", accountDetails.isEmpty());	
+			Assert.assertTrue("Fail to get accountDetails", accountDetails.matches("not found"));	
+			Assert.assertTrue("Fail to get accountDetails", accountDetails.matches("problem"));		
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -73,7 +74,8 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		String pw = "password";
 		try {
 			String accountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc,  username, pw);
-			Assert.assertFalse("Fail to get accountDetails", accountDetails.isEmpty());	
+			Assert.assertFalse("Fail to get accountDetails", accountDetails.matches("not found"));	
+			Assert.assertFalse("Fail to get accountDetails", accountDetails.matches("problem"));
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -108,33 +110,6 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		}
 	}
 
-	@Test
-	public void testSendOrder_TrueCondition() {
-		int accountId = 2;
-		String market = "HK";
-		String order = "5,-1,2,100,23.3";
-		try {
-		String orderDetails = remoteObj.sendOrder(accountId, market, order);		
-			Assert.assertNull("Unable to send the current order", orderDetails);	
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	@Test
-	public void testSendOrder_FalseCondition() {
-		int accountId = 0;
-		String market = "JP";
-		String order = "5,-1,2,100,23.3";
-		try {
-		String orderDetails = remoteObj.sendOrder(accountId, market, order);		
-			Assert.assertNotNull("Order is sended", orderDetails);	
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
 
 	@Test
 	public void testgetAllStocksByMarket_TrueCondition() {
@@ -142,7 +117,6 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		String getStock;
 		try {
 			getStock = remoteObj.getAllStocksByMarket(market);
-		
 			Assert.assertNotEquals("Fail to get back the stock market", getStock ,"empty");
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
@@ -152,10 +126,11 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	
 	@Test
 	public void testgetAllStocksByMarket_FailCondition() {
-		String market = "Test";
+		String market = "tttttttttt";
 		String getStock;
 		try {
 			getStock = remoteObj.getAllStocksByMarket(market);
+			System.out.println("printttttttttttttttt heeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeere  +" + getStock);
 			Assert.assertEquals("Stock Market is current empty", getStock , "empty");	
 			Assert.assertEquals("Fail to get back the sotck market", getStock , "error fetching");	
 		} catch (RemoteException e) {
