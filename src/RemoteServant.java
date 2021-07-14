@@ -38,9 +38,9 @@ import redis.clients.jedis.Jedis;
 
 public class RemoteServant extends UnicastRemoteObject implements RemoteInterface {
 	private AccountDetailsDbScript accountDetailsDb;
-	private HKDbScript hkDb;
-	private SGDbScript sgDb;
-	private USADbScript usaDb;
+	private StockDBScript hkDb;
+	private StockDBScript sgDb;
+	private StockDBScript usaDb;
 	private HashMap<Integer, ClientInt> clientHashMap; // accountId and clientInterface
 
 	private HashMap<String, Integer> logMap; // for log (will be server name and generation number)
@@ -62,9 +62,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	public RemoteServant() throws RemoteException {
 		super();
 		accountDetailsDb = new AccountDetailsDbScript(); // Start the RabbitMQ Receiver that's in main method
-		hkDb = new HKDbScript(); // Start the RabbitMQ Receiver that's in main method
-		sgDb = new SGDbScript(); // Start the RabbitMQ Receiver that's in main method
-		usaDb = new USADbScript(); // Start the RabbitMQ Receiver that's in main method
+		hkDb = new StockDBScript("HKMarket", "localhost:3306", "hkstockmarket"); // Start the RabbitMQ Receiver that's in main method
+		sgDb = new StockDBScript("SGMarket", "localhost:3306", "sgstockmarket"); // Start the RabbitMQ Receiver that's in main method
+		usaDb = new StockDBScript("USMarket", "localhost:3306", "usstockmarket"); // Start the RabbitMQ Receiver that's in main method
 		clientHashMap = new HashMap<Integer, ClientInt>();
 		logMap = new HashMap<String, Integer>(); // for log (will be server name and generation number)
 //		USSERVERIPADDRESS = "192.168.43.185";
