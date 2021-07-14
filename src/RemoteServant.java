@@ -45,13 +45,13 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	private HashMap<String, Integer> logMap; // for log (will be server name and generation number)
 	private List<String> listServer;
-	private String accountServer;
-	private String accountServer2;
-	private String accountServer3;
+	private final static String ACCOUNTSERVER = "192.168.43.250"; //192.168.87.54
+	private final static String ACCOUNTSERVER2 = "192.168.43.168"; //192.168.87.55
+	private final static String ACCOUNTSERVER3 = "192.168.43.199"; //192.168.87.56
 	private String accountUser;
-	private static String USServerIPAddress;
-	private static String SGServerIPAddress;
-	private static String HKServerIPAddress;
+	private final static String USSERVERIPADDRESS = "192.168.43.185";
+	private final static String SGSERVERIPADDRESS = "192.168.43.210";
+	private final static String HKSERVERIPADDRESS = "192.168.43.74";
 
 	private boolean leaseAlive;
 
@@ -67,15 +67,15 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		usaDb = new USADbScript(); // Start the RabbitMQ Receiver that's in main method
 		clientHashMap = new HashMap<Integer, ClientInt>();
 		logMap = new HashMap<String, Integer>(); // for log (will be server name and generation number)
-		USServerIPAddress = "192.168.43.185";
-		SGServerIPAddress = "192.168.43.210";
-		HKServerIPAddress = "192.168.43.74";
-
-		accountServer = "192.168.43.250";  //192.168.87.54
-		accountServer2 = "192.168.43.168";   //192.168.87.55
-		accountServer3 = "192.168.43.199";   //192.168.87.56
+//		USSERVERIPADDRESS = "192.168.43.185";
+//		SGSERVERIPADDRESS = "192.168.43.210";
+//		HKSERVERIPADDRESS = "192.168.43.74";
+//
+//		ACCOUNTSERVER = "192.168.43.250";  //192.168.87.54
+//		ACCOUNTSERVER2 = "192.168.43.168";   //192.168.87.55
+//		ACCOUNTSERVER3 = "192.168.43.199";   //192.168.87.56
 		accountUser = "a";
-		listServer = new ArrayList<>(Arrays.asList(accountServer, accountServer2, accountServer3));
+		listServer = new ArrayList<>(Arrays.asList(ACCOUNTSERVER, ACCOUNTSERVER2, ACCOUNTSERVER3));
 		leaseAlive = false;
 
 		jedis = new Jedis();
@@ -172,21 +172,21 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 		while (true) {
 			try {
-				if (sendPingRequest(USServerIPAddress) == false) {
+				if (sendPingRequest(USSERVERIPADDRESS) == false) {
 					failedServer = "US";
 					System.out.println("Cannot ping US");
 					usaDb.setOnline(false);
 				} else {
 					usaDb.setOnline(true);
 				}
-				if (sendPingRequest(SGServerIPAddress) == false) {
+				if (sendPingRequest(SGSERVERIPADDRESS) == false) {
 					failedServer = "SG";
 					System.out.println("Cannot ping SG");
 					sgDb.setOnline(false);
 				} else {
 					sgDb.setOnline(true);
 				}
-				if (sendPingRequest(HKServerIPAddress) == false) {
+				if (sendPingRequest(HKSERVERIPADDRESS) == false) {
 					failedServer = "HK";
 					System.out.println("Cannot ping HK");
 					hkDb.setOnline(false);
