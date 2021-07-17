@@ -23,23 +23,25 @@ import classes.StockOwned;
 public class StockDBScript {
 	private boolean isOnline = true; // will be true unless algo detected offline in RemoteServant.java
 	private ClientInt currentClientInt;
-	private static String queue_name;
-	public static final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
-	private static final String USERNAME = "root";
-	private static final String PASSWORD = "root";
-	private static String conn_string; // jdbc:mysql://ip:3306/DBNAME
+	private String queue_name;
+	public final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
+	private String username;
+	private String password;
+	private String conn_string; // jdbc:mysql://ip:3306/DBNAME
 
 //	public StockDBScript() {
 //		this.queue_name = "";
 //		this.conn_string = "";
 //	}
 
-	public StockDBScript(String qn, String ip, String dbname) {
-		StockDBScript.queue_name = qn;
-		StockDBScript.conn_string = "jdbc:mysql://" + ip + "/" + dbname;
+	public StockDBScript(String qn, String ip, String dbname, String u, String p) {
+		this.queue_name = qn;
+		this.conn_string = "jdbc:mysql://" + ip + "/" + dbname;
+		this.username = u;
+		this.password = p;
 	}
 
-	public static void setConnString(String ipandPort, String dbName) {
+	public void setConnString(String ipandPort, String dbName) {
 		conn_string = "jdbc:mysql//" + ipandPort + dbName;
 	}
 
@@ -99,7 +101,7 @@ public class StockDBScript {
 
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
+			con = (Connection) DriverManager.getConnection(conn_string, username, password);
 			System.out.println("Connected to DB");
 
 			String query = "{CALL DeleteMarketPending(?)}";
@@ -121,7 +123,7 @@ public class StockDBScript {
 
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
+			con = (Connection) DriverManager.getConnection(conn_string, username, password);
 			System.out.println("Connected to DB");
 
 			String query = "{CALL UpdateMarketPendingQuantity(?, ?)}";
@@ -145,7 +147,7 @@ public class StockDBScript {
 
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
+			con = (Connection) DriverManager.getConnection(conn_string, username, password);
 			System.out.println("Connected to DB");
 
 			String query = "{CALL InsertToMarketComplete(?,?,?,?,?,?)}";
@@ -173,7 +175,7 @@ public class StockDBScript {
 
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
+			con = (Connection) DriverManager.getConnection(conn_string, username, password);
 			System.out.println("Connected to DB");
 
 			String query = "{CALL InsertToMarketPending(?,?,?,?,?,?)}";
@@ -205,7 +207,7 @@ public class StockDBScript {
 
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
+			con = (Connection) DriverManager.getConnection(conn_string, username, password);
 			System.out.println("Connected to DB");
 
 			String query = "{CALL CloseSellMarketPendingOrders(?,?)}";
@@ -228,7 +230,7 @@ public class StockDBScript {
 		ArrayList<MarketPending> retrievedOrders = null;
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
+			con = (Connection) DriverManager.getConnection(conn_string, username, password);
 			System.out.println("Connected to DB");
 
 			if (isBuy) {
@@ -306,7 +308,7 @@ public class StockDBScript {
 
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
+			con = (Connection) DriverManager.getConnection(conn_string, username, password);
 			System.out.println("Connected to DB");
 
 			if (sellerId == -1 && buyerId != -1) {
@@ -485,7 +487,7 @@ public class StockDBScript {
 		Connection con = null;
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
+			con = (Connection) DriverManager.getConnection(conn_string, username, password);
 			System.out.println("Connected to DB");
 
 			String query = "{CALL getTotalHoldingsByAccountId(?)}";
@@ -524,7 +526,7 @@ public class StockDBScript {
 		Connection con = null;
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
+			con = (Connection) DriverManager.getConnection(conn_string, username, password);
 			System.out.println("Connected to DB");
 
 			String query = "{CALL getAllStocks}";
@@ -563,7 +565,7 @@ public class StockDBScript {
 		Connection con = null;
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
+			con = (Connection) DriverManager.getConnection(conn_string, username, password);
 			System.out.println("Connected to DB");
 
 			String query = "{CALL getOrdersByStockId(?)}";
@@ -620,7 +622,7 @@ public class StockDBScript {
 		Connection con = null;
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
+			con = (Connection) DriverManager.getConnection(conn_string, username, password);
 			System.out.println("Connected to DB");
 
 			String query = "{CALL getOrdersCompletedByStockId(?)}";
