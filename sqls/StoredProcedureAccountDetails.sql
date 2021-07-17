@@ -3,8 +3,8 @@ DROP procedure IF EXISTS `getAccountDetailsByUsernameAndPw`;
 
 DELIMITER $$
 
-USE AccountDetailsServer;
-CREATE PROCEDURE getAccountDetailsByUsernameAndPassword(IN inputUsername varchar(50), IN inputPassword varchar(50))
+-- USE AccountDetailsServer;
+CREATE PROCEDURE getAccountDetailsByUsernameAndPw(IN inputUsername varchar(50), IN inputPassword varchar(50))
 BEGIN
 	SELECT * FROM account WHERE userName = inputUsername AND password = inputPassword;
 END $$
@@ -62,7 +62,7 @@ DROP procedure IF EXISTS `addAccountSecurityValue`;
 
 DELIMITER $$
 
-#USE AccountDetailsServer;  uncomment if need
+-- USE AccountDetailsServer;  
 
 CREATE PROCEDURE addAccountSecurityValue(IN accountInputId INT , IN accountValueAdd INT)
 BEGIN
