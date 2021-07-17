@@ -260,6 +260,9 @@ where MarketPendingId = inputMarketPendingId;
 INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
 VALUES(@stockId,@sellerId, inputBuyerId, @quantity,@price, now());
 
+
+UPDATE stock SET CurrentValue = @price WHERE StockId = @stockId;
+
 END$$
 DELIMITER ;
 
@@ -292,6 +295,9 @@ where MarketPendingId = inputMarketPendingId;
 
 INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
 VALUES(@stockId, inputSellerId, @buyerId, @quantity,@price, now());
+
+
+UPDATE stock SET CurrentValue = @price WHERE StockId = @stockId;
 
 END$$
 DELIMITER ;
