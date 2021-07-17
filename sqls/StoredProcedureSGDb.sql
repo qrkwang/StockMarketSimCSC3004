@@ -302,5 +302,23 @@ UPDATE stock SET CurrentValue = @price WHERE StockId = @stockId;
 END$$
 DELIMITER ;
 
+USE `SGStockMarket`;
+DROP PROCEDURE IF EXISTS `getTop5CompletedOrderByStockId`;
+
+DELIMITER $$
+USE `SGStockMarket`$$
+
+CREATE PROCEDURE `getTop5CompletedOrderByStockId`(IN inputStockId int)
+BEGIN
+
+SELECT FORMAT(Avg(Price),2) as averagePrice
+FROM  (Select Price
+FROM marketcompleted 
+where StockId = inputStockId
+ORDER BY TransactionDate desc limit 5) P;
+
+END$$
+DELIMITER ;
+
 
 

@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Random;
 
 import com.mysql.jdbc.Connection;
 import com.rabbitmq.client.Channel;
@@ -731,5 +732,110 @@ public class StockDBScript {
 		con.close();
 		return arrayListOrders;
 	}
+	
+	public double getAvgCompletedOrder(int stockId) throws SQLException {
+		Connection con = null;
+		double averagePrice = 0;
+		
+		try {
+			Class.forName(DRIVER_CLASS);
+			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
+			System.out.println("Connected to DB");
+
+			String query = "{CALL getTop5CompletedOrderByStockId(?)}";
+			CallableStatement stmt = con.prepareCall(query); // prepare to call
+			stmt.setInt(1, stockId); // Set the parameter
+			
+			ResultSet rs = stmt.executeQuery();
+			if(rs.next())
+			{
+				averagePrice = rs.getDouble("averagePrice");
+			}
+		}
+		catch(ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		con.close();
+		
+		return averagePrice;
+	}
+	
+	public double randomInRange(double min, double max) {
+		  Random random = new Random();
+		  double range = max - min;
+		  double scaled = random.nextDouble() * range;
+		  double shifted = scaled + min;
+		  return shifted; 
+	}
+	
+	public void dbRandomOrderGeneration() {
+		ArrayList<Stock> arrayListStocks = null;
+		try {
+			arrayListStocks = getAllStocks();
+			
+			boolean buyOrSell = false;
+			boolean randomSign = false;
+			int quantity = 0;
+			Random rd = new Random();
+	
+			for (Stock stock :arrayListStocks) {
+				for(int i = 0; i <20; i++) {
+					double offsetValue = 0;
+					double averagePrice = 0;
+					String formattedPrice = "";
+					StringBuilder message = new StringBuilder("");
+					//buy = 0, sell = 1
+					buyOrSell = rd.nextBoolean();
+					//Get the average price of top 5 per stock
+					averagePrice = getAvgCompletedOrder(stock.getStockId());
+					if (averagePrice < 10) {
+						offsetValue = randomInRange(0,0.1);	
+					}
+					else if(averagePrice >= 10 && averagePrice < 100) {
+						offsetValue = randomInRange(0,0.2);	
+					}
+					else {
+						offsetValue = randomInRange(0,0.5);	
+					}
+					// true = + , false = -
+					randomSign = rd.nextBoolean();
+					//Generate new quantity
+					quantity = rd.nextInt(50);
+					System.out.println("OffsetValue " + offsetValue);
+					System.out.println(averagePrice);
+					formattedPrice = String.format("%.2f", averagePrice + offsetValue);
+		
+					if(randomSign == true && buyOrSell == true)
+					{
+							message.append(stock.getStockId()).append(",").append(-1).append(",").append(0).append(",").append(quantity).append(",").append(formattedPrice);
+					}
+					else if(randomSign == true && buyOrSell == false){
+							message.append(stock.getStockId()).append(",").append(0).append(",").append(-1).append(",").append(quantity).append(",").append(formattedPrice);
+						
+					}
+					else if(randomSign == false && buyOrSell == true)
+					{
+						message.append(stock.getStockId()).append(",").append(-1).append(",").append(0).append(",").append(quantity).append(",").append(formattedPrice);
+						
+					}
+					else if(randomSign == false && buyOrSell == false)
+					{
+						message.append(stock.getStockId()).append(",").append(0).append(",").append(-1).append(",").append(quantity).append(",").append(formattedPrice);
+
+					}
+					if (!message.equals("")) {
+						System.out.println(message.toString());
+						receiveOrder(message.toString());
+					}				
+				}
+			}
+					
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 
 }

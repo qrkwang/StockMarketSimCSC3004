@@ -43,7 +43,7 @@ IN stockId Int, In sellerId Int, In buyerId Int, In quantity Int, In price Doubl
 BEGIN
 
 INSERT INTO marketpending (StockId, SellerId, BuyerId, Quantity, Price, CreatedDate)
-VALUES(stockId,sellerId, buyerId, quantity,price, createDate);
+VALUES(stockId,sellerId, buyerId, quantity,price, createdDate);
 
 END$$
 DELIMITER ;
@@ -299,5 +299,21 @@ UPDATE stock SET CurrentValue = @price WHERE StockId = @stockId;
 END$$
 DELIMITER ;
 
+USE `USStockMarket`;
+DROP PROCEDURE IF EXISTS `getTop5CompletedOrderByStockId`;
 
+DELIMITER $$
+USE `USStockMarket`$$
+
+CREATE PROCEDURE `getTop5CompletedOrderByStockId`(IN inputStockId int)
+BEGIN
+
+SELECT FORMAT(Avg(Price),2) as averagePrice
+FROM  (Select Price
+FROM marketcompleted 
+where StockId = inputStockId
+ORDER BY TransactionDate desc limit 5) P;
+
+END$$
+DELIMITER ;
 

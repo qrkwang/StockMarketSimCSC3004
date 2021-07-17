@@ -74,6 +74,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 																					// in main method
 		usaDb = new StockDBScript("USMarket", "localhost:3306", "usstockmarket", "root", "root"); // Start the RabbitMQ Receiver that's
 																					// in main method
+		
+
 		clientHashMap = new HashMap<Integer, ClientInt>();
 		logMap = new HashMap<Integer, String>(); // for log (will be server name and generation number)
 		accountUser = "a";
@@ -94,9 +96,15 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		startLeaderElectionAlgo();
 		startDataRedundancyAlgo();
 		startCache();
+		
+		startRandomOrderGeneration(Market.US);
+		startRandomOrderGeneration(Market.SG);
+		startRandomOrderGeneration(Market.HK);
+		
 	}
 
 	/*
@@ -761,4 +769,34 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	 * ----------------------RANDOM ORDER GENERATION----------------------
 	 * 
 	 */
+	
+	public void startRandomOrderGeneration(Market market) 
+	{
+		System.out.println("why why");
+		Thread thread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				System.out.println("Generating new order");
+				try {
+					// TODO Auto-generated method stub
+					if(market.equals(market.US))
+					{
+						usaDb.dbRandomOrderGeneration();
+					}
+					else if(market.equals(market.SG))
+					{
+						sgDb.dbRandomOrderGeneration();
+					}
+					else 
+					{
+						hkDb.dbRandomOrderGeneration();
+					}
+				}
+				catch(Exception ex) {
+					ex.printStackTrace();
+				}
+			}		
+		});
+		thread.start();
+	}
 }
