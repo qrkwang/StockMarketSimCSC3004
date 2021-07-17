@@ -15,6 +15,7 @@ import com.rabbitmq.client.DeliverCallback;
 
 import classes.MarketComplete;
 import classes.MarketPending;
+import classes.OrderBook;
 import classes.Stock;
 import classes.StockOwned;
 
@@ -759,6 +760,43 @@ public class StockDBScript {
 		con.close();
 		
 		return averagePrice;
+	}
+
+	public ArrayList<OrderBook> getOrderBook(int stockId) throws SQLException {
+		ArrayList<OrderBook> arrayListOrderBook = null;
+		Connection con = null;
+		
+		try {
+			Class.forName(DRIVER_CLASS);
+			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
+			System.out.println("Connected to DB");
+
+			String query = "{CALL getOrderBookByStockId(?)}";
+			CallableStatement stmt = con.prepareCall(query); // prepare to call
+			stmt.setInt(1, stockId); // Set the parameter
+			
+			ResultSet rs = stmt.executeQuery();
+			int count = 0;
+			while (rs.next()) {
+				if (count == 0) {
+					arrayListOrderBook = new ArrayList<OrderBook>(); // initialize arraylist if results to be found
+				}
+				java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("TransactionDate");
+				LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
+
+				OrderBook orderbook = new OrderBook(rs.getString("Type"), rs.getInt("Quantity"), rs.getFloat("Price"));
+
+				System.out.println("Market Completed: ");
+				System.out.println(orderbook.toString());
+				arrayListOrderBook.add(orderbook);
+				count++;
+			}
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		con.close();
+		return arrayListOrderBook;
 	}
 	
 	public double randomInRange(double min, double max) {

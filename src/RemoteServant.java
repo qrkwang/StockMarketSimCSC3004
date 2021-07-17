@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.rmi.ConnectException;
 import java.rmi.RemoteException;
 import java.rmi.UnknownHostException;
 import java.rmi.server.UnicastRemoteObject;
@@ -32,6 +33,7 @@ import com.rabbitmq.client.ConnectionFactory;
 
 import classes.MarketComplete;
 import classes.MarketPending;
+import classes.OrderBook;
 import classes.Stock;
 import classes.StockOwned;
 import redis.clients.jedis.Jedis;
@@ -51,6 +53,13 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private final String USSERVERIPADDRESS = "192.168.43.185";
 	private final String SGSERVERIPADDRESS = "192.168.43.210";
 	private final String HKSERVERIPADDRESS = "192.168.43.74";
+
+//	private final String ACCOUNTSERVER = "localhost:3306"; // 192.168.87.54
+//	private final String ACCOUNTSERVER2 = "localhost:3306"; // 192.168.87.55
+//	private final String ACCOUNTSERVER3 = "localhost:3306"; // 192.168.87.56
+//	private final String USSERVERIPADDRESS = "localhost";
+//	private final String SGSERVERIPADDRESS = "localhost";
+//	private final String HKSERVERIPADDRESS = "localhost";
 	private String accountUser;
 
 	private boolean leaseAlive;
@@ -90,13 +99,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			hkDb.startWaitForMsg();
 			sgDb.startWaitForMsg();
 			usaDb.startWaitForMsg();
-
 		} catch (Exception e) {
 			System.out.println("error start wait for msg");
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
 		startLeaderElectionAlgo();
 		startDataRedundancyAlgo();
 		startCache();
@@ -134,7 +141,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		List<String> serverlist = new ArrayList<String>(listServer);
 		HashMap<String, Long> rankListServer = new HashMap<>();
 		// long startTimeSelectedServer = System.currentTimeMillis();
-
 		try {
 			for (int i = 0; i < serverlist.size(); i++) {
 				// rank them by the faster server speed
@@ -151,9 +157,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			// sorting of map to get the best time result smaller to the bigger
 			Map<String, Long> sortedServerList = rankListServer.entrySet().stream().sorted(Entry.comparingByValue())
 					.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-
 			System.out.println(Arrays.asList(sortedServerList));
-
 			generation = generation + 1; // increase count every new election with leader
 			if (!rankListServer.isEmpty()) {
 				selectedserver = sortedServerList.keySet().stream().findFirst().get();// get the first key
@@ -169,7 +173,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				 * + totalTimeSelectedServer);
 				 */
 			}
-
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -394,6 +397,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				}
 			}
 		});
+		thread.start();
 	}
 
 	public void cacheMarket() {
@@ -410,6 +414,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 					try {
 						Thread.sleep(60000);
 						client.updateMarket(market);
+					}catch (ConnectException e) {
+						Thread.currentThread().interrupt();
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -419,6 +425,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 					}
 				}
 			});
+			thread.start();
 			return jedis.get(market);
 		} else
 			return null;
@@ -431,17 +438,27 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			if (System.currentTimeMillis() - entry.getValue() > 600000) {
 				it.remove();
 			} else {
-				cacheStock(entry.getKey());
+				cacheCompletedOrders(entry.getKey());
+				cacheOrderBook(entry.getKey());
 			}
 		}
 	}
 
-	public String cacheStock(String key) {
+	public String cacheCompletedOrders(String key) {
 		String[] keySplit = key.split(DELIMITER);
 		String market = keySplit[0];
 		int stockid = Integer.parseInt(keySplit[1]);
 		String value = retrieveCompletedOrders(market, stockid);
 		jedis.set(key, value);
+		return value;
+	}
+
+	public String cacheOrderBook(String key) {
+		String[] keySplit = key.split(DELIMITER);
+		String market = keySplit[0];
+		int stockid = Integer.parseInt(keySplit[1]);
+		String value = retrieveOrderBook(market, stockid);
+		jedis.set(key+DELIMITER+"OrderBook", value);
 		return value;
 	}
 
@@ -454,20 +471,19 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				try {
 					Thread.sleep(60000);
 					client.updateStock(market, stockid);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
+				} catch (InterruptedException | RemoteException e) {
 					e.printStackTrace();
 				}
 			}
 		});
+		thread.start();
 		if (jedis.exists(key))
 			return jedis.get(key);
 		else {
 			// Retrieve from database and cache if not found
-			String res = cacheStock(key);
+			String res = cacheCompletedOrders(key);
+			String orderbook = cacheOrderBook(key);
+			client.sendOrderBook(orderbook);
 			return res;
 		}
 	}
@@ -494,7 +510,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 		if (clientHashMap.containsKey(accountId)) {
 			return clientHashMap.get(accountId);
-
 		}
 		return null;
 	}
@@ -515,18 +530,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			JsonNode jsonNodeAccountId = jsonNodeRoot.get("accountId");
 //			String password = jsonNodePW.asText();
 			int accountId = Integer.parseInt(jsonNodeAccountId.asText());
-//
-//			System.out.println(password);
-//
-//			if (password.equals(pw)) {
-//				System.out.println("passwword match");
-//				addToClientHashMap(cc, accountId);
-//				return resAccountDetail;
-//			} else {
-//				System.out.println("passwword not match");
-//
-//				return "wrong pw";
-//			}
 			addToClientHashMap(cc, accountId);
 			return resAccountDetail;
 		} catch (SQLException | JsonProcessingException e) {
@@ -574,19 +577,15 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		String QUEUE_NAME = "";
 
 		// Get the clientInt of that accountId first then set on the DB class.
-
+		ClientInt user = this.retrieveClientIntFromHashMap(accountId);
 		if (market.equals("US")) {
 			QUEUE_NAME = "USMarket";
-			ClientInt user = this.retrieveClientIntFromHashMap(accountId);
 			hkDb.setCurrentClientInt(user);
-
 		} else if (market.equals("HK")) {
 			QUEUE_NAME = "HKMarket";
-			ClientInt user = this.retrieveClientIntFromHashMap(accountId);
 			hkDb.setCurrentClientInt(user);
 		} else {
 			QUEUE_NAME = "SGMarket";
-			ClientInt user = this.retrieveClientIntFromHashMap(accountId);
 			hkDb.setCurrentClientInt(user);
 		}
 
@@ -596,10 +595,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			channel.basicPublish("", QUEUE_NAME, null, order.getBytes());
 
 			System.out.println(" [x] Sent '" + order + "'");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TimeoutException e) {
+		} catch (IOException | TimeoutException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -609,131 +605,90 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	@SuppressWarnings("resource")
 	public String retrievePendingOrders(String market, int stockId) {
 		StringBuilder sb = new StringBuilder();
-
-		if (market.equals("US")) {
-			try {
-				ArrayList<MarketPending> arrayListStocks = usaDb.getPendingOrders(stockId);
-				if (arrayListStocks == null) {
-					return "empty";
+		ArrayList<MarketPending> arrayListStocks = null;
+		try {
+			if (market.equals("US"))
+				arrayListStocks = usaDb.getPendingOrders(stockId);
+			else if (market.equals("HK"))
+				arrayListStocks = hkDb.getPendingOrders(stockId);
+			else
+				arrayListStocks = sgDb.getPendingOrders(stockId);
+				
+			if (arrayListStocks == null)
+				return "empty";
+			// Serialize list of object to string for returning to client.
+			new ObjectOutputStream(new OutputStream() {
+				@Override
+				public void write(int i) throws IOException {
+					sb.append((char) i);
 				}
-				// Serialize list of object to string for returning to client.
-				new ObjectOutputStream(new OutputStream() {
-					@Override
-					public void write(int i) throws IOException {
-						sb.append((char) i);
-					}
-				}).writeObject(arrayListStocks);
-				return sb.toString();
-
-			} catch (SQLException | IOException e) {
-				e.printStackTrace();
-				return "error fetching";
-			}
-		} else if (market.equals("HK")) {
-			try {
-				ArrayList<MarketPending> arrayListStocks = hkDb.getPendingOrders(stockId);
-				if (arrayListStocks == null) {
-					return "empty";
-				}
-				// Serialize list of object to string for returning to client.
-				new ObjectOutputStream(new OutputStream() {
-					@Override
-					public void write(int i) throws IOException {
-						sb.append((char) i);
-					}
-				}).writeObject(arrayListStocks);
-				return sb.toString();
-
-			} catch (SQLException | IOException e) {
-				e.printStackTrace();
-				return "error fetching";
-			}
-		} else {
-			// SG
-			try {
-				ArrayList<MarketPending> arrayListStocks = sgDb.getPendingOrders(stockId);
-				if (arrayListStocks == null) {
-					return "empty";
-				}
-				// Serialize list of object to string for returning to client.
-				new ObjectOutputStream(new OutputStream() {
-					@Override
-					public void write(int i) throws IOException {
-						sb.append((char) i);
-					}
-				}).writeObject(arrayListStocks);
-				return sb.toString();
-
-			} catch (SQLException | IOException e) {
-				e.printStackTrace();
-				return "error fetching";
-			}
+			}).writeObject(arrayListStocks);
+		} catch (SQLException | IOException e) {
+			e.printStackTrace();
+			return "error fetching";
 		}
+		return sb.toString();
 	}
 
 	@SuppressWarnings("resource")
 	public String retrieveCompletedOrders(String market, int stockId) {
+		ArrayList<MarketComplete> arrayListStocks = null;
 		StringBuilder sb = new StringBuilder();
 
-		if (market.equals("US")) {
-			try {
-				ArrayList<MarketComplete> arrayListStocks = usaDb.getCompletedOrders(stockId);
-				if (arrayListStocks == null) {
-					return "empty";
-				}
-				// Serialize list of object to string for returning to client.
-				new ObjectOutputStream(new OutputStream() {
-					@Override
-					public void write(int i) throws IOException {
-						sb.append((char) i);
-					}
-				}).writeObject(arrayListStocks);
-				return sb.toString();
+		try {
+			if (market.equals("US"))
+				arrayListStocks = usaDb.getCompletedOrders(stockId);
+			else if (market.equals("HK"))
+				arrayListStocks = hkDb.getCompletedOrders(stockId);
+			else
+				arrayListStocks = sgDb.getCompletedOrders(stockId);
 
-			} catch (SQLException | IOException e) {
-				e.printStackTrace();
-				return "error fetching";
-			}
-		} else if (market.equals("HK")) {
-			try {
-				ArrayList<MarketComplete> arrayListStocks = hkDb.getCompletedOrders(stockId);
-				if (arrayListStocks == null) {
-					return "empty";
+			if (arrayListStocks == null)
+				return "empty";
+			// Serialize list of object to string for returning to client.
+			new ObjectOutputStream(new OutputStream() {
+				@Override
+				public void write(int i) throws IOException {
+					sb.append((char) i);
 				}
-				// Serialize list of object to string for returning to client.
-				new ObjectOutputStream(new OutputStream() {
-					@Override
-					public void write(int i) throws IOException {
-						sb.append((char) i);
-					}
-				}).writeObject(arrayListStocks);
-				return sb.toString();
-
-			} catch (SQLException | IOException e) {
-				e.printStackTrace();
-				return "error fetching";
-			}
-		} else {
-			// SG
-			try {
-				ArrayList<MarketComplete> arrayListStocks = sgDb.getCompletedOrders(stockId);
-				if (arrayListStocks == null) {
-					return "empty";
-				}
-				// Serialize list of object to string for returning to client.
-				new ObjectOutputStream(new OutputStream() {
-					@Override
-					public void write(int i) throws IOException {
-						sb.append((char) i);
-					}
-				}).writeObject(arrayListStocks);
-				return sb.toString();
-
-			} catch (SQLException | IOException e) {
-				e.printStackTrace();
-				return "error fetching";
-			}
+			}).writeObject(arrayListStocks);
+		} catch (SQLException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return "error fetching";
 		}
+		return sb.toString();
+	}
+
+
+	@SuppressWarnings("resource")
+	public String retrieveOrderBook(String market, int stockId) {
+		ArrayList<OrderBook> arrayListStocks = null;
+		StringBuilder sb = new StringBuilder();
+
+		try {
+			if (market.equals("US"))
+				arrayListStocks = usaDb.getOrderBook(stockId);
+			else if (market.equals("HK")) 
+				arrayListStocks = hkDb.getOrderBook(stockId);
+			else
+				arrayListStocks = sgDb.getOrderBook(stockId);
+
+			if (arrayListStocks == null) 
+				return "empty";
+			// Serialize list of object to string for returning to client.
+			new ObjectOutputStream(new OutputStream() {
+				@Override
+				public void write(int i) throws IOException {
+					sb.append((char) i);
+				}
+			}).writeObject(arrayListStocks);
+		} catch (SQLException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return "error fetching";
+		}
+		return sb.toString();
 	}
 
 	@SuppressWarnings("resource")
@@ -741,16 +696,15 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		StringBuilder sb = new StringBuilder();
 		ArrayList<Stock> arrayListStocks = null;
 		try {
-			if (market.equals(Market.US)) {
+			if (market.equals(Market.US)) 
 				arrayListStocks = usaDb.getAllStocks();
-			} else if (market.equals(Market.HK)) {
-				arrayListStocks = hkDb.getAllStocks();
-			} else if (market.equals(Market.SG)) {
+			else if (market.equals(Market.HK)) 
+				arrayListStocks = hkDb.getAllStocks(); 
+			else if (market.equals(Market.SG))
 				arrayListStocks = sgDb.getAllStocks();
-			}
-			if (arrayListStocks == null) {
+			
+			if (arrayListStocks == null) 
 				return "empty";
-			}
 			// Serialize list of object to string for returning to client.
 			new ObjectOutputStream(new OutputStream() {
 				@Override
@@ -772,7 +726,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	
 	public void startRandomOrderGeneration(Market market) 
 	{
-		System.out.println("why why");
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -780,17 +733,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				try {
 					// TODO Auto-generated method stub
 					if(market.equals(market.US))
-					{
 						usaDb.dbRandomOrderGeneration();
-					}
 					else if(market.equals(market.SG))
-					{
 						sgDb.dbRandomOrderGeneration();
-					}
 					else 
-					{
 						hkDb.dbRandomOrderGeneration();
-					}
 				}
 				catch(Exception ex) {
 					ex.printStackTrace();

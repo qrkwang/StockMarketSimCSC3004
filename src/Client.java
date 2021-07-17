@@ -37,6 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import classes.AccountDetails;
 import classes.MarketComplete;
 import classes.MarketPending;
+import classes.OrderBook;
 import classes.Stock;
 
 public class Client extends java.rmi.server.UnicastRemoteObject implements ClientInt {
@@ -47,6 +48,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
     private JPanel homePanel;
     private JPanel chartPanel;
     private AccountDetails accountDetailsObj;
+    private ArrayList<OrderBook> arrayListOrderBook;
     private enum Market{
     	SG,
     	HK,
@@ -67,6 +69,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		try {
 			remoteObj = (RemoteInterface) Naming.lookup("rmi://localhost:1099/RemoteServer");
 			currentDisplayStockId = -1;
+			arrayListOrderBook = null;
 			initialise();
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
@@ -85,7 +88,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 		System.out.println(s);
 	}
-	// Unicast from server to client to print whatever.
+
 	public void updateMarket(String market) throws java.rmi.RemoteException {
 		String m = currentPage.name();
 		if(m.equals(market)) {
@@ -107,7 +110,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			}
 		}
 	}
-	// Unicast from server to client to print whatever.
+
 	public void updateStock(String market, int stockId) throws java.rmi.RemoteException {
 		if(currentPage.name().equals("STOCK") && currentDisplayMarket.name().equals(market) 
 				&& stockId == currentDisplayStockId) {
@@ -115,8 +118,9 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		}
 	}
 
-	private static int accountId;
-
+	public void sendOrderBook(String orderbook) throws java.rmi.RemoteException {
+		arrayListOrderBook = (ArrayList<OrderBook>) deserializeString(orderbook,"orderBook");
+	}
 	// Client will need to display account details, send buy/sell order, list of
 	// account stock holdings, polling of stock price per interval (not necessarily
 	// need polling, can be on update) when on that page, stock page orders.
@@ -125,49 +129,56 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 	private static ArrayList<?> deserializeString(String sb, String action) {
 		final int[] index = { 0 };
 		ArrayList deserializedList = null;
-
-		if (action.equals("stock")) {
-			try {
+		try {
+			if (action.equals("stock")) {
 				deserializedList = (ArrayList<Stock>) new ObjectInputStream(new InputStream() {
 					@Override
 					public int read() throws IOException {
 						return sb.charAt(index[0]++);
 					}
 				}).readObject();
-			} catch (ClassNotFoundException | IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} else if (action.equals("completeOrders")) {
-			try {
+			} else if (action.equals("completeOrders")) {
 				deserializedList = (ArrayList<MarketComplete>) new ObjectInputStream(new InputStream() {
 					@Override
 					public int read() throws IOException {
 						return sb.charAt(index[0]++);
 					}
 				}).readObject();
-			} catch (ClassNotFoundException | IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} else {
-			// action is pendingOrders
-			try {
+			} else if (action.equals("pendingOrders"))  {
+				// action is pendingOrders
 				deserializedList = (ArrayList<MarketPending>) new ObjectInputStream(new InputStream() {
 					@Override
 					public int read() throws IOException {
 						return sb.charAt(index[0]++);
 					}
 				}).readObject();
-			} catch (ClassNotFoundException | IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			} else if (action.equals("orderBook"))  {
+				// action is pendingOrders
+				deserializedList = (ArrayList<OrderBook>) new ObjectInputStream(new InputStream() {
+					@Override
+					public int read() throws IOException {
+						return sb.charAt(index[0]++);
+					}
+				}).readObject();
 			}
+		} catch (ClassNotFoundException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		return deserializedList;
 	}
 
 	public void addLabel(JPanel panel, String label, int gridx, int gridy, Insets insets) {
+		GridBagConstraints gbc = new GridBagConstraints();
+		JLabel lbl = new JLabel(label);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = gridx;
+        gbc.gridy = gridy;
+        gbc.insets = insets;
+        panel.add(lbl, gbc);
+	}
+	
+	public void addLabel(JTabbedPane panel, String label, int gridx, int gridy, Insets insets) {
 		GridBagConstraints gbc = new GridBagConstraints();
 		JLabel lbl = new JLabel(label);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -196,6 +207,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		frame = new JFrame("Stock");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
+        frame.setBounds(100, 100, 800, 800);
 		defaultInsets =  new Insets(0, 0, 10, 10);
 		createLoginPanel();
 		createHomePanel();
@@ -206,7 +218,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 	}
 	
 	public void createLoginPanel() {
-        frame.setBounds(100, 100, 800, 800);
 		GridBagConstraints gbc = new GridBagConstraints();
 		loginPanel = new JPanel();
 		loginPanel.setLayout(new GridBagLayout());
@@ -281,6 +292,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
         gbc.insets = defaultInsets;
         homePanel.add(homePane, gbc);
 		JPanel dashboardPanel = new JPanel();
+		addLabel(dashboardPanel, "", 0, 0, defaultInsets);
 		JPanel SGPanel = createCountryPanel(Market.SG);
 		JPanel HKPanel = createCountryPanel(Market.HK);
 		JPanel USPanel = createCountryPanel(Market.US);
@@ -390,9 +402,62 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 	public JPanel createChartPanel() {
 		
 //        frame.setBounds(100, 100, 1000, 900);
-//		GridBagConstraints gbc = new GridBagConstraints();
+		Insets insets = new Insets(0, 0, 10, 50);
+		GridBagConstraints gbc = new GridBagConstraints();
 		JPanel chartPanel = new JPanel();
-		addLabel(chartPanel, currentDisplayStockId+"", 0, 0, defaultInsets);
+		if(currentDisplayStockId != -1) {
+			addLabel(chartPanel, currentDisplayStockId+"", 0, 0, defaultInsets);
+
+			JPanel infoPanel = new JPanel();
+			JTabbedPane orderPane = new JTabbedPane();
+			JPanel buyOrderBookPanel = new JPanel();
+			infoPanel.add("Buy Order Book", orderPane);
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        gbc.gridx = 0;
+	        gbc.gridy = 0;
+	        gbc.insets = defaultInsets;
+			orderPane.add(new JScrollPane(buyOrderBookPanel), gbc);
+
+			JPanel sellOrderBookPanel = new JPanel();
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        gbc.gridx = 1;
+	        gbc.gridy = 0;
+	        gbc.insets = defaultInsets;
+			orderPane.add(new JScrollPane(sellOrderBookPanel), gbc);
+
+			addLabel(buyOrderBookPanel, "Type", 0, 0, insets);
+			addLabel(buyOrderBookPanel, "Quantity", 1, 0, insets);
+			addLabel(buyOrderBookPanel, "Price", 2, 0, insets);
+			
+			addLabel(sellOrderBookPanel, "Type", 0, 0, insets);
+			addLabel(sellOrderBookPanel, "Quantity", 1, 0, insets);
+			addLabel(sellOrderBookPanel, "Price", 2, 0, insets);
+
+			int buyOBCount = 0;
+			int sellOBCount = 0;
+			for(int i = 0; i < arrayListOrderBook.size(); i++) {
+				OrderBook ob = arrayListOrderBook.get(i);
+				if(ob.getType().equals("BUY")) {
+					buyOBCount++;
+					addLabel(buyOrderBookPanel, ob.getType(), 0, buyOBCount, insets);
+					addLabel(buyOrderBookPanel, ob.getQuantity() + "", 1, buyOBCount, insets);
+					addLabel(buyOrderBookPanel, ob.getPrice() + "", 2, buyOBCount, insets);
+				}
+				else {
+					sellOBCount++;
+					addLabel(sellOrderBookPanel, ob.getType(), 0, sellOBCount, insets);
+					addLabel(sellOrderBookPanel, ob.getQuantity() + "", 1, sellOBCount, insets);
+					addLabel(sellOrderBookPanel, ob.getPrice() + "", 2, sellOBCount, insets);
+				}
+			}
+			JTabbedPane openOrderPane = new JTabbedPane();
+			infoPanel.add("Open Orders", openOrderPane);
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        gbc.gridx = 0;
+	        gbc.gridy = 1;
+	        gbc.insets = defaultInsets;
+			chartPanel.add(infoPanel,gbc);
+		}
 //		chartPanel.setLayout(new GridBagLayout());
 //		// Create Chart
 //		
@@ -411,17 +476,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 //        gbc.gridy = 0;
 //        gbc.insets = defaultInsets;
 //		chartPanel.add(ohlcPanel, gbc);
-//		
-//		JTabbedPane orderPane = new JTabbedPane();
-//		JPanel orderBookPanel = new JPanel();
-//		JPanel openOrderPanel = new JPanel();
-//		orderPane.add("Order Book", orderBookPanel);
-//		orderPane.add("Open Orders", openOrderPanel);
-//        gbc.fill = GridBagConstraints.HORIZONTAL;
-//        gbc.gridx = 0;
-//        gbc.gridy = 1;
-//        gbc.insets = defaultInsets;
-//		chartPanel.add(orderPane,gbc);
 		return chartPanel;
 	}
 	
@@ -434,37 +488,37 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			ClientInt cc = new Client();
 
 			// Interface for login
-			String username = "demo";
-			String pw = "password";
-			Scanner stdin = new Scanner(System.in); // Init scanner
-			String input = null;
-			String secondInput = null;
-
-			String resAccountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc, username, pw);
-			// convert json string to object
-			if (resAccountDetails.equals("not found")) {
-				System.out.println("your username does not exist. Try again.");
-
-			} else if (resAccountDetails.equals("problem")) {
-				System.out.println("there's a problem while accessing the server");
-
-			} else if (resAccountDetails.equals("wrong pw")) {
-				System.out.println("your pw is wrong");
-
-			} else {
-				// Successfully logged in cause all cases checked.
-				ObjectMapper objectMapper = new ObjectMapper();
-				StringBuilder sb = new StringBuilder();
-
-				// Unmarshall json string to object.
-				AccountDetails accountDetailsObj = objectMapper.readValue(resAccountDetails, AccountDetails.class);
-
-				//
-				System.out.println("AFTER GET ACCOUNT DETAILS!!" + accountDetailsObj);
-				// Assign accountId value to global variable so can use on other
-				// methods.
-				accountId = accountDetailsObj.getAccountId();
-				remoteObj.getAccountHoldingsById(accountId);
+//			String username = "demo";
+//			String pw = "password";
+//			Scanner stdin = new Scanner(System.in); // Init scanner
+//			String input = null;
+//			String secondInput = null;
+//
+//			String resAccountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc, username, pw);
+//			// convert json string to object
+//			if (resAccountDetails.equals("not found")) {
+//				System.out.println("your username does not exist. Try again.");
+//
+//			} else if (resAccountDetails.equals("problem")) {
+//				System.out.println("there's a problem while accessing the server");
+//
+//			} else if (resAccountDetails.equals("wrong pw")) {
+//				System.out.println("your pw is wrong");
+//
+//			} else {
+//				// Successfully logged in cause all cases checked.
+//				ObjectMapper objectMapper = new ObjectMapper();
+//				StringBuilder sb = new StringBuilder();
+//
+//				// Unmarshall json string to object.
+//				AccountDetails accountDetailsObj = objectMapper.readValue(resAccountDetails, AccountDetails.class);
+//
+//				//
+//				System.out.println("AFTER GET ACCOUNT DETAILS!!" + accountDetailsObj);
+//				// Assign accountId value to global variable so can use on other
+//				// methods.
+//				accountId = accountDetailsObj.getAccountId();
+//				remoteObj.getAccountHoldingsById(accountId);
 
 //				String returnedHkStocks = remoteObj.retrieveMarketCache("HK");
 //				String returnedUSStocks = remoteObj.retrieveMarketCache("US");
@@ -550,12 +604,12 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				// Send Order
 				// Please send in format (accountId, "US", "StockId, SellerId, BuyerId, Qty,
 				// Price")
-				remoteObj.sendOrder(2, "HK", "5,-1,2,100,23.3"); // -1 to indicate null, i will change to null on
-																	// backend.
-
-				// Exit
-				remoteObj.removeFromClientHashMap(accountId);
-			}
+//				remoteObj.sendOrder(2, "HK", "5,-1,2,100,23.3"); // -1 to indicate null, i will change to null on
+//																	// backend.
+//
+//				// Exit
+//				remoteObj.removeFromClientHashMap(accountId);
+//			}
 
 		} catch (Exception e) {
 			System.out.format("Error obtaining remoteServer/remoteInterface from registry");
