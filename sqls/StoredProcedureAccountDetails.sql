@@ -1,12 +1,12 @@
 USE AccountDetailsServer;  
-DROP procedure IF EXISTS `getAccountDetailsByUsername`;
+DROP procedure IF EXISTS `getAccountDetailsByUsernameAndPw`;
 
 DELIMITER $$
 
 USE AccountDetailsServer;
-CREATE PROCEDURE getAccountDetailsByUsername(IN inputUsername varchar (50))
+CREATE PROCEDURE getAccountDetailsByUsernameAndPassword(IN inputUsername varchar(50), IN inputPassword varchar(50))
 BEGIN
-	SELECT * FROM account WHERE userName = inputUsername;
+	SELECT * FROM account WHERE userName = inputUsername AND password = inputPassword;
 END $$
 
 DELIMITER ;

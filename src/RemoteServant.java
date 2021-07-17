@@ -38,46 +38,53 @@ import redis.clients.jedis.Jedis;
 
 public class RemoteServant extends UnicastRemoteObject implements RemoteInterface {
 	private AccountDetailsDbScript accountDetailsDb;
-	private HKDbScript hkDb;
-	private SGDbScript sgDb;
-	private USADbScript usaDb;
+	private StockDBScript hkDb;
+	private StockDBScript sgDb;
+	private StockDBScript usaDb;
 	private HashMap<Integer, ClientInt> clientHashMap; // accountId and clientInterface
 
 	private HashMap<Integer,String> logMap; // for log (will be server name and generation number)
 	private List<String> listServer;
-	private String accountServer;
-	private String accountServer2;
-	private String accountServer3;
+	private final String ACCOUNTSERVER = "192.168.43.250"; //192.168.87.54
+	private final String ACCOUNTSERVER2 = "192.168.43.168"; //192.168.87.55
+	private final String ACCOUNTSERVER3 = "192.168.43.199"; //192.168.87.56
+	private final String USSERVERIPADDRESS = "192.168.43.185";
+	private final String SGSERVERIPADDRESS = "192.168.43.210";
+	private final String HKSERVERIPADDRESS = "192.168.43.74";
 	private String accountUser;
-	private static String USServerIPAddress;
-	private static String SGServerIPAddress;
-	private static String HKServerIPAddress;
 
 	private boolean leaseAlive;
 
 	private Jedis jedis;
 	private HashMap<String, Long> lastSearchTimestamp;
 	private final String DELIMITER = "|";
+    private enum Market{
+    	SG,
+    	HK,
+    	US
+    }
 
 	public RemoteServant() throws RemoteException {
 		super();
+		System.out.format("Creating server object\n"); // Print to client that server object is being created once
+		// constructor called.
 		accountDetailsDb = new AccountDetailsDbScript(); // Start the RabbitMQ Receiver that's in main method
-		hkDb = new HKDbScript(); // Start the RabbitMQ Receiver that's in main method
-		sgDb = new SGDbScript(); // Start the RabbitMQ Receiver that's in main method
-		usaDb = new USADbScript(); // Start the RabbitMQ Receiver that's in main method
+		hkDb = new StockDBScript("HKMarket", "localhost:3306", "hkstockmarket"); // Start the RabbitMQ Receiver that's in main method
+		sgDb = new StockDBScript("SGMarket", "localhost:3306", "sgstockmarket"); // Start the RabbitMQ Receiver that's in main method
+		usaDb = new StockDBScript("USMarket", "localhost:3306", "usstockmarket"); // Start the RabbitMQ Receiver that's in main method
 		clientHashMap = new HashMap<Integer, ClientInt>();
-		logMap = new HashMap<Integer,String>(); // for log (will be server name and generation number)
-		USServerIPAddress = "192.168.43.185";
-		SGServerIPAddress = "192.168.43.210";
-		HKServerIPAddress = "192.168.43.74";
-
-		accountServer = "192.168.43.250";  //192.168.87.54
-		accountServer2 = "192.168.43.168";   //192.168.87.55
-		accountServer3 = "192.168.43.199";   //192.168.87.56
+		logMap = new HashMap<String, Integer>(); // for log (will be server name and generation number)
+//		USSERVERIPADDRESS = "192.168.43.185";
+//		SGSERVERIPADDRESS = "192.168.43.210";
+//		HKSERVERIPADDRESS = "192.168.43.74";
+//
+//		ACCOUNTSERVER = "192.168.43.250";  //192.168.87.54
+//		ACCOUNTSERVER2 = "192.168.43.168";   //192.168.87.55
+//		ACCOUNTSERVER3 = "192.168.43.199";   //192.168.87.56
 		accountUser = "a";
-		listServer = new ArrayList<>(Arrays.asList(accountServer, accountServer2, accountServer3));
+		listServer = new ArrayList<>(Arrays.asList(ACCOUNTSERVER, ACCOUNTSERVER2, ACCOUNTSERVER3));
 		leaseAlive = false;
-
+		
 		jedis = new Jedis();
 		lastSearchTimestamp = new HashMap<String, Long>();
 
@@ -92,42 +99,20 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		System.out.format("Creating server object\n"); // Print to client that server object is being created once
-														// constructor called.
+		startLeaderElectionAlgo();
+		startDataRedundancyAlgo();
+		startCache();
 	}
-
-	public void addToClientHashMap(ClientInt cc, int accountId) {
-		clientHashMap.put(accountId, cc);
-
-	}
-
-	@Override
-	public void removeFromClientHashMap(int accountId) throws RemoteException {
-		if (clientHashMap.containsKey(accountId)) {
-			clientHashMap.remove(accountId);
-
-		}
-	}
-
-	public ClientInt retrieveClientIntFromHashMap(int accountId) {
-		ClientInt retrievedClientInt = null;
-		System.out.println("retrieve from hashmap print");
-		System.out.println(clientHashMap);
-
-		if (clientHashMap.containsKey(accountId)) {
-			retrievedClientInt = clientHashMap.get(accountId);
-
-		}
-		return retrievedClientInt;
-	}
-
-	public boolean startLeaderElectionAlgo() throws RemoteException {
+	/*
+	 * ----------------------LEADER ELECTION----------------------
+	 * 
+	 */
+	public boolean startLeaderElectionAlgo(){
 		String serverNo = null;
 		boolean result = false;
 	
 		int generation = 0; // increase everytime it election a new leader
-		if (leaseAlive == false && serverNo == null) { // running for first time
+		if (leaseAlive == false) { // running for first time
 			serverNo = electionLeader(listServer, null, generation);
 			if (serverNo == null) {
 				System.out.println("Fail to find any working server , please restart application or check server status");
@@ -139,27 +124,149 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return result;
 	}
 
+	public String electionLeader(List<String> listServer, String currServer, int generation) {
+		String selectedserver = null;
+		List<String> serverlist = new ArrayList<String>(listServer);
+		HashMap<String, Long> rankListServer = new HashMap<>();
 
-	public static void executeFile(String fileName, String failedServer) {
 		try {
-			String[] cmd = { "python", fileName, failedServer };
-
-			Process p = Runtime.getRuntime().exec(cmd);
-
-			BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-			String line = "";
-			System.out.println("running file " + fileName);
-
-			while ((line = reader.readLine()) != null) {
-				System.out.println(line + "\n");
+			for (int i = 0; i < serverlist.size(); i++) {
+				// rank them by the faster server speed
+				long startTime = System.nanoTime();
+				boolean connectionResult = checkConnection(serverlist.get(i), "root", "root", "AccountDetailsServer");
+				long endTime = System.nanoTime();
+				long total = endTime - startTime;
+				System.out.println("total time for " + total + " server running = " + serverlist.get(i));
+				System.out.println("server result connection " + connectionResult);
+				if (connectionResult == true) {
+					rankListServer.put(serverlist.get(i), total); // adding result that pass the connection
+				}
 			}
-		} catch (Exception ex) {
-			ex.printStackTrace();
+			// sorting of map to get the best time result smaller to the bigger
+			Map<String, Long> sortedServerList = rankListServer.entrySet().stream().sorted(Entry.comparingByValue())
+					.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+
+			System.out.println(Arrays.asList(sortedServerList));
+
+			generation = generation + 1; // increase count every new election with leader
+			if (!rankListServer.isEmpty()) {
+				selectedserver = sortedServerList.keySet().stream().findFirst().get();// get the first key
+				logMap.put(selectedserver, generation); // add the generation and log map
+				setLease(selectedserver, "root", "root"); // once elected leader start the lease time
+				System.out.println(
+						"Selected Server as a leader is " + selectedserver + " current generation no " + generation);
+			}
+
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		if (leaseAlive == true && !logMap.isEmpty()) { // call the script once the node is ready to be called
+			accountDetailsDb.setConnString(selectedserver, "AccountDetailsServer");
+			System.out.println("running the accountDetailsDb leader");
+		}
+		return selectedserver; // return the leader
+	}
+	
+
+
+	// act like heartbeat to check if connection exist or not
+	public static boolean checkConnection(String ipname, String username, String password, String dbname)
+			throws SQLException {
+		Connection con = null;
+		boolean result = false;
+		String CONN_STRING = "jdbc:mysql://" + ipname + "/" + dbname;
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+			con = (Connection) DriverManager.getConnection(CONN_STRING, username, password);
+			if (con != null) {
+				result = true; // able to connect to db
+				con.close();
+			}
+		} catch (SQLException | ClassNotFoundException e) {
+			 e.printStackTrace();
+		}
+		return result;
+	}
+
+	// set a lease to run in backgroup for the leader
+	public void setLease(String ipname, String username, String password) {
+		Timer timer = new Timer();
+		TimerTask task = new TimerTask() {
+			@Override
+			public void run() {
+				boolean checkHeartbeatResult = false;
+				try {
+					checkHeartbeatResult = checkConnection(ipname, username, password, "AccountDetailsServer");
+					System.out.println("task have expired , ready to check for renew");
+					if (checkHeartbeatResult == false) { // check if it ok to reset the lease , if heartbeat fail no
+						timer.cancel(); // cancel all the schedule task that maybe happending
+						leaseAlive = false;
+						System.out.println("time out unable to lease due to error");
+						String[] serverDetailsLog = getLogResult(logMap);
+						restartServer(serverDetailsLog[0], accountUser, "accountServer.py"); // try to restart server
+						String resultElection = electionLeader(listServer, ipname,
+								Integer.parseInt(serverDetailsLog[1])); // call for election again to get new leader
+						if (resultElection.isEmpty() || resultElection == null) {
+							System.out.println(
+									"Fail to find any working server , please restart application or check server status");
+						}
+					}
+				} catch (SQLException e) {
+					e.printStackTrace();
+					cancel(); // if there is exception also cancel the lease
+					leaseAlive = false;
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		leaseAlive = true;
+		System.out.println("lease have been renew");
+		timer.schedule(task, 0, 3000); // to trigger to reschedule the lease will repeat itself till the condition is
+										// met
+	}
+
+	public void restartServer(String ipAddr, String username, String fileName) {
+		try {
+			String path = new File(fileName).getAbsolutePath();
+			String newPath = new File(path).getParent();
+			String[] cmd = { "python", newPath + "\\src\\" + fileName, ipAddr, username };
+			Process process = Runtime.getRuntime().exec(cmd);
+
+			String result;
+			String error;
+
+			BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+			BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+			while ((result = stdout.readLine()) != null) {
+				System.out.println(result);
+			}
+
+			while ((error = stdError.readLine()) != null) {
+				System.out.println(error);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
 	}
+	
 
-	public void startDataRedundancyAlgo() throws RemoteException {
+	public String[] getLogResult(HashMap<String, Integer> log) {
+		String logMapResult = log.entrySet().toArray()[log.size() - 1].toString(); // trying to get last value
+		String[] resultgenserver = logMapResult.split("="); // get back the last election leader server & generation
+															// number
+		return resultgenserver;
+	}
+	/*
+	 * ----------------------DATA REDUNDANCY----------------------
+	 * 
+	 */
+	public void startDataRedundancyAlgo(){
 
 		String failedServer = null;
 		boolean usRequiredRecovery = false;
@@ -168,21 +275,21 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 		while (true) {
 			try {
-				if (sendPingRequest(USServerIPAddress) == false) {
+				if (sendPingRequest(USSERVERIPADDRESS) == false) {
 					failedServer = "US";
 					System.out.println("Cannot ping US");
 					usaDb.setOnline(false);
 				} else {
 					usaDb.setOnline(true);
 				}
-				if (sendPingRequest(SGServerIPAddress) == false) {
+				if (sendPingRequest(SGSERVERIPADDRESS) == false) {
 					failedServer = "SG";
 					System.out.println("Cannot ping SG");
 					sgDb.setOnline(false);
 				} else {
 					sgDb.setOnline(true);
 				}
-				if (sendPingRequest(HKServerIPAddress) == false) {
+				if (sendPingRequest(HKSERVERIPADDRESS) == false) {
 					failedServer = "HK";
 					System.out.println("Cannot ping HK");
 					hkDb.setOnline(false);
@@ -227,6 +334,25 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		}
 	}
 
+	public static void executeFile(String fileName, String failedServer) {
+		try {
+			String[] cmd = { "python", fileName, failedServer };
+
+			Process p = Runtime.getRuntime().exec(cmd);
+
+			BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			String line = "";
+			System.out.println("running file " + fileName);
+
+			while ((line = reader.readLine()) != null) {
+				System.out.println(line + "\n");
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+
+	}
+
 	public static boolean sendPingRequest(String ipAddress) throws UnknownHostException, IOException {
 		InetAddress host = InetAddress.getByName(ipAddress);
 
@@ -236,145 +362,129 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		else
 			return false;
 	}
-
-	public String electionLeader(List<String> listServer, String currServer, int generation) {
-		String selectedserver = null;
-		List<String> serverlist = new ArrayList<String>(listServer);
-		HashMap<String, Long> rankListServer = new HashMap<>();
-		long startTimeSelectedServer = System.currentTimeMillis();
-		
-		try {
-
-			for (int i = 0; i < serverlist.size(); i++) {
-				// rank them by the faster server speed
-				long startTime = System.currentTimeMillis();
-				boolean connectionResult = checkConnection(serverlist.get(i), "root", "root", "AccountDetailsServer");
-				long endTime = System.currentTimeMillis();
-				long total = endTime - startTime;
-			//	System.out.println("total time for " + total + " server running = " + serverlist.get(i));
-			//	System.out.println("server result connection " + connectionResult);
-				if (connectionResult == true) {
-					rankListServer.put(serverlist.get(i), total); // adding result that pass the connection
-				}
-			}
-			// sorting of map to get the best time result smaller to the bigger
-			Map<String, Long> sortedServerList = rankListServer.entrySet().stream().sorted(Entry.comparingByValue())
-					.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-
-			System.out.println(Arrays.asList(sortedServerList));
-
-			generation = generation + 1; // increase count every new election with leader
-			if (!rankListServer.isEmpty()) {
-				selectedserver = sortedServerList.keySet().stream().findFirst().get();// get the first key
-				logMap.put(generation,selectedserver); // add the generation and log map
-				setLease(selectedserver, "root", "root"); // once elected leader start the lease time
-				System.out.println(	"Selected Server as a leader is " + selectedserver + " current generation no " + generation);
-				long endTimeSelectedServer = System.currentTimeMillis();
-				long totalTimeSelectedServer = endTimeSelectedServer - startTimeSelectedServer;
-				System.out.println("total time for leader election to select a new sever - " + totalTimeSelectedServer);
-			}
-
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		if (leaseAlive == true && !logMap.isEmpty()) { // call the script once the node is ready to be called
-			accountDetailsDb.setConnString(selectedserver, "AccountDetailsServer");
-		//	System.out.println("running the accountDetailsDb leader");
-		}
-		return selectedserver; // return the leader
-	}
-
-	public void restartServer(String ipAddr, String username, String fileName) {
-		try {
-			String path = new File(fileName).getAbsolutePath();
-			String newPath = new File(path).getParent();
-			String[] cmd = { "python", newPath + "\\src\\" + fileName, ipAddr, username };
-			Process process = Runtime.getRuntime().exec(cmd);
-
-			String result;
-			String error;
-
-			BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-			BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-			while ((result = stdout.readLine()) != null) {
-				System.out.println(result);
-			}
-
-			while ((error = stdError.readLine()) != null) {
-				System.out.println(error);
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	// set a lease to run in backgroup for the leader
-	public void setLease(String ipname, String username, String password) {
-		Timer timer = new Timer();
-		TimerTask task = new TimerTask() {
+	/*
+	 * ----------------------CACHING----------------------
+	 * 
+	 */
+	public void startCache() {
+		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				boolean checkHeartbeatResult = false;
 				try {
-					checkHeartbeatResult = checkConnection(ipname, username, password, "AccountDetailsServer");
-					System.out.println("task have expired , ready to check for renew");
-					if (checkHeartbeatResult == false) { // check if it ok to reset the lease , if heartbeat fail no
-						timer.cancel(); // cancel all the schedule task that maybe happending
-						leaseAlive = false;
-						System.out.println("time out unable to lease due to error");
-						String[] serverDetailsLog = getLogResult(logMap);
-						System.out.println(serverDetailsLog[0] + "            log map details" + "  test " +  serverDetailsLog[1]);
-						restartServer(serverDetailsLog[1], accountUser, "accountServer.py"); // try to restart server
-						String resultElection = electionLeader(listServer, ipname,
-								Integer.parseInt(serverDetailsLog[0])); // call for election again to get new leader
-						if (resultElection.isEmpty() || resultElection == null) {
-						System.out.println("Fail to find any working server , please restart application or check server status");
-						}
+					while(true) {
+						cacheMarket();
+						checkStockCache();
+						Thread.sleep(60000);
 					}
-				} catch (SQLException e) {
-					e.printStackTrace();
-					cancel(); // if there is exception also cancel the lease
-					leaseAlive = false;
-				} catch (Exception e) {
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
-		};
-		leaseAlive = true;
-		System.out.println("lease have been renew");
-		timer.schedule(task, 0, 3000); // to trigger to reschedule the lease will repeat itself till the condition is
-										// met
+		});
 	}
 
-	// act like heartbeat to check if connection exist or not
-	public static boolean checkConnection(String ipname, String username, String password, String dbname)
-			throws SQLException {
-		Connection con = null;
-		boolean result = false;
-		String CONN_STRING = "jdbc:mysql://" + ipname + "/" + dbname;
-		try {
-			Class.forName("com.mysql.jdbc.Driver");
-			con = (Connection) DriverManager.getConnection(CONN_STRING, username, password);
-			if (con != null) {
-				result = true; // able to connect to db
-				con.close();
-			}
-		} catch (SQLException | ClassNotFoundException e) {
-			 e.printStackTrace();
+	public void cacheMarket() {
+		jedis.set(Market.US.name(), getAllStocksByMarket(Market.US));
+		jedis.set(Market.HK.name(), getAllStocksByMarket(Market.HK));
+		jedis.set(Market.SG.name(), getAllStocksByMarket(Market.SG));
+	}
+	
+	public String retrieveMarketCache(String market, ClientInt client) throws RemoteException {
+		if (jedis.exists(market)) {
+			Thread thread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						Thread.sleep(60000);
+						client.updateMarket(market);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			});
+			return jedis.get(market);
 		}
-		return result;
+		else 
+			return null;
+	}
+	
+	public void checkStockCache() {
+		Iterator it = lastSearchTimestamp.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<String, Long> entry = (Entry<String, Long>) it.next();
+			if (System.currentTimeMillis() - entry.getValue() > 600000) {
+				it.remove();
+			} else {
+				cacheStock(entry.getKey());
+			}
+		}
+	}
+	
+	public String cacheStock(String key) {
+		String[] keySplit = key.split(DELIMITER);
+		String market = keySplit[0];
+		int stockid = Integer.parseInt(keySplit[1]);
+		String value = retrieveCompletedOrders(market, stockid);
+		jedis.set(key, value);
+		return value;
+	}
+	
+	public String retrieveStockCache(String market, int stockid, ClientInt client) throws RemoteException {
+		String key = market + stockid;
+		lastSearchTimestamp.put(key, System.currentTimeMillis());
+		Thread thread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(60000);
+					client.updateStock(market, stockid);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
+		if (jedis.exists(key))
+			return jedis.get(key);
+		else {
+			// Retrieve from database and cache if not found
+			String res = cacheStock(key);
+			return res;
+		}
+	}
+	/*
+	 * ----------------------DATABASE----------------------
+	 * 
+	 */
+	public void addToClientHashMap(ClientInt cc, int accountId) {
+		clientHashMap.put(accountId, cc);
+
 	}
 
-	public String[] getLogResult(HashMap<Integer,String> log) {
-		String logMapResult = log.entrySet().toArray()[log.size() - 1].toString(); // trying to get last value
-		String[] resultgenserver = logMapResult.split("="); // get back the last election leader server & generation
-															// number
-		return resultgenserver;
+	@Override
+	public void removeFromClientHashMap(int accountId) throws RemoteException {
+		if (clientHashMap.containsKey(accountId)) {
+			clientHashMap.remove(accountId);
+		}
+	}
+
+	public ClientInt retrieveClientIntFromHashMap(int accountId) {
+		System.out.println("retrieve from hashmap print");
+		System.out.println(clientHashMap);
+
+		if (clientHashMap.containsKey(accountId)) {
+			return clientHashMap.get(accountId);
+
+		}
+		return null;
 	}
 
 	@Override
@@ -383,28 +493,30 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		ObjectMapper objectMapper = new ObjectMapper();
 
 		try {
-			String resAccountDetail = accountDetailsDb.getAccountDetails(username);
+			String resAccountDetail = accountDetailsDb.getAccountDetails(username, pw);
 			System.out.println("result from db script" + resAccountDetail);
 			if (resAccountDetail == "not found") {
 				return "not found";
 			}
 			JsonNode jsonNodeRoot = objectMapper.readTree(resAccountDetail);
-			JsonNode jsonNodePW = jsonNodeRoot.get("password");
+//			JsonNode jsonNodePW = jsonNodeRoot.get("password");
 			JsonNode jsonNodeAccountId = jsonNodeRoot.get("accountId");
-			String password = jsonNodePW.asText();
+//			String password = jsonNodePW.asText();
 			int accountId = Integer.parseInt(jsonNodeAccountId.asText());
-
-			System.out.println(password);
-
-			if (password.equals(pw)) {
-				System.out.println("passwword match");
-				addToClientHashMap(cc, accountId);
-				return resAccountDetail;
-			} else {
-				System.out.println("passwword not match");
-
-				return "wrong pw";
-			}
+//
+//			System.out.println(password);
+//
+//			if (password.equals(pw)) {
+//				System.out.println("passwword match");
+//				addToClientHashMap(cc, accountId);
+//				return resAccountDetail;
+//			} else {
+//				System.out.println("passwword not match");
+//
+//				return "wrong pw";
+//			}
+			addToClientHashMap(cc, accountId);
+			return resAccountDetail;
 		} catch (SQLException | JsonProcessingException e) {
 			// TODO Auto-generated catch block
 			System.out.println("sql or json processing exception");
@@ -613,117 +725,36 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	@SuppressWarnings("resource")
-	@Override
-	public String getAllStocksByMarket(String market) throws RemoteException {
+	public String getAllStocksByMarket(Market market){
 		StringBuilder sb = new StringBuilder();
-
-		if (market.equals("US")) {
-			try {
-				ArrayList<Stock> arrayListStocks = usaDb.getAllStocks();
-				if (arrayListStocks == null) {
-					return "empty";
-				}
-				// Serialize list of object to string for returning to client.
-				new ObjectOutputStream(new OutputStream() {
-					@Override
-					public void write(int i) throws IOException {
-						sb.append((char) i);
-					}
-				}).writeObject(arrayListStocks);
-				return sb.toString();
-
-			} catch (SQLException | IOException e) {
-				e.printStackTrace();
-				return "error fetching";
+		ArrayList<Stock> arrayListStocks = null;
+		try {
+			if (market.equals(Market.US)) {
+				arrayListStocks = usaDb.getAllStocks();
+			} else if (market.equals(Market.HK)) {
+				arrayListStocks = hkDb.getAllStocks();
+			} else if (market.equals(Market.SG)) {
+				arrayListStocks = sgDb.getAllStocks();
 			}
-		} else if (market.equals("HK")) {
-			try {
-				ArrayList<Stock> arrayListStocks = hkDb.getAllStocks();
-				if (arrayListStocks == null) {
-					return "empty";
-				}
-				// Serialize list of object to string for returning to client.
-				new ObjectOutputStream(new OutputStream() {
-					@Override
-					public void write(int i) throws IOException {
-						sb.append((char) i);
-					}
-				}).writeObject(arrayListStocks);
-				return sb.toString();
-
-			} catch (SQLException | IOException e) {
-				e.printStackTrace();
-				return "error fetching";
+			if (arrayListStocks == null) {
+				return "empty";
 			}
-		} else {
-			// SG
-			try {
-				ArrayList<Stock> arrayListStocks = sgDb.getAllStocks();
-				if (arrayListStocks == null) {
-					return "empty";
+			// Serialize list of object to string for returning to client.
+			new ObjectOutputStream(new OutputStream() {
+				@Override
+				public void write(int i) throws IOException {
+					sb.append((char) i);
 				}
-				// Serialize list of object to string for returning to client.
-				new ObjectOutputStream(new OutputStream() {
-					@Override
-					public void write(int i) throws IOException {
-						sb.append((char) i);
-					}
-				}).writeObject(arrayListStocks);
-				return sb.toString();
+			}).writeObject(arrayListStocks);
 
-			} catch (SQLException | IOException e) {
-				e.printStackTrace();
-				return "error fetching";
-			}
+		} catch (SQLException | IOException e) {
+			e.printStackTrace();
+			return "error fetching";
 		}
+		return sb.toString();
 	}
-
-	public void startCache() {
-		Thread thread = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					checkForCache();
-					Thread.sleep(60000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		});
-	}
-
-	@SuppressWarnings("unchecked")
-	public void checkForCache() {
-		Iterator it = lastSearchTimestamp.entrySet().iterator();
-		while (it.hasNext()) {
-			Entry<String, Long> entry = (Entry<String, Long>) it.next();
-			if (System.currentTimeMillis() - entry.getValue() > 600000) {
-				it.remove();
-			} else {
-				caching(entry.getKey());
-			}
-		}
-	}
-
-	public String caching(String key) {
-		String[] keySplit = key.split(DELIMITER);
-		String market = keySplit[0];
-		int stockid = Integer.parseInt(keySplit[1]);
-		String value = retrieveCompletedOrders(market, stockid);
-		jedis.set(key, value);
-		return value;
-	}
-
-	public String retrieveCache(String market, int stockid) throws RemoteException {
-		String key = market + stockid;
-		lastSearchTimestamp.put(key, System.currentTimeMillis());
-		if (jedis.exists(key))
-			return jedis.get(key);
-		else {
-			// Retrieve from database and cache if not found
-			String res = caching(key);
-			return res;
-		}
-	}
+	/*
+	 * ----------------------RANDOM ORDER GENERATION----------------------
+	 * 
+	 */
 }

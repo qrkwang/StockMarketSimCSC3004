@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Date;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.knowm.xchart.*;
 import org.knowm.xchart.style.Styler;
 
@@ -20,6 +22,9 @@ public class UITemp {
 	private JFrame frame;
     private Insets defaultInsets;
     private int currentDisplayStockId;
+    private JPanel loginPanel;
+    private JPanel homePanel;
+    private JPanel chartPanel;
     private enum Country{
     	SG,
     	HK,
@@ -34,7 +39,7 @@ public class UITemp {
 	public static void main(String[] args) {
 		UITemp ui = new UITemp();
 	}
-	
+	 
 	public void addLabel(JPanel panel, String label, int gridx, int gridy, Insets insets) {
 		GridBagConstraints gbc = new GridBagConstraints();
 		JLabel lbl = new JLabel(label);
@@ -45,10 +50,8 @@ public class UITemp {
         panel.add(lbl, gbc);
 	}
 
-	
-	public void addTextField(JPanel panel, int column, int gridx, int gridy) {
+	public void addTextField(JPanel panel, JTextField txtField, int column, int gridx, int gridy) {
 		GridBagConstraints gbc = new GridBagConstraints();
-        JTextField txtField = new JTextField();
         txtField.setColumns(column);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
@@ -62,10 +65,8 @@ public class UITemp {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
 		defaultInsets =  new Insets(0, 0, 10, 10);
-		
-		JPanel loginPanel = createLoginPanel();
-		
-		JTabbedPane homePane = createHomePane();
+		createLoginPanel();
+		createHomePanel();
 		
 		List<Date> xData = new ArrayList<Date>();
 		List<Double> openData = new ArrayList<Double>();
@@ -75,10 +76,11 @@ public class UITemp {
 		
 		OHLCChart chart = new OHLCChartBuilder().width(800).height(600).title("Prices").build();
 		XChartPanel<OHLCChart> ohlcChart = new XChartPanel<OHLCChart>(chart);
-		JPanel chartPanel = createChartPanel(chart, ohlcChart, xData, openData, highData, lowData, closeData);
+//		chartPanel = createChartPanel(chart, ohlcChart, xData, openData, highData, lowData, closeData);
+		chartPanel = new JPanel();
 		System.out.println("Done initialised!");
-		frame.getContentPane().add(homePane, BorderLayout.CENTER);
-		frame.validate();
+		switchPanel(loginPanel);
+//		frame.getContentPane().add(homePanel, BorderLayout.CENTER);
 //		while(true) {
 //		     try {
 ////				Thread.sleep(100);
@@ -106,19 +108,23 @@ public class UITemp {
 //				// TODO Auto-generated catch block
 //				e.printStackTrace();
 //			}
-//			
 //		}
 	}
 	
-	public JPanel createLoginPanel() {
-        frame.setBounds(100, 100, 350, 250);
+	public void switchPanel(JPanel panel) {
+		frame.setContentPane(new JScrollPane(panel));
+        frame.validate();
+	}
+	
+	public void createLoginPanel() {
+        frame.setBounds(100, 100, 800, 800);
 		GridBagConstraints gbc = new GridBagConstraints();
-		JPanel loginPanel = new JPanel();
+		loginPanel = new JPanel();
 		loginPanel.setLayout(new GridBagLayout());
-		
 		addLabel(loginPanel, "Username :", 0, 0, defaultInsets);
-
-		addTextField(loginPanel, 10, 1, 0);
+		
+		JTextField userNameTxt = new JTextField();
+		addTextField(loginPanel, userNameTxt, 10, 1, 0);
 
 		addLabel(loginPanel, "Password :", 0, 1, defaultInsets);
 
@@ -142,6 +148,9 @@ public class UITemp {
         JButton btnLogin = new JButton("Login");
         btnLogin.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+            	//Check login
+            	//Redirect to homePanel
+            	switchPanel(homePanel);
             }
         });
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -150,18 +159,55 @@ public class UITemp {
         gbc.insets = defaultInsets;
         loginPanel.add(btnLogin, gbc);
         gbc.gridwidth = 0;
-        
-		return loginPanel;
 	}
 	
-	public JTabbedPane createHomePane() {
+	public void createHomePanel() {
+		homePanel = new JPanel();
+		homePanel.setLayout(new GridBagLayout());
+		GridBagConstraints gbc = new GridBagConstraints();
 		JTabbedPane homePane = new JTabbedPane();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = defaultInsets;
+        homePanel.add(homePane, gbc);
 		JPanel dashboardPanel = new JPanel();
 		JPanel SGPanel = createCountryPanel(Country.SG);
 		JPanel HKPanel = createCountryPanel(Country.HK);
 		JPanel USPanel = createCountryPanel(Country.US);
-		homePane.add("SG Market", new JScrollPane(SGPanel));
-		return homePane;
+		homePane.add("Dashboard", dashboardPanel);
+		homePane.add("SG Market", SGPanel);
+		homePane.add("HK Market", HKPanel);
+		homePane.add("US Market", USPanel);
+		homePane.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				JPanel selected = (JPanel) homePane.getSelectedComponent();
+				System.out.print(homePane.getSelectedIndex());
+				if(homePane.getSelectedIndex()==2) {
+					selected = createCountryPanel(Country.SG);
+				}
+				else if(homePane.getSelectedIndex()==3) {
+					selected = createCountryPanel(Country.HK);
+				}
+				else if(homePane.getSelectedIndex()==4) {
+					selected = createCountryPanel(Country.US);
+				}
+			}});
+		JButton btnLogout = new JButton("Log out");
+		btnLogout.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+            	//Check login
+            	//Redirect to homePanel
+            	switchPanel(loginPanel);
+            }
+        });
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(20, 0, 10, 10);
+        gbc.anchor = GridBagConstraints.NORTH;
+        homePanel.add(btnLogout, gbc);
 	}
 	
 	public JPanel createCountryPanel(Country country) {
@@ -195,6 +241,8 @@ public class UITemp {
 	            public void actionPerformed(ActionEvent e) {
 	            	currentDisplayStockId = stockValue;
 	            	System.out.println("Stock value = " + stockValue);
+	            	chartPanel = createChartPanel();
+	            	switchPanel(chartPanel);
 	            }
 	        });
 	        gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -206,18 +254,20 @@ public class UITemp {
 		return JSPane;
 	}
 
-	public JPanel createChartPanel(
-			OHLCChart chart,
-			XChartPanel<OHLCChart> ohlcChart,
-			List<Date> xData,
-			List<Double> openData,
-			List<Double> highData,
-			List<Double> lowData,
-			List<Double> closeData) {
+//	public JPanel createChartPanel(
+//			OHLCChart chart,
+//			XChartPanel<OHLCChart> ohlcChart,
+//			List<Date> xData,
+//			List<Double> openData,
+//			List<Double> highData,
+//			List<Double> lowData,
+//			List<Double> closeData) {
+	public JPanel createChartPanel() {
 		
 //        frame.setBounds(100, 100, 1000, 900);
 //		GridBagConstraints gbc = new GridBagConstraints();
 		JPanel chartPanel = new JPanel();
+		addLabel(chartPanel, currentDisplayStockId+"", 0, 0, defaultInsets);
 //		chartPanel.setLayout(new GridBagLayout());
 //		// Create Chart
 //		

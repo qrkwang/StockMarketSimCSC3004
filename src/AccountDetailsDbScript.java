@@ -28,7 +28,7 @@ public class AccountDetailsDbScript {
 		CONN_STRING = "jdbc:mysql://" + ipandPort + "/" + dbName;
 	}
 
-	public String getAccountDetails(String userName) throws SQLException {
+	public String getAccountDetails(String userName, String pw) throws SQLException {
 		Connection con = null;
 		try {
 			Class.forName(DRIVER_CLASS);
@@ -39,11 +39,12 @@ public class AccountDetailsDbScript {
 			e.printStackTrace();
 		}
 
-		String query = "{CALL getAccountDetailsByUsername(?)}"; // Query of calling stored procedure "Get account
+		String query = "{CALL getAccountDetailsByUsernameAndPassword(?,?)}"; // Query of calling stored procedure "Get account
 																// Details" with
 		CallableStatement stmt = con.prepareCall(query); // prepare to call
 
 		stmt.setString(1, userName); // Set the parameter
+		stmt.setString(2, pw); // Set the parameter
 
 		ResultSet rs = stmt.executeQuery();
 
@@ -51,8 +52,8 @@ public class AccountDetailsDbScript {
 		while (rs.next()) {
 			System.out.println("there's result");
 
-			AccountDetails accountDetail = new AccountDetails(rs.getInt("accountId"), rs.getString("userName"),
-					rs.getString("password"), rs.getString("email"), rs.getFloat("totalAccountValue"),
+			AccountDetails accountDetail = new AccountDetails(rs.getInt("accountId"), rs.getString("userName"), 
+					rs.getString("email"), rs.getFloat("totalAccountValue"),
 					rs.getFloat("totalSecurityValue"), rs.getFloat("availableCash"));
 
 			System.out.println(accountDetail);

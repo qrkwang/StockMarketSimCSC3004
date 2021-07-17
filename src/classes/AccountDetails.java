@@ -3,18 +3,16 @@ package classes;
 public class AccountDetails {
 	private int accountId;
 	private String userName;
-	private String password;
 	private String email;
 	private float totalAccountValue;
 	private float totalSecurityValue;
 	private float availableCash;
 
-	public AccountDetails(int accountId, String userName, String password, String email, float totalAccountValue,
+	public AccountDetails(int accountId, String userName, String email, float totalAccountValue,
 			float totalSecurityValue, float availableCash) {
 		super();
 		this.accountId = accountId;
 		this.userName = userName;
-		this.password = password;
 		this.email = email;
 		this.totalAccountValue = totalAccountValue;
 		this.totalSecurityValue = totalSecurityValue;
@@ -39,14 +37,6 @@ public class AccountDetails {
 
 	public void setUserName(String userName) {
 		this.userName = userName;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
 	}
 
 	public String getEmail() {
@@ -83,7 +73,7 @@ public class AccountDetails {
 
 	@Override
 	public String toString() {
-		return "AccountId: " + accountId + "\nuserName: " + userName + "\nPassword : " + password + "\nEmail: " + email
+		return "AccountId: " + accountId + "\nuserName: " + userName + "\nEmail: " + email
 				+ "\ntotalAccountValue: " + totalAccountValue + "\ntotalSecurityValue" + totalSecurityValue
 				+ "\navailableCash: " + availableCash;
 	}
