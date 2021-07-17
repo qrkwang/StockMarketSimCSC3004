@@ -39,7 +39,7 @@ public class AccountDetailsDbScript {
 			e.printStackTrace();
 		}
 
-		String query = "{CALL getAccountDetailsByUsernameAndPassword(?,?)}"; // Query of calling stored procedure "Get account
+		String query = "{CALL getAccountDetailsByUsernameAndPw(?,?)}"; // Query of calling stored procedure "Get account
 																// Details" with
 		CallableStatement stmt = con.prepareCall(query); // prepare to call
 

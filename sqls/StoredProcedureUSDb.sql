@@ -174,6 +174,29 @@ END$$
 DELIMITER ;
 
 USE `USStockMarket`;
+DROP PROCEDURE IF EXISTS `getOrderBookByStockId`;
+
+DELIMITER $$
+USE `USStockMarket`$$
+
+CREATE PROCEDURE `getOrderBookByStockId`(IN inputStockId int)
+BEGIN
+
+SELECT "BUY" as "Type", sum(Quantity) as "Quantity", Price
+FROM hkstockmarket.marketpending
+WHERE SellerId IS NULL AND StockId = 1
+GROUP BY Price
+UNION 
+SELECT "SELL" as "Type", sum(Quantity) as "Quantity", Price
+FROM hkstockmarket.marketpending
+WHERE BuyerId IS NULL AND StockId = 1
+GROUP BY Price
+ORDER BY type, Price asc;
+
+END$$
+DELIMITER ;
+
+USE `USStockMarket`;
 DROP PROCEDURE IF EXISTS `getOrdersCompletedByStockId`;
 
 DELIMITER $$
