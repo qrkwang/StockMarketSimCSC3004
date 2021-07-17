@@ -23,21 +23,22 @@ import classes.StockOwned;
 public class StockDBScript {
 	private boolean isOnline = true; // will be true unless algo detected offline in RemoteServant.java
 	private ClientInt currentClientInt;
-	private static String queue_name = "HKMarket";
+	private static String queue_name;
 	public static final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
 	private static final String USERNAME = "root";
 	private static final String PASSWORD = "root";
-	private static String conn_string = "jdbc:mysql://localhost:3306/hkstockmarket"; // jdbc:mysql://ip:3306/DBNAME
-	
-	public StockDBScript() {
-		this.queue_name = "";
-		this.conn_string = "";
-	}
-	
+	private static String conn_string; // jdbc:mysql://ip:3306/DBNAME
+
+//	public StockDBScript() {
+//		this.queue_name = "";
+//		this.conn_string = "";
+//	}
+
 	public StockDBScript(String qn, String ip, String dbname) {
-		this.queue_name = qn;
-		this.conn_string = "jdbc:mysql://" + ip + "/" + dbname;
+		StockDBScript.queue_name = qn;
+		StockDBScript.conn_string = "jdbc:mysql://" + ip + "/" + dbname;
 	}
+
 	public static void setConnString(String ipandPort, String dbName) {
 		conn_string = "jdbc:mysql//" + ipandPort + dbName;
 	}
@@ -122,7 +123,7 @@ public class StockDBScript {
 			Class.forName(DRIVER_CLASS);
 			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
 			System.out.println("Connected to DB");
-			
+
 			String query = "{CALL UpdateMarketPendingQuantity(?, ?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 			stmt.setInt(1, id);
@@ -174,7 +175,7 @@ public class StockDBScript {
 			Class.forName(DRIVER_CLASS);
 			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
 			System.out.println("Connected to DB");
-			
+
 			String query = "{CALL InsertToMarketPending(?,?,?,?,?,?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 			stmt.setInt(1, stockId);
@@ -206,7 +207,7 @@ public class StockDBScript {
 			Class.forName(DRIVER_CLASS);
 			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
 			System.out.println("Connected to DB");
-			
+
 			String query = "{CALL CloseSellMarketPendingOrders(?,?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 
@@ -307,7 +308,7 @@ public class StockDBScript {
 			Class.forName(DRIVER_CLASS);
 			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
 			System.out.println("Connected to DB");
-			
+
 			if (sellerId == -1 && buyerId != -1) {
 				// its a buy order
 
@@ -338,7 +339,8 @@ public class StockDBScript {
 					int lastOrderQty = 0;
 					float avgPrice = 0; // average price throughout the filled orders
 
-					ArrayList<Integer> orderIds = new ArrayList<Integer>(); // get list of order IDs so later can use for
+					ArrayList<Integer> orderIds = new ArrayList<Integer>(); // get list of order IDs so later can use
+																			// for
 																			// updating them in DB.
 
 					// minus the quantity per order and then execute the update in SQL.
@@ -355,13 +357,16 @@ public class StockDBScript {
 							break;
 						}
 
-						if (order.getQuantity() <= buyOrderQuantity) { // if the fetched order quantity is smaller or equal
+						if (order.getQuantity() <= buyOrderQuantity) { // if the fetched order quantity is smaller or
+																		// equal
 																		// to buyorderquantity
 
 							buyOrderQuantity -= order.getQuantity();
-							moneyPaid += order.getPrice() * order.getQuantity(); // accumulate the money paid by adding it
+							moneyPaid += order.getPrice() * order.getQuantity(); // accumulate the money paid by adding
+																					// it
 																					// per order.
-							totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks bought by adding it
+							totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks bought by
+																	// adding it
 																	// per order.
 
 							orderIds.add(order.getMarketPendingId()); // keep array list of order ID so later can update
@@ -371,21 +376,25 @@ public class StockDBScript {
 																				// buyOrderQuantity
 
 							lastOrderQty = order.getQuantity() - buyOrderQuantity;
-							buyOrderQuantity = 0; // make buy order quantity 0 to break the loop, so will stop looking for
-							// more matches
-							moneyPaid += order.getPrice() * order.getQuantity(); // accumulate the money paid by adding it
-							// per order.
-							totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks bought by adding it
-							// per order.
+							buyOrderQuantity = 0; // make buy order quantity 0 to break the loop, so will stop looking
+													// for more matches
+
+							moneyPaid += order.getPrice() * order.getQuantity(); // accumulate the money paid by adding
+																					// it per order.
+
+							totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks bought by
+																	// adding it per order.
+
 							orderIds.add(order.getMarketPendingId()); // keep array list of order ID so later can update
-							// those orders through SQL.
+																		// those orders through SQL.
+
 						} else {
 							// Shouldn't reach here at all.
 						}
 					}
 
-					for (int i = 0; i < orderIds.size(); i++) { // loop through order IDs and update / delete them
-																// indicating match.
+					for (int i = 0; i < orderIds.size(); i++) { // loop through order IDs and update / delete them indicating match.
+																
 						if (i == orderIds.size() - 1) {
 							// once reach last item, check if lastOrderQty has any value. If have, update
 							// the last order with that qty.
@@ -395,13 +404,19 @@ public class StockDBScript {
 								updateLastMatchedMarketPendingOrder(orderIds.get(i), lastOrderQty);
 							}
 						}
+
+						/*
+						 * These comments are for old function, ignore and delete if no need.
+						 */
 						// call delete order function here. after deleting also need to add
 						// marketcomplete with same information with additional buyerId.
 //						deleteMarketPendingOrder(orderIds.get(i));
-						// add marketcomplete with same information but with additional buyerId
+						// add marketcomplete with same information but with additional buyerId */
 
 						// call closemarketpendingOrder
-						closeMarketPendingOrder(orderIds.get(i), buyerId); // this will delete marketpending entries and create corresponding marketcomplete entries with buyerId.
+						closeMarketPendingOrder(orderIds.get(i), buyerId); // this will delete marketpending entries and
+																			// create corresponding marketcomplete
+																			// entries with buyerId.
 					}
 
 					if (buyOrderQuantity != 0) {
@@ -472,7 +487,7 @@ public class StockDBScript {
 			Class.forName(DRIVER_CLASS);
 			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
 			System.out.println("Connected to DB");
-			
+
 			String query = "{CALL getTotalHoldingsByAccountId(?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 
@@ -511,7 +526,7 @@ public class StockDBScript {
 			Class.forName(DRIVER_CLASS);
 			con = (Connection) DriverManager.getConnection(conn_string, USERNAME, PASSWORD);
 			System.out.println("Connected to DB");
-			
+
 			String query = "{CALL getAllStocks}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 
@@ -526,8 +541,9 @@ public class StockDBScript {
 				}
 				java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("CreatedDate");
 				LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
-				Stock stockItem = new Stock(rs.getInt("StockId"), rs.getString("CompanyName"), rs.getString("TickerSymbol"),
-						rs.getFloat("CurrentValue"), rs.getBoolean("Status"), rs.getString("Timezone"), localDateTime);
+				Stock stockItem = new Stock(rs.getInt("StockId"), rs.getString("CompanyName"),
+						rs.getString("TickerSymbol"), rs.getFloat("CurrentValue"), rs.getBoolean("Status"),
+						rs.getString("Timezone"), localDateTime);
 
 				System.out.println(stockItem.toString());
 				arrayListStocks.add(stockItem);
@@ -581,8 +597,8 @@ public class StockDBScript {
 
 				java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("CreatedDate");
 				LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
-				MarketPending marketOrder = new MarketPending(rs.getInt("MarketPendingId"), rs.getInt("StockId"), SellerId,
-						BuyerId, rs.getInt("Quantity"), rs.getFloat("Price"), localDateTime);
+				MarketPending marketOrder = new MarketPending(rs.getInt("MarketPendingId"), rs.getInt("StockId"),
+						SellerId, BuyerId, rs.getInt("Quantity"), rs.getFloat("Price"), localDateTime);
 
 				marketOrder.setCreatedDate(localDateTime);
 
@@ -610,11 +626,11 @@ public class StockDBScript {
 			String query = "{CALL getOrdersCompletedByStockId(?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 			stmt.setInt(1, stockId); // Set the parameter
-	
+
 			ResultSet rs = stmt.executeQuery();
-	
+
 			System.out.println("before while loop");
-	
+
 			int count = 0;
 			while (rs.next()) {
 				if (count == 0) {
@@ -622,11 +638,11 @@ public class StockDBScript {
 				}
 				java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("TransactionDate");
 				LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
-	
+
 				MarketComplete marketOrder = new MarketComplete(rs.getInt("MarketCompletedId"), rs.getInt("StockId"),
 						rs.getInt("SellerId"), rs.getInt("BuyerId"), rs.getInt("Quantity"), rs.getFloat("Price"),
 						localDateTime);
-	
+
 				System.out.println("Market Completed: ");
 				System.out.println(marketOrder.toString());
 				arrayListOrders.add(marketOrder);

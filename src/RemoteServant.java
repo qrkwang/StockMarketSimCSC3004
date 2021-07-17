@@ -43,11 +43,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private StockDBScript usaDb;
 	private HashMap<Integer, ClientInt> clientHashMap; // accountId and clientInterface
 
-	private HashMap<Integer,String> logMap; // for log (will be server name and generation number)
+	private HashMap<Integer, String> logMap; // for log (will be server name and generation number)
 	private List<String> listServer;
-	private final String ACCOUNTSERVER = "192.168.43.250"; //192.168.87.54
-	private final String ACCOUNTSERVER2 = "192.168.43.168"; //192.168.87.55
-	private final String ACCOUNTSERVER3 = "192.168.43.199"; //192.168.87.56
+	private final String ACCOUNTSERVER = "192.168.43.250"; // 192.168.87.54
+	private final String ACCOUNTSERVER2 = "192.168.43.168"; // 192.168.87.55
+	private final String ACCOUNTSERVER3 = "192.168.43.199"; // 192.168.87.56
 	private final String USSERVERIPADDRESS = "192.168.43.185";
 	private final String SGSERVERIPADDRESS = "192.168.43.210";
 	private final String HKSERVERIPADDRESS = "192.168.43.74";
@@ -58,33 +58,28 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private Jedis jedis;
 	private HashMap<String, Long> lastSearchTimestamp;
 	private final String DELIMITER = "|";
-    private enum Market{
-    	SG,
-    	HK,
-    	US
-    }
+
+	private enum Market {
+		SG, HK, US
+	}
 
 	public RemoteServant() throws RemoteException {
 		super();
 		System.out.format("Creating server object\n"); // Print to client that server object is being created once
 		// constructor called.
 		accountDetailsDb = new AccountDetailsDbScript(); // Start the RabbitMQ Receiver that's in main method
-		hkDb = new StockDBScript("HKMarket", "localhost:3306", "hkstockmarket"); // Start the RabbitMQ Receiver that's in main method
-		sgDb = new StockDBScript("SGMarket", "localhost:3306", "sgstockmarket"); // Start the RabbitMQ Receiver that's in main method
-		usaDb = new StockDBScript("USMarket", "localhost:3306", "usstockmarket"); // Start the RabbitMQ Receiver that's in main method
+		hkDb = new StockDBScript("HKMarket", "localhost:3306", "hkstockmarket"); // Start the RabbitMQ Receiver that's
+																					// in main method
+		sgDb = new StockDBScript("SGMarket", "localhost:3306", "sgstockmarket"); // Start the RabbitMQ Receiver that's
+																					// in main method
+		usaDb = new StockDBScript("USMarket", "localhost:3306", "usstockmarket"); // Start the RabbitMQ Receiver that's
+																					// in main method
 		clientHashMap = new HashMap<Integer, ClientInt>();
-		logMap = new HashMap< Integer,String>(); // for log (will be server name and generation number)
-//		USSERVERIPADDRESS = "192.168.43.185";
-//		SGSERVERIPADDRESS = "192.168.43.210";
-//		HKSERVERIPADDRESS = "192.168.43.74";
-//
-//		ACCOUNTSERVER = "192.168.43.250";  //192.168.87.54
-//		ACCOUNTSERVER2 = "192.168.43.168";   //192.168.87.55
-//		ACCOUNTSERVER3 = "192.168.43.199";   //192.168.87.56
+		logMap = new HashMap<Integer, String>(); // for log (will be server name and generation number)
 		accountUser = "a";
 		listServer = new ArrayList<>(Arrays.asList(ACCOUNTSERVER, ACCOUNTSERVER2, ACCOUNTSERVER3));
 		leaseAlive = false;
-		
+
 		jedis = new Jedis();
 		lastSearchTimestamp = new HashMap<String, Long>();
 
@@ -103,19 +98,21 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		startDataRedundancyAlgo();
 		startCache();
 	}
+
 	/*
 	 * ----------------------LEADER ELECTION----------------------
 	 * 
 	 */
-	public boolean startLeaderElectionAlgo(){
+	public boolean startLeaderElectionAlgo() {
 		String serverNo = null;
 		boolean result = false;
-	
+
 		int generation = 0; // increase everytime it election a new leader
 		if (leaseAlive == false) { // running for first time
 			serverNo = electionLeader(listServer, null, generation);
 			if (serverNo == null) {
-				System.out.println("Fail to find any working server , please restart application or check server status");
+				System.out
+						.println("Fail to find any working server , please restart application or check server status");
 			} else {
 				System.out.println("Set up server " + serverNo);
 				result = true;
@@ -128,7 +125,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		String selectedserver = null;
 		List<String> serverlist = new ArrayList<String>(listServer);
 		HashMap<String, Long> rankListServer = new HashMap<>();
-	//	long startTimeSelectedServer = System.currentTimeMillis();
+		// long startTimeSelectedServer = System.currentTimeMillis();
 
 		try {
 			for (int i = 0; i < serverlist.size(); i++) {
@@ -152,16 +149,17 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			generation = generation + 1; // increase count every new election with leader
 			if (!rankListServer.isEmpty()) {
 				selectedserver = sortedServerList.keySet().stream().findFirst().get();// get the first key
-				logMap.put(generation,selectedserver); // add the generation and log map
+				logMap.put(generation, selectedserver); // add the generation and log map
 				setLease(selectedserver, "root", "root"); // once elected leader start the lease time
 				System.out.println(
 						"Selected Server as a leader is " + selectedserver + " current generation no " + generation);
-				// for testing 
+				// for testing
 				/*
-				long endTimeSelectedServer = System.currentTimeMillis();
-				long totalTimeSelectedServer = endTimeSelectedServer - startTimeSelectedServer;
-				System.out.println("total time for leader election to select a new sever - " + totalTimeSelectedServer);
-				*/
+				 * long endTimeSelectedServer = System.currentTimeMillis(); long
+				 * totalTimeSelectedServer = endTimeSelectedServer - startTimeSelectedServer;
+				 * System.out.println("total time for leader election to select a new sever - "
+				 * + totalTimeSelectedServer);
+				 */
 			}
 
 		} catch (Exception e) {
@@ -175,8 +173,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		}
 		return selectedserver; // return the leader
 	}
-	
-
 
 	// act like heartbeat to check if connection exist or not
 	public static boolean checkConnection(String ipname, String username, String password, String dbname)
@@ -192,7 +188,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				con.close();
 			}
 		} catch (SQLException | ClassNotFoundException e) {
-			 e.printStackTrace();
+			e.printStackTrace();
 		}
 		return result;
 	}
@@ -261,19 +257,19 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		}
 
 	}
-	
 
-	public String[] getLogResult(HashMap<Integer,String> log) {
+	public String[] getLogResult(HashMap<Integer, String> log) {
 		String logMapResult = log.entrySet().toArray()[log.size() - 1].toString(); // trying to get last value
 		String[] resultgenserver = logMapResult.split("="); // get back the last election leader server & generation
 															// number
 		return resultgenserver;
 	}
+
 	/*
 	 * ----------------------DATA REDUNDANCY----------------------
 	 * 
 	 */
-	public void startDataRedundancyAlgo(){
+	public void startDataRedundancyAlgo() {
 
 		String failedServer = null;
 		boolean usRequiredRecovery = false;
@@ -369,6 +365,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		else
 			return false;
 	}
+
 	/*
 	 * ----------------------CACHING----------------------
 	 * 
@@ -378,7 +375,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			@Override
 			public void run() {
 				try {
-					while(true) {
+					while (true) {
 						cacheMarket();
 						checkStockCache();
 						Thread.sleep(60000);
@@ -396,7 +393,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		jedis.set(Market.HK.name(), getAllStocksByMarket(Market.HK));
 		jedis.set(Market.SG.name(), getAllStocksByMarket(Market.SG));
 	}
-	
+
 	public String retrieveMarketCache(String market, ClientInt client) throws RemoteException {
 		if (jedis.exists(market)) {
 			Thread thread = new Thread(new Runnable() {
@@ -415,11 +412,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				}
 			});
 			return jedis.get(market);
-		}
-		else 
+		} else
 			return null;
 	}
-	
+
 	public void checkStockCache() {
 		Iterator it = lastSearchTimestamp.entrySet().iterator();
 		while (it.hasNext()) {
@@ -431,7 +427,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		}
 	}
-	
+
 	public String cacheStock(String key) {
 		String[] keySplit = key.split(DELIMITER);
 		String market = keySplit[0];
@@ -440,7 +436,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		jedis.set(key, value);
 		return value;
 	}
-	
+
 	public String retrieveStockCache(String market, int stockid, ClientInt client) throws RemoteException {
 		String key = market + stockid;
 		lastSearchTimestamp.put(key, System.currentTimeMillis());
@@ -467,6 +463,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			return res;
 		}
 	}
+
 	/*
 	 * ----------------------DATABASE----------------------
 	 * 
@@ -732,7 +729,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	@SuppressWarnings("resource")
-	public String getAllStocksByMarket(Market market){
+	public String getAllStocksByMarket(Market market) {
 		StringBuilder sb = new StringBuilder();
 		ArrayList<Stock> arrayListStocks = null;
 		try {
