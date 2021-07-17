@@ -73,7 +73,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		sgDb = new StockDBScript("SGMarket", "localhost:3306", "sgstockmarket"); // Start the RabbitMQ Receiver that's in main method
 		usaDb = new StockDBScript("USMarket", "localhost:3306", "usstockmarket"); // Start the RabbitMQ Receiver that's in main method
 		clientHashMap = new HashMap<Integer, ClientInt>();
-		logMap = new HashMap<String, Integer>(); // for log (will be server name and generation number)
+		logMap = new HashMap< Integer,String>(); // for log (will be server name and generation number)
 //		USSERVERIPADDRESS = "192.168.43.185";
 //		SGSERVERIPADDRESS = "192.168.43.210";
 //		HKSERVERIPADDRESS = "192.168.43.74";
@@ -128,6 +128,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		String selectedserver = null;
 		List<String> serverlist = new ArrayList<String>(listServer);
 		HashMap<String, Long> rankListServer = new HashMap<>();
+	//	long startTimeSelectedServer = System.currentTimeMillis();
 
 		try {
 			for (int i = 0; i < serverlist.size(); i++) {
@@ -151,10 +152,16 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			generation = generation + 1; // increase count every new election with leader
 			if (!rankListServer.isEmpty()) {
 				selectedserver = sortedServerList.keySet().stream().findFirst().get();// get the first key
-				logMap.put(selectedserver, generation); // add the generation and log map
+				logMap.put(generation,selectedserver); // add the generation and log map
 				setLease(selectedserver, "root", "root"); // once elected leader start the lease time
 				System.out.println(
 						"Selected Server as a leader is " + selectedserver + " current generation no " + generation);
+				// for testing 
+				/*
+				long endTimeSelectedServer = System.currentTimeMillis();
+				long totalTimeSelectedServer = endTimeSelectedServer - startTimeSelectedServer;
+				System.out.println("total time for leader election to select a new sever - " + totalTimeSelectedServer);
+				*/
 			}
 
 		} catch (Exception e) {
@@ -205,9 +212,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 						leaseAlive = false;
 						System.out.println("time out unable to lease due to error");
 						String[] serverDetailsLog = getLogResult(logMap);
-						restartServer(serverDetailsLog[0], accountUser, "accountServer.py"); // try to restart server
+						restartServer(serverDetailsLog[1], accountUser, "accountServer.py"); // try to restart server
 						String resultElection = electionLeader(listServer, ipname,
-								Integer.parseInt(serverDetailsLog[1])); // call for election again to get new leader
+								Integer.parseInt(serverDetailsLog[0])); // call for election again to get new leader
 						if (resultElection.isEmpty() || resultElection == null) {
 							System.out.println(
 									"Fail to find any working server , please restart application or check server status");
@@ -256,7 +263,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 	
 
-	public String[] getLogResult(HashMap<String, Integer> log) {
+	public String[] getLogResult(HashMap<Integer,String> log) {
 		String logMapResult = log.entrySet().toArray()[log.size() - 1].toString(); // trying to get last value
 		String[] resultgenserver = logMapResult.split("="); // get back the last election leader server & generation
 															// number
