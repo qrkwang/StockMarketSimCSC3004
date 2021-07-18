@@ -33,8 +33,8 @@ DROP TABLE IF EXISTS `marketcompleted`;
 CREATE TABLE `marketcompleted` (
   `MarketCompletedId` int(11) NOT NULL AUTO_INCREMENT,
   `StockId` int(11) NOT NULL,
-  `SellerId` int(11) DEFAULT NULL,
-  `BuyerId` int(11) DEFAULT NULL,
+  `SellerId` int(11) NOT NULL,
+  `BuyerId` int(11) NOT NULL,
   `Quantity` int(11) NOT NULL,
   `Price` double NOT NULL,
   `TransactionDate` datetime NOT NULL,

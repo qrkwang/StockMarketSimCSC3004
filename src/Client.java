@@ -604,7 +604,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				// Send Order
 				// Please send in format (accountId, "US", "StockId, SellerId, BuyerId, Qty,
 				// Price")
-//				remoteObj.sendOrder(2, "HK", "5,-1,2,100,23.3"); // -1 to indicate null, i will change to null on
+//				remoteObj.sendOrder(2, "HK", "5,-1,2,100,23.3", false); // -1 to indicate null, i will change to null on
 //																	// backend.
 //
 //				// Exit

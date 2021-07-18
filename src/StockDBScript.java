@@ -243,7 +243,7 @@ public class StockDBScript {
 			Class.forName(DRIVER_CLASS);
 			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
 
-			String query = "{CALL CloseSellMarketPendingOrders(?,?)}";
+			String query = "{CALL CloseBuyMarketPendingOrders(?,?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 
 			stmt.setInt(1, marketPendingId);
@@ -305,6 +305,7 @@ public class StockDBScript {
 
 	public ArrayList<MarketPending> retrieveOrdersToMatch(boolean isBuy, int stockId, float orderPrice)
 			throws SQLException {
+		System.out.println("retrieving orders to match function");
 		Connection con = null;
 		ArrayList<MarketPending> retrievedOrders = null;
 		try {
@@ -379,6 +380,7 @@ public class StockDBScript {
 	}
 
 	private void receiveOrder(String message) throws SQLException, RemoteException, ClassNotFoundException {
+		
 		String[] splitArray = message.split(",");
 		int stockId = Integer.parseInt(splitArray[0]);
 		int sellerId = Integer.parseInt(splitArray[1]);
@@ -417,14 +419,17 @@ public class StockDBScript {
 		// Order processing
 		if (isbuyOrder) {
 			// its a buy order
-
+			System.out.println("Is Buy Order");
 			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(true, stockId, price);
 			// If return no entries for matching
 			if (fetchedOrders == null) {
+				System.out.println("No fetched orders, Inserting buy order ");
+
 				// No orders to match with, he want to buy but there's no one selling under his
 				// buy price or equals to
 
 				Class.forName(DRIVER_CLASS);
+				System.out.println("print conn string, username, password" + this.conn_string + " " + this.username + " "+ this.password);
 				con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
 				// If return no entry, create a marketpending order and insert.
 				String query1 = "{CALL InsertToMarketPending(?,?,?,?,?,?)}";
@@ -442,7 +447,7 @@ public class StockDBScript {
 				System.out.println(rs1);
 
 			} else {
-
+				System.out.println("Got fetched orders");
 				int buyOrderQuantity = qty;
 				int lastOrderQty = 0;
 				float avgPrice = 0; // average price throughout the filled orders
@@ -502,9 +507,11 @@ public class StockDBScript {
 				}
 				if (orderIds.size() == 0) {
 					// no matched orders, make a new marketpending order with initial values.
+					System.out.println("got fetched orders but no matched orders");
 					addMarketPendingOrder(true, stockId, buyerId, qty, price);
 
 				} else {
+					System.out.println("got fetched orders and got matched orders");
 					for (int i = 0; i < orderIds.size(); i++) { // loop through order IDs and update / delete them
 						// indicating match.
 
@@ -514,11 +521,14 @@ public class StockDBScript {
 
 							if (lastOrderQty != 0) {
 								// update last order here with that qty, call SQL function.
+								System.out.println("update last matched market pending order");
+
 								updateLastMatchedMarketPendingOrder(orderIds.get(i), lastOrderQty);
 								break; // break to stop the loop and not let it close the last matched order.
 							}
 						}
 
+						System.out.println("closing sell market pending order");
 						// call closemarketpendingOrder
 						closeSellMarketPendingOrder(orderIds.get(i), buyerId); // this will delete marketpending
 																				// entries and create
@@ -531,6 +541,7 @@ public class StockDBScript {
 					if (buyOrderQuantity != 0) {
 						// means that the order cannot be fulfilled fully, still need more quantity,
 						// will create a new marketpending order for the rest of the qty.
+						System.out.println("add market pending because after closing matched orders, still got more to buy.");
 						addMarketPendingOrder(true, stockId, buyerId, buyOrderQuantity, price);
 						// update the user account values with currently executed order total price.
 						int totalQtyBought = qty - buyOrderQuantity;
@@ -552,9 +563,11 @@ public class StockDBScript {
 		} else
 
 		{
+			System.out.println("Is sell order");
 			// its a sell order
 			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(false, stockId, price);
 			if (fetchedOrders == null) {
+				System.out.println("Inserting sell order");
 				// No orders to match with, he want to sell but there's no one buying above his
 				// sell price or equals to.
 				Class.forName(DRIVER_CLASS);
@@ -683,7 +696,7 @@ public class StockDBScript {
 
 		}
 
-		con.close();
+		//con.close();
 	}
 
 	public ArrayList<StockOwned> getOwnedStocks(int accountId) throws SQLException {
