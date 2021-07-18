@@ -50,7 +50,7 @@ DELIMITER $$
 
 #USE AccountDetailsServer;  uncomment if need
 
-CREATE PROCEDURE updatePurchaseInAccount(IN accountInputId INT , IN purchaseValue INT)
+CREATE PROCEDURE updateSaleInAccount(IN accountInputId INT , IN purchaseValue INT)
 BEGIN
 	Update account SET availableCash = availableCash + purchaseValue WHERE accountId = accountInputId;
 	Update account SET totalSecurityValue = totalSecurityValue - purchaseValue WHERE accountId = accountInputId;
