@@ -28,6 +28,38 @@ DELIMITER ;
 
 
 USE AccountDetailsServer;
+DROP procedure IF EXISTS `updatePurchaseInAccount`;
+
+DELIMITER $$
+
+#USE AccountDetailsServer;  uncomment if need
+
+CREATE PROCEDURE updatePurchaseInAccount(IN accountInputId INT , IN purchaseValue INT)
+BEGIN
+	Update account SET availableCash = availableCash - purchaseValue WHERE accountId = accountInputId;
+	Update account SET totalSecurityValue = totalSecurityValue + purchaseValue WHERE accountId = accountInputId;
+
+END $$
+
+DELIMITER ;
+
+USE AccountDetailsServer;
+DROP procedure IF EXISTS `updateSaleInAccount`;
+
+DELIMITER $$
+
+#USE AccountDetailsServer;  uncomment if need
+
+CREATE PROCEDURE updatePurchaseInAccount(IN accountInputId INT , IN purchaseValue INT)
+BEGIN
+	Update account SET availableCash = availableCash + purchaseValue WHERE accountId = accountInputId;
+	Update account SET totalSecurityValue = totalSecurityValue - purchaseValue WHERE accountId = accountInputId;
+
+END $$
+
+DELIMITER ;
+
+USE AccountDetailsServer;
 DROP procedure IF EXISTS `addAccountAvailableCash`;
 
 DELIMITER $$
