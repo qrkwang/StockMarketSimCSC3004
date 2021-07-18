@@ -255,7 +255,7 @@ public class StockDBScript {
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 
 			stmt.setInt(1, buyerId);
-			stmt.setInt(2, totalPaid);
+			stmt.setFloat(2, totalPaid);
 			ResultSet rs = stmt.executeQuery();
 			System.out.println(rs);
 
@@ -266,7 +266,7 @@ public class StockDBScript {
 		con.close();
 	}
 
-	private void updateSaleInAccount(int sellerId, int value) throws SQLException {
+	private void updateSaleInAccount(int sellerId, float value) throws SQLException {
 		Connection con = null;
 
 		try {
@@ -277,7 +277,7 @@ public class StockDBScript {
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 
 			stmt.setInt(1, sellerId);
-			stmt.setInt(2, value);
+			stmt.setFloat(2, value);
 			ResultSet rs = stmt.executeQuery();
 			System.out.println(rs);
 		} catch (ClassNotFoundException e) {
@@ -652,7 +652,7 @@ public class StockDBScript {
 							totalValueSold = price * qty;
 
 						}
-						this.updatePurchaseInAccount(sellerId, totalValueSold);
+						this.updateSaleInAccount(sellerId, totalValueSold);
 
 					}
 				}
