@@ -77,11 +77,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		System.out.format("Creating server object\n"); // Print to client that server object is being created once
 		// constructor called.
 		accountDetailsDb = new AccountDetailsDbScript(); // Start the RabbitMQ Receiver that's in main method
-		hkDb = new StockDBScript("HKMarket", "localhost:3306", "hkstockmarket", "root", "root"); // Start the RabbitMQ Receiver that's
+		hkDb = new StockDBScript("HKMarket", "localhost:3306", "hkstockmarket", "root", "root", accountDetailsDb); // Start the RabbitMQ Receiver that's
 																					// in main method
-		sgDb = new StockDBScript("SGMarket", "localhost:3306", "sgstockmarket", "root", "root"); // Start the RabbitMQ Receiver that's
+		sgDb = new StockDBScript("SGMarket", "localhost:3306", "sgstockmarket", "root", "root", accountDetailsDb); // Start the RabbitMQ Receiver that's
 																					// in main method
-		usaDb = new StockDBScript("USMarket", "localhost:3306", "usstockmarket", "root", "root"); // Start the RabbitMQ Receiver that's
+		usaDb = new StockDBScript("USMarket", "localhost:3306", "usstockmarket", "root", "root", accountDetailsDb); // Start the RabbitMQ Receiver that's
 																					// in main method
 	
 

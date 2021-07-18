@@ -31,17 +31,19 @@ public class StockDBScript {
 	private String username;
 	private String password;
 	private String conn_string; // jdbc:mysql://ip:3306/DBNAME
-
+	private AccountDetailsDbScript accountDetailsDb;
 //	public StockDBScript() {
 //		this.queue_name = "";
 //		this.conn_string = "";
 //	}
 
-	public StockDBScript(String qn, String ip, String dbname, String u, String p) {
+	public StockDBScript(String qn, String ip, String dbname, String u, String p,
+			AccountDetailsDbScript accountDetailsDb) {
 		this.queue_name = qn;
 		this.conn_string = "jdbc:mysql://" + ip + "/" + dbname;
 		this.username = u;
 		this.password = p;
+		this.accountDetailsDb = accountDetailsDb;
 	}
 
 	public void setConnString(String ipandPort, String dbName) {
@@ -76,7 +78,7 @@ public class StockDBScript {
 			Channel channel = connection.createChannel();
 
 			channel.queueDeclare(queue_name, false, false, false, null);
-			System.out.println(" [*] HKDbScript waiting for msg.");
+			System.out.println(" [*] DbScript waiting for msg.");
 
 			DeliverCallback deliverCallback = (consumerTag, delivery) -> {
 				String message = new String(delivery.getBody(), "UTF-8");
@@ -92,7 +94,7 @@ public class StockDBScript {
 						// Call back to client
 						this.getCurrentClientInt().printToClient("Transaction failed while processing order.");
 					}
-					
+
 					e.printStackTrace();
 				}
 			};
@@ -382,25 +384,22 @@ public class StockDBScript {
 			String query = "{CALL getAccountHoldingsById(?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 
+			float accountBalance = 0;
 			// Check if is buyer or seller order first.
 			if (sellerId == -1 && buyerId != -1) {
 
 				isbuyOrder = true;
 				stmt.setInt(1, buyerId);
-
+				accountBalance = accountDetailsDb.getAccountBalanceById(buyerId);
 			} else {
 				isbuyOrder = false;
 				stmt.setInt(1, sellerId);
-
+				accountBalance = accountDetailsDb.getAccountBalanceById(sellerId);
 			}
 
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				float accountBalance = rs.getFloat("availableCash");
-				float orderValue = qty * price;
-				if (accountBalance < orderValue) {
-					this.getCurrentClientInt().printToClient("not enough balance");
-				}
+			float orderValue = qty * price;
+			if (accountBalance < orderValue) {
+				this.getCurrentClientInt().printToClient("not enough balance");
 			}
 
 			// Order processing
@@ -636,7 +635,7 @@ public class StockDBScript {
 							}
 
 							// call closemarketpendingOrder
-							closeSellMarketPendingOrder(orderIds.get(i), sellerId); // this will delete marketpending
+							closeBuyMarketPendingOrder(orderIds.get(i), sellerId); // this will delete marketpending
 																					// entries and create
 																					// corresponding marketcomplete
 																					// entries with sellerId.
@@ -923,7 +922,7 @@ public class StockDBScript {
 			double offsetValue = 0;
 			double averagePrice = 0;
 			String formattedPrice = "";
-			
+
 			// buy = 0, sell = 1
 			buyOrSell = rd.nextBoolean();
 			// Get the average price of top 5 per stock
@@ -944,23 +943,22 @@ public class StockDBScript {
 			formattedPrice = String.format("%.2f", averagePrice + offsetValue);
 
 			if (randomSign == true && buyOrSell == true) {
-				message.append(stockId).append(",").append(-1).append(",").append(0).append(",")
-						.append(quantity).append(",").append(formattedPrice);
+				message.append(stockId).append(",").append(-1).append(",").append(0).append(",").append(quantity)
+						.append(",").append(formattedPrice);
 			} else if (randomSign == true && buyOrSell == false) {
-				message.append(stockId).append(",").append(0).append(",").append(-1).append(",")
-						.append(quantity).append(",").append(formattedPrice);
+				message.append(stockId).append(",").append(0).append(",").append(-1).append(",").append(quantity)
+						.append(",").append(formattedPrice);
 
 			} else if (randomSign == false && buyOrSell == true) {
-				message.append(stockId).append(",").append(-1).append(",").append(0).append(",")
-						.append(quantity).append(",").append(formattedPrice);
+				message.append(stockId).append(",").append(-1).append(",").append(0).append(",").append(quantity)
+						.append(",").append(formattedPrice);
 
 			} else if (randomSign == false && buyOrSell == false) {
-				message.append(stockId).append(",").append(0).append(",").append(-1).append(",")
-						.append(quantity).append(",").append(formattedPrice);
+				message.append(stockId).append(",").append(0).append(",").append(-1).append(",").append(quantity)
+						.append(",").append(formattedPrice);
 
 			}
-			
-			
+
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

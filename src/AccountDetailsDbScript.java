@@ -17,15 +17,37 @@ import classes.AccountDetails;
 
 public class AccountDetailsDbScript {
 	private final static String QUEUE_NAME = "hello";
-	public static final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
-	private static final String USERNAME = "root";
-	private static final String PASSWORD = "root";
+	public final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
+	private final String USERNAME = "root";
+	private final String PASSWORD = "root";
 
 	// Change this string according to leader election
-	private static String CONN_STRING = "jdbc:mysql://localhost:3306/accountdetailsserver"; // jdbc:mysql://ip:3306/DBNAME
+	private String CONN_STRING = "jdbc:mysql://localhost:3306/accountdetailsserver"; // jdbc:mysql://ip:3306/DBNAME
 
 	public void setConnString(String ipandPort, String dbName) {
 		CONN_STRING = "jdbc:mysql://" + ipandPort + "/" + dbName;
+	}
+
+	public float getAccountBalanceById(int accountId) throws SQLException {
+		Connection con = null;
+		float accountBalance = 0;
+		try {
+			Class.forName(DRIVER_CLASS);
+			con = (Connection) DriverManager.getConnection(this.CONN_STRING, this.USERNAME, this.PASSWORD);
+			String query = "{CALL getAccountHoldingsById(?)}";
+			CallableStatement stmt = con.prepareCall(query); // prepare to call
+
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				accountBalance = rs.getFloat("availableCash");
+
+			}
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return accountBalance;
+
 	}
 
 	public String getAccountDetails(String userName, String pw) throws SQLException {
@@ -40,7 +62,7 @@ public class AccountDetailsDbScript {
 		}
 
 		String query = "{CALL getAccountDetailsByUsernameAndPw(?,?)}"; // Query of calling stored procedure "Get account
-																// Details" with
+		// Details" with
 		CallableStatement stmt = con.prepareCall(query); // prepare to call
 
 		stmt.setString(1, userName); // Set the parameter
@@ -52,9 +74,9 @@ public class AccountDetailsDbScript {
 		while (rs.next()) {
 			System.out.println("there's result");
 
-			AccountDetails accountDetail = new AccountDetails(rs.getInt("accountId"), rs.getString("userName"), 
-					rs.getString("email"), rs.getFloat("totalAccountValue"),
-					rs.getFloat("totalSecurityValue"), rs.getFloat("availableCash"));
+			AccountDetails accountDetail = new AccountDetails(rs.getInt("accountId"), rs.getString("userName"),
+					rs.getString("email"), rs.getFloat("totalAccountValue"), rs.getFloat("totalSecurityValue"),
+					rs.getFloat("availableCash"));
 
 			System.out.println(accountDetail);
 
