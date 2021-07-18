@@ -410,7 +410,7 @@ public class StockDBScript {
 		}
 
 		float orderValue = qty * price;
-		if (accountBalance < orderValue) {
+		if ((accountBalance < orderValue) && !isRandomGenOrder) {
 			this.getCurrentClientInt().printToClient("not enough balance");
 		}
 
