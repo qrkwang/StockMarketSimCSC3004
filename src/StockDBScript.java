@@ -392,18 +392,21 @@ public class StockDBScript {
 		float accountBalance = 0;
 		// Check if is buyer or seller order first.
 		if (sellerId == -1 && buyerId != -1) {
+			isbuyOrder = true;
+
 			if (buyerId == 0) {
 				isRandomGenOrder = true;
+			} else {
+				accountBalance = accountDetailsDb.getAccountBalanceById(buyerId);
 			}
-			isbuyOrder = true;
-			accountBalance = accountDetailsDb.getAccountBalanceById(buyerId);
-
 		} else {
+			isbuyOrder = false;
+
 			if (sellerId == 0) {
 				isRandomGenOrder = true;
+			} else {
+				accountBalance = accountDetailsDb.getAccountBalanceById(sellerId);
 			}
-			isbuyOrder = false;
-			accountBalance = accountDetailsDb.getAccountBalanceById(sellerId);
 		}
 
 		float orderValue = qty * price;
