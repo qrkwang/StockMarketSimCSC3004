@@ -37,7 +37,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		}
 	}
 
-	
+	/*
 	
 	@Test
 	public void testStartLeaderElectionAlgo() {
@@ -52,7 +52,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		}
 	}
 
-	
+*/	
 	
 
 	@Test
@@ -110,7 +110,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		}
 	}
 
-
+/*
 	@Test
 	public void testgetAllStocksByMarket_TrueCondition() {
 		String market = "HK";
@@ -138,7 +138,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 			e.printStackTrace();
 		}
 	}
-
+*/
 	// not too sure for retrieve cache
 /*
 	@Test
@@ -170,14 +170,30 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		// TODO Auto-generated method stub	
 	}
 
-	@Override
 	public void updateMarket(String market, String res) throws RemoteException {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
 	public void updateStock(String s) throws RemoteException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void updateMarket(String market) throws RemoteException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void updateStock(String market, int stockid) throws RemoteException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void sendOrderBook(String orderbook) throws RemoteException {
 		// TODO Auto-generated method stub
 		
 	}
