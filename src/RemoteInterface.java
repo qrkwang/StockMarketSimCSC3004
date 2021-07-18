@@ -10,7 +10,7 @@ public interface RemoteInterface extends Remote {
 	public String getAccountDetailsByUsernameAndPW(ClientInt cc, String username, String pw) throws RemoteException;
 	public ArrayList getAccountHoldingsById(int accountId) throws RemoteException;
 
-	public String sendOrder(int accountId, String market, String order) throws RemoteException;
+	public String sendOrder(int accountId, String market, String order,  boolean randomGeneration) throws RemoteException;
 
 	public void removeFromClientHashMap(int accountId) throws RemoteException;
 	

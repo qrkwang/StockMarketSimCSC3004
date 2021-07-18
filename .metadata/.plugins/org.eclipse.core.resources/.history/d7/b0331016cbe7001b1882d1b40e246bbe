@@ -50,9 +50,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private final String ACCOUNTSERVER = "192.168.43.250"; // 192.168.87.54
 	private final String ACCOUNTSERVER2 = "192.168.43.168"; // 192.168.87.55
 	private final String ACCOUNTSERVER3 = "192.168.43.199"; // 192.168.87.56
-	private final String USSERVERIPADDRESS = "192.168.43.185";
-	private final String SGSERVERIPADDRESS = "192.168.43.210";
-	private final String HKSERVERIPADDRESS = "192.168.43.74";
+	private final String USSERVERIPADDRESS = "192.168.1.16";
+	private final String SGSERVERIPADDRESS = "192.168.1.17";
+	private final String HKSERVERIPADDRESS = "192.168.1.18";
 
 //	private final String ACCOUNTSERVER = "localhost:3306"; // 192.168.87.54
 //	private final String ACCOUNTSERVER2 = "localhost:3306"; // 192.168.87.55

@@ -85,9 +85,14 @@ public class StockDBScript {
 					receiveOrder(message);
 				} catch (Exception e) {
 
-					// Call back to client
-					this.getCurrentClientInt().printToClient("Transaction failed while processing order.");
-					System.out.println("start wait for msg exception");
+					if (this.getCurrentClientInt() == null) {
+						System.out.println("start wait for msg exception");
+
+					} else {
+						// Call back to client
+						this.getCurrentClientInt().printToClient("Transaction failed while processing order.");
+					}
+					
 					e.printStackTrace();
 				}
 			};
@@ -908,68 +913,59 @@ public class StockDBScript {
 		return shifted;
 	}
 
-	public void dbRandomOrderGeneration() {
-		ArrayList<Stock> arrayListStocks = null;
+	public String dbRandomOrderGeneration(int stockId) {
+		StringBuilder message = new StringBuilder("");
 		try {
-			arrayListStocks = getAllStocks();
-
 			boolean buyOrSell = false;
 			boolean randomSign = false;
 			int quantity = 0;
 			Random rd = new Random();
-
-			for (Stock stock : arrayListStocks) {
-				for (int i = 0; i < 20; i++) {
-					double offsetValue = 0;
-					double averagePrice = 0;
-					String formattedPrice = "";
-					StringBuilder message = new StringBuilder("");
-					// buy = 0, sell = 1
-					buyOrSell = rd.nextBoolean();
-					// Get the average price of top 5 per stock
-					averagePrice = getAvgCompletedOrder(stock.getStockId());
-					if (averagePrice < 10) {
-						offsetValue = randomInRange(0, 0.1);
-					} else if (averagePrice >= 10 && averagePrice < 100) {
-						offsetValue = randomInRange(0, 0.2);
-					} else {
-						offsetValue = randomInRange(0, 0.5);
-					}
-					// true = + , false = -
-					randomSign = rd.nextBoolean();
-					// Generate new quantity
-					quantity = rd.nextInt(50);
-					System.out.println("OffsetValue " + offsetValue);
-					System.out.println(averagePrice);
-					formattedPrice = String.format("%.2f", averagePrice + offsetValue);
-
-					if (randomSign == true && buyOrSell == true) {
-						message.append(stock.getStockId()).append(",").append(-1).append(",").append(0).append(",")
-								.append(quantity).append(",").append(formattedPrice);
-					} else if (randomSign == true && buyOrSell == false) {
-						message.append(stock.getStockId()).append(",").append(0).append(",").append(-1).append(",")
-								.append(quantity).append(",").append(formattedPrice);
-
-					} else if (randomSign == false && buyOrSell == true) {
-						message.append(stock.getStockId()).append(",").append(-1).append(",").append(0).append(",")
-								.append(quantity).append(",").append(formattedPrice);
-
-					} else if (randomSign == false && buyOrSell == false) {
-						message.append(stock.getStockId()).append(",").append(0).append(",").append(-1).append(",")
-								.append(quantity).append(",").append(formattedPrice);
-
-					}
-					if (!message.equals("")) {
-						System.out.println(message.toString());
-						receiveOrder(message.toString());
-					}
-				}
+			double offsetValue = 0;
+			double averagePrice = 0;
+			String formattedPrice = "";
+			
+			// buy = 0, sell = 1
+			buyOrSell = rd.nextBoolean();
+			// Get the average price of top 5 per stock
+			averagePrice = getAvgCompletedOrder(stockId);
+			if (averagePrice < 10) {
+				offsetValue = randomInRange(0, 0.1);
+			} else if (averagePrice >= 10 && averagePrice < 100) {
+				offsetValue = randomInRange(0, 0.2);
+			} else {
+				offsetValue = randomInRange(0, 0.5);
 			}
+			// true = + , false = -
+			randomSign = rd.nextBoolean();
+			// Generate new quantity
+			quantity = rd.nextInt(50);
+			System.out.println("OffsetValue " + offsetValue);
+			System.out.println(averagePrice);
+			formattedPrice = String.format("%.2f", averagePrice + offsetValue);
 
+			if (randomSign == true && buyOrSell == true) {
+				message.append(stockId).append(",").append(-1).append(",").append(0).append(",")
+						.append(quantity).append(",").append(formattedPrice);
+			} else if (randomSign == true && buyOrSell == false) {
+				message.append(stockId).append(",").append(0).append(",").append(-1).append(",")
+						.append(quantity).append(",").append(formattedPrice);
+
+			} else if (randomSign == false && buyOrSell == true) {
+				message.append(stockId).append(",").append(-1).append(",").append(0).append(",")
+						.append(quantity).append(",").append(formattedPrice);
+
+			} else if (randomSign == false && buyOrSell == false) {
+				message.append(stockId).append(",").append(0).append(",").append(-1).append(",")
+						.append(quantity).append(",").append(formattedPrice);
+
+			}
+			
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return message.toString();
 	}
 
 }
