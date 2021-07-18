@@ -387,14 +387,21 @@ public class StockDBScript {
 		float price = Float.parseFloat(splitArray[4]);
 		Connection con = null;
 		boolean isbuyOrder;
+		boolean isRandomGenOrder = false;
 
 		float accountBalance = 0;
 		// Check if is buyer or seller order first.
 		if (sellerId == -1 && buyerId != -1) {
-
+			if (buyerId == 0) {
+				isRandomGenOrder = true;
+			}
 			isbuyOrder = true;
 			accountBalance = accountDetailsDb.getAccountBalanceById(buyerId);
+
 		} else {
+			if (sellerId == 0) {
+				isRandomGenOrder = true;
+			}
 			isbuyOrder = false;
 			accountBalance = accountDetailsDb.getAccountBalanceById(sellerId);
 		}
@@ -532,8 +539,9 @@ public class StockDBScript {
 						totalPaid = price * qty;
 
 					}
-					this.updatePurchaseInAccount(buyerId, totalPaid);
-
+					if (!isRandomGenOrder) {
+						this.updatePurchaseInAccount(buyerId, totalPaid);
+					}
 				}
 
 			}
@@ -663,8 +671,10 @@ public class StockDBScript {
 						totalValueSold = price * qty;
 
 					}
-					this.updateSaleInAccount(sellerId, totalValueSold);
+					if (!isRandomGenOrder) {
 
+						this.updateSaleInAccount(sellerId, totalValueSold);
+					}
 				}
 			}
 
