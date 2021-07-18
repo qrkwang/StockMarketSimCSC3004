@@ -342,7 +342,52 @@ ORDER BY TransactionDate desc limit 5) P;
 END$$
 DELIMITER ;
 
+-- USE this to generate dummy data after create the table
+USE `HKStockMarket`;
+DROP PROCEDURE IF EXISTS `InsertMarketCompletedData`;
 
+DELIMITER $$
+USE `HKStockMarket`$$
+
+CREATE PROCEDURE InsertMarketCompletedData(
+)
+BEGIN
+	DECLARE counterid INT DEFAULT 1;
+    DECLARE insertStockId int;
+    DECLARE insertPrice double;
+    DECLARE InsertQuantity int DEFAULT 20;
+    DECLARE insertId int;
+    DECLARE insertBuyerId int DEFAULT 0;
+    DECLARE insertSellerId int default 0;
+    
+    
+	WHILE counterid <=(SELECT COUNT(*) FROM stock) do
+		SELECT @insertStockId := StockId
+        from stock
+        WHERE StockId = counterid;
+        
+        SELECT @insertPrice := CurrentValue
+        from stock
+        WHERE StockId = counterid;
+		SET insertSellerId = 0;
+        SET insertBuyerId = 6;
+        SET insertId = 1;
+        WHILE insertId <=5 do
+        SET insertSellerId = insertSellerId + 1;
+        SET insertBuyerId = insertBuyerId - 1;
+        SET InsertQuantity = InsertQuantity + 1;
+        SET @insertPrice = @insertPrice + 0.1;
+        
+        INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
+		VALUES(@insertStockId,insertSellerId, insertBuyerId, InsertQuantity,@insertPrice, now());
+        
+        SET insertId = insertId +1;
+        END WHILE;
+        SET counterid = counterid + 1;
+	END WHILE;
+END$$
+
+CALL InsertMarketCompletedData();
 
 
 
