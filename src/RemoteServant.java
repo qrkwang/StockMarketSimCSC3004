@@ -283,71 +283,76 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	 * 
 	 */
 	public void startDataRedundancyAlgo() {
+		Thread thread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				String failedServer = null;
+				boolean usRequiredRecovery = false;
+				boolean hkRequiredRecovery = false;
+				boolean sgRequiredRecovery = false;
+				while (true) {
+					try {
+						if (sendPingRequest(USSERVERIPADDRESS) == false) {
+							failedServer = "US";
+							System.out.println("Cannot ping US");
+							usaDb.setOnline(false);
+						} else {
+							usaDb.setOnline(true);
+						}
+						if (sendPingRequest(SGSERVERIPADDRESS) == false) {
+							failedServer = "SG";
+							System.out.println("Cannot ping SG");
+							sgDb.setOnline(false);
+						} else {
+							sgDb.setOnline(true);
+						}
+						if (sendPingRequest(HKSERVERIPADDRESS) == false) {
+							failedServer = "HK";
+							System.out.println("Cannot ping HK");
+							hkDb.setOnline(false);
+						} else {
+							hkDb.setOnline(true);
+						}
 
-		String failedServer = null;
-		boolean usRequiredRecovery = false;
-		boolean hkRequiredRecovery = false;
-		boolean sgRequiredRecovery = false;
+						if (failedServer != null && usRequiredRecovery == false && sgRequiredRecovery == false
+								&& hkRequiredRecovery == false) {
+							executeFile("src/sshRecoverIfFail.py", failedServer);
+							if (failedServer.equals("US")) {
+								usRequiredRecovery = true;
+							} else if (failedServer.equals("HK")) {
+								hkRequiredRecovery = true;
+							} else if (failedServer.equals("SG")) {
+								sgRequiredRecovery = true;
+							}
 
-		while (true) {
-			try {
-				if (sendPingRequest(USSERVERIPADDRESS) == false) {
-					failedServer = "US";
-					System.out.println("Cannot ping US");
-					usaDb.setOnline(false);
-				} else {
-					usaDb.setOnline(true);
-				}
-				if (sendPingRequest(SGSERVERIPADDRESS) == false) {
-					failedServer = "SG";
-					System.out.println("Cannot ping SG");
-					sgDb.setOnline(false);
-				} else {
-					sgDb.setOnline(true);
-				}
-				if (sendPingRequest(HKSERVERIPADDRESS) == false) {
-					failedServer = "HK";
-					System.out.println("Cannot ping HK");
-					hkDb.setOnline(false);
-				} else {
-					hkDb.setOnline(true);
-				}
+						}
+						if ((usRequiredRecovery == true && usaDb.isOnline() == true)
+								|| (sgDb.isOnline() == true && sgRequiredRecovery == true)
+								|| (hkDb.isOnline() == true && hkRequiredRecovery == true)) {
+							executeFile("src/sshRecoverOriginalServer.py", failedServer);
+							failedServer = null;
+							usRequiredRecovery = false;
+							sgRequiredRecovery = false;
+							hkRequiredRecovery = false;
 
-				if (failedServer != null && usRequiredRecovery == false && sgRequiredRecovery == false
-						&& hkRequiredRecovery == false) {
-					executeFile("src/sshRecoverIfFail.py", failedServer);
-					if (failedServer.equals("US")) {
-						usRequiredRecovery = true;
-					} else if (failedServer.equals("HK")) {
-						hkRequiredRecovery = true;
-					} else if (failedServer.equals("SG")) {
-						sgRequiredRecovery = true;
+						}
+						Thread.sleep(60000);
+
+					} catch (UnknownHostException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
-
 				}
-				if ((usRequiredRecovery == true && usaDb.isOnline() == true)
-						|| (sgDb.isOnline() == true && sgRequiredRecovery == true)
-						|| (hkDb.isOnline() == true && hkRequiredRecovery == true)) {
-					executeFile("src/sshRecoverOriginalServer.py", failedServer);
-					failedServer = null;
-					usRequiredRecovery = false;
-					sgRequiredRecovery = false;
-					hkRequiredRecovery = false;
-
-				}
-				Thread.sleep(60000);
-
-			} catch (UnknownHostException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
-		}
+			
+		});
+		thread.start();
 	}
 
 	public static void executeFile(String fileName, String failedServer) {
