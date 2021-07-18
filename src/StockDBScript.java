@@ -379,21 +379,15 @@ public class StockDBScript {
 		try {
 			// Check account balance if enough for order, if not, callback saying not
 			// enough, if yes, continue with order processing.
-			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
-			String query = "{CALL getAccountHoldingsById(?)}";
-			CallableStatement stmt = con.prepareCall(query); // prepare to call
 
 			float accountBalance = 0;
 			// Check if is buyer or seller order first.
 			if (sellerId == -1 && buyerId != -1) {
 
 				isbuyOrder = true;
-				stmt.setInt(1, buyerId);
 				accountBalance = accountDetailsDb.getAccountBalanceById(buyerId);
 			} else {
 				isbuyOrder = false;
-				stmt.setInt(1, sellerId);
 				accountBalance = accountDetailsDb.getAccountBalanceById(sellerId);
 			}
 
