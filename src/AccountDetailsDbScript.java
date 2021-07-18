@@ -42,6 +42,8 @@ public class AccountDetailsDbScript {
 				accountBalance = rs.getFloat("availableCash");
 
 			}
+			con.close();
+
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
