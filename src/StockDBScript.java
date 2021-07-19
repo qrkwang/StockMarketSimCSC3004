@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 
 import com.mysql.jdbc.Connection;
@@ -32,6 +33,8 @@ public class StockDBScript {
 	private String password;
 	private String conn_string; // jdbc:mysql://ip:3306/DBNAME
 	private AccountDetailsDbScript accountDetailsDb;
+	private HashMap<Integer, ClientInt> clientHashMap; // accountId and clientInterface
+
 //	public StockDBScript() {
 //		this.queue_name = "";
 //		this.conn_string = "";
@@ -44,6 +47,8 @@ public class StockDBScript {
 		this.username = u;
 		this.password = p;
 		this.accountDetailsDb = accountDetailsDb;
+		clientHashMap = new HashMap<Integer, ClientInt>();
+
 	}
 
 	public void setConnString(String ipandPort, String dbName) {
@@ -58,12 +63,25 @@ public class StockDBScript {
 		this.isOnline = isOnline;
 	}
 
-	public ClientInt getCurrentClientInt() {
-		return currentClientInt;
+	public void addToClientHashMap(ClientInt cc, int accountId) {
+		clientHashMap.put(accountId, cc);
+
 	}
 
-	public void setCurrentClientInt(ClientInt currentClientInt) {
-		this.currentClientInt = currentClientInt;
+	public void removeFromClientHashMap(int accountId) {
+		if (clientHashMap.containsKey(accountId)) {
+			clientHashMap.remove(accountId);
+		}
+	}
+
+	public ClientInt retrieveClientIntFromHashMap(int accountId) {
+		System.out.println("retrieve from hashmap print");
+		System.out.println(clientHashMap);
+
+		if (clientHashMap.containsKey(accountId)) {
+			return clientHashMap.get(accountId);
+		}
+		return null;
 	}
 
 	public void startWaitForMsg() {
@@ -83,20 +101,7 @@ public class StockDBScript {
 			DeliverCallback deliverCallback = (consumerTag, delivery) -> {
 				String message = new String(delivery.getBody(), "UTF-8");
 				System.out.println(" [x] Received '" + message + "'");
-				try {
-					receiveOrder(message);
-				} catch (Exception e) {
-
-					if (this.getCurrentClientInt() == null) {
-						System.out.println("start wait for msg exception");
-
-					} else {
-						// Call back to client
-						this.getCurrentClientInt().printToClient("Transaction failed while processing order.");
-					}
-
-					e.printStackTrace();
-				}
+				receiveOrder(message);
 			};
 			channel.basicConsume(queue_name, true, deliverCallback, consumerTag -> {
 			});
@@ -393,30 +398,43 @@ public class StockDBScript {
 
 		float accountBalance = 0;
 		// Check if is buyer or seller order first.
+		if (sellerId == -1 && buyerId != -1) {
+			isbuyOrder = true;
+
+		} else {
+			isbuyOrder = false;
+
+		}
 		try {
 
-			if (sellerId == -1 && buyerId != -1) {
-				isbuyOrder = true;
-
-				if (buyerId == 0) {
-					isRandomGenOrder = true;
-				} else {
-					accountBalance = accountDetailsDb.getAccountBalanceById(buyerId);
-
-				}
+			if (buyerId == 0 && isbuyOrder) {
+				isRandomGenOrder = true;
 			} else {
-				isbuyOrder = false;
+				accountBalance = accountDetailsDb.getAccountBalanceById(buyerId);
 
-				if (sellerId == 0) {
-					isRandomGenOrder = true;
-				} else {
-					accountBalance = accountDetailsDb.getAccountBalanceById(sellerId);
-				}
+			}
+
+			if (sellerId == 0 && !isbuyOrder) {
+				isRandomGenOrder = true;
+			} else {
+				accountBalance = accountDetailsDb.getAccountBalanceById(sellerId);
 			}
 
 			float orderValue = qty * price;
 			if ((accountBalance < orderValue) && !isRandomGenOrder) {
-				this.getCurrentClientInt().printToClient("not enough balance");
+				try {
+					int accountId;
+					if (isbuyOrder) {
+						this.retrieveClientIntFromHashMap(buyerId).printToClient("not enough balance");
+
+					} else {
+						this.retrieveClientIntFromHashMap(sellerId).printToClient("not enough balance");
+					}
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					System.out.println("client offline / cannot connect to client");
+					e.printStackTrace();
+				}
 			}
 
 			// Order processing
@@ -702,6 +720,12 @@ public class StockDBScript {
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
+			if (isbuyOrder) {
+				this.retrieveClientIntFromHashMap(buyerId).printToClient("error processing");
+			} else {
+				this.retrieveClientIntFromHashMap(sellerId).printToClient("error processing");
+
+			}
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block

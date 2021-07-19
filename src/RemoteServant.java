@@ -601,13 +601,13 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		if (!randomGeneration) {
 			if (market.equals("US")) {
 				QUEUE_NAME = "USMarket";
-				hkDb.setCurrentClientInt(user);
+				hkDb.addToClientHashMap(user, accountId);
 			} else if (market.equals("HK")) {
 				QUEUE_NAME = "HKMarket";
-				hkDb.setCurrentClientInt(user);
+				hkDb.addToClientHashMap(user, accountId);
 			} else {
 				QUEUE_NAME = "SGMarket";
-				hkDb.setCurrentClientInt(user);
+				hkDb.addToClientHashMap(user, accountId);
 			}
 		} else {
 			if (market.equals("US")) {
