@@ -299,6 +299,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 							usaDb.setConnString(SGSERVERIPADDRESS, USDBName);
 						} else {
 							usaDb.setOnline(true);
+							usaDb.setConnString(USSERVERIPADDRESS, USDBName);
 						}
 						if (sendPingRequest(SGSERVERIPADDRESS) == false) {
 							failedServer = Market.SG.name();
@@ -307,6 +308,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 							sgDb.setConnString(HKSERVERIPADDRESS, SGDBName);
 						} else {
 							sgDb.setOnline(true);
+							sgDb.setConnString(SGSERVERIPADDRESS, SGDBName);
 						}
 						if (sendPingRequest(HKSERVERIPADDRESS) == false) {
 							failedServer = Market.HK.name();
@@ -315,6 +317,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 							hkDb.setConnString(USSERVERIPADDRESS, HKDBName);
 						} else {
 							hkDb.setOnline(true);
+							hkDb.setConnString(HKSERVERIPADDRESS, HKDBName);
 						}
 
 						if (failedServer != null && usRequiredRecovery == false && sgRequiredRecovery == false
