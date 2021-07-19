@@ -20,9 +20,15 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	
 	private RemoteInterface remoteObj;
 	private ClientInt cc = new Client();
-	
+	private RemoteServant remoteServant;
+
 	public ClientTest() throws RemoteException {
-		remoteObj = new RemoteServant();	
+		remoteObj = new RemoteServant();
+		remoteServant = new RemoteServant();	
+	}
+	
+	private enum Market {
+		SG, HK, US
 	}
 
 	public void setUp() throws Exception , RemoteException {
@@ -40,40 +46,26 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	
 	
 	@Test
-	public void testStartLeaderElectionAlgo() {
-		boolean algoResult = false;
-		try {
-			algoResult = remoteObj.startLeaderElectionAlgo();
-			System.out.println("testing inside");
-			Assert.assertTrue("Fail to run the leader election (no leader server is selected)",algoResult);	
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	
-	
-
-	@Test
 	public void testGetAccountDetailsByUsernameAndPW_FalseCondition() {
 		String username = "demo";
 		String pw = "";
 		try {
-			String accountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc,  username, pw);
-			Assert.assertTrue("Fail to get accountDetails", accountDetails.matches("not found"));	
-			Assert.assertTrue("Fail to get accountDetails", accountDetails.matches("problem"));		
+			String accountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc,  username, pw);		
+			Assert.assertTrue("Fail to get accountDetails", accountDetails.matches("not found") || accountDetails.matches("problem"));	
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
+	
+	
 	@Test
 	public void testGetAccountDetailsByUsernameAndPW_TrueCondition() {
 		String username = "demo";
 		String pw = "password";
 		try {
 			String accountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc,  username, pw);
+			System.out.println(accountDetails + "  running here");
 			Assert.assertFalse("Fail to get accountDetails", accountDetails.matches("not found"));	
 			Assert.assertFalse("Fail to get accountDetails", accountDetails.matches("problem"));
 		} catch (RemoteException e) {
@@ -84,10 +76,10 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	
 	
 	
+	
 	@Test
 	public void testGetAccountHoldingsById_TrueCondition() {
 		int accountId = 2;
-		// cant test yet
 		try {
 			ArrayList<StockOwned> resultAccount = remoteObj.getAccountHoldingsById(accountId);
 			Assert.assertNotNull("The account Id exist", resultAccount);	
@@ -97,27 +89,26 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		}
 	}
 	
+	
 	@Test
 	public void testGetAccountHoldingsById_FalseCondition() {
-		// cant test yet 
-		int accountId = 3;
+		int accountId = 80;
 		try {
 			ArrayList<StockOwned> resultAccount = remoteObj.getAccountHoldingsById(accountId);
-			Assert.assertNull("The account Id is wrong", resultAccount);	
+			Assert.assertTrue("The account Id is wrong", resultAccount == null || resultAccount.isEmpty());	
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-
-
+	
+	
 	@Test
-	public void testgetAllStocksByMarket_TrueCondition() {
-		String market = "HK";
-		String getStock;
+	public void testretrieveMarketCache_TrueCondition() {
+		String  market = "HK";
 		try {
-			getStock = remoteObj.getAllStocksByMarket(market);
-			Assert.assertNotEquals("Fail to get back the stock market", getStock ,"empty");
+			String marketCache = remoteObj.retrieveMarketCache(market , cc);
+			Assert.assertNotNull("Manage to retreive the cache for current market", marketCache);	
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -125,59 +116,39 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	}
 	
 	@Test
-	public void testgetAllStocksByMarket_FailCondition() {
-		String market = "tttttttttt";
-		String getStock;
+	public void testretrieveMarketCache_FalseCondition() {
+		String  market = "demo";
 		try {
-			getStock = remoteObj.getAllStocksByMarket(market);
-			System.out.println("printttttttttttttttt heeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeere  +" + getStock);
-			Assert.assertEquals("Stock Market is current empty", getStock , "empty");	
-			Assert.assertEquals("Fail to get back the sotck market", getStock , "error fetching");	
+			String marketCache = remoteObj.retrieveMarketCache(market , cc);
+			Assert.assertNull("Fail to retreive the cache for current market", marketCache);	
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-
-	// not too sure for retrieve cache
-/*
-	@Test
-	public void testRetrieveCache() {
-		String market = "";
-		int stockid	 = 0;	
-		try {
-			String cacheResult = remoteObj.retrieveCache(market, stockid);
-			Assert.assertNotNull("Cache result have been recieved", cacheResult);
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		// not sure what is the value in for stockId and market
 	}
 	
-
-	@Test
-	public void testRemoveFromClientHashMap() {
-		// no return value . will need to check again
-		System.out.println("testing 1234567890");
-		fail("Not yet implemented");
-	}
-
-*/
+	
 	
 	@Override
 	public void printToClient(String s) throws RemoteException {
 		// TODO Auto-generated method stub	
 	}
 
+
 	@Override
-	public void updateMarket(String market, String res) throws RemoteException {
+	public void updateMarket(String market) throws RemoteException {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void updateStock(String s) throws RemoteException {
+	public void updateStock(String market, int stockid) throws RemoteException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void sendOrderBook(String orderbook) throws RemoteException {
 		// TODO Auto-generated method stub
 		
 	}
