@@ -813,6 +813,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 	            		order = generateOrder(StockId, -1, accountId, quantity, price);
 					remoteObj.sendOrder(accountId, market, order, false); // -1 to indicate null, i will change to null on
 					orderStockFrame.dispose();
+					createHomePanel();
 				} catch (ParseException | RemoteException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
