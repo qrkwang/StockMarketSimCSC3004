@@ -54,6 +54,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private final String USSERVERIPADDRESS = "localhost";
 	private final String SGSERVERIPADDRESS = "localhost";
 	private final String HKSERVERIPADDRESS = "localhost";
+	
+	private final String USDBName = "USStockMarket";
+	private final String HKDBName = "HKStockMarket";
+	private final String SGDBName = "SGStockMarket";
 
 //	private final String ACCOUNTSERVER = "localhost:3306"; // 192.168.87.54
 //	private final String ACCOUNTSERVER2 = "localhost:3306"; // 192.168.87.55
@@ -291,35 +295,41 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				while (true) {
 					try {
 						if (sendPingRequest(USSERVERIPADDRESS) == false) {
-							failedServer = "US";
+							failedServer = Market.US.name();
 							System.out.println("Cannot ping US");
 							usaDb.setOnline(false);
+							usaDb.setConnString(SGSERVERIPADDRESS, USDBName);
 						} else {
 							usaDb.setOnline(true);
 						}
 						if (sendPingRequest(SGSERVERIPADDRESS) == false) {
-							failedServer = "SG";
+							failedServer = Market.SG.name();
 							System.out.println("Cannot ping SG");
 							sgDb.setOnline(false);
+							sgDb.setConnString(HKSERVERIPADDRESS, SGDBName);
 						} else {
 							sgDb.setOnline(true);
 						}
 						if (sendPingRequest(HKSERVERIPADDRESS) == false) {
-							failedServer = "HK";
+							failedServer = Market.HK.name();
 							System.out.println("Cannot ping HK");
 							hkDb.setOnline(false);
+							hkDb.setConnString(USSERVERIPADDRESS, HKDBName);
 						} else {
 							hkDb.setOnline(true);
 						}
 
 						if (failedServer != null && usRequiredRecovery == false && sgRequiredRecovery == false
 								&& hkRequiredRecovery == false) {
+						
+						    
+							//System.out.println("The current working directory is " + currentDirectory);
 							executeFile("src/sshRecoverIfFail.py", failedServer);
-							if (failedServer.equals("US")) {
+							if (failedServer.equals(Market.US.name())) {
 								usRequiredRecovery = true;
-							} else if (failedServer.equals("HK")) {
+							} else if (failedServer.equals(Market.HK.name())) {
 								hkRequiredRecovery = true;
-							} else if (failedServer.equals("SG")) {
+							} else if (failedServer.equals(Market.SG.name())) {
 								sgRequiredRecovery = true;
 							}
 
@@ -328,6 +338,14 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 								|| (sgDb.isOnline() == true && sgRequiredRecovery == true)
 								|| (hkDb.isOnline() == true && hkRequiredRecovery == true)) {
 							executeFile("src/sshRecoverOriginalServer.py", failedServer);
+							
+							if (failedServer.equals(Market.US.name())) {
+								usaDb.setConnString(USSERVERIPADDRESS, USDBName);
+							} else if (failedServer.equals(Market.HK.name())) {
+								hkDb.setConnString(HKSERVERIPADDRESS, HKDBName);
+							} else if (failedServer.equals(Market.SG.name())) {
+								sgDb.setConnString(SGSERVERIPADDRESS, SGDBName);
+							}
 							failedServer = null;
 							usRequiredRecovery = false;
 							sgRequiredRecovery = false;
@@ -352,7 +370,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		});
 		thread.start();
 	}
-
+	
 	public static void executeFile(String fileName, String failedServer) {
 		try {
 			String[] cmd = { "python", fileName, failedServer };
