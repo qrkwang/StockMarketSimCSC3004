@@ -32,6 +32,7 @@ public class StockDBScript {
 	private String username;
 	private String password;
 	private String conn_string; // jdbc:mysql://ip:3306/DBNAME
+	private String market; // jdbc:mysql://ip:3306/DBNAME
 	private AccountDetailsDbScript accountDetailsDb;
 	private HashMap<Integer, ClientInt> clientHashMap; // accountId and clientInterface
 
@@ -40,8 +41,9 @@ public class StockDBScript {
 //		this.conn_string = "";
 //	}
 
-	public StockDBScript(String qn, String ip, String dbname, String u, String p,
+	public StockDBScript(String m, String qn, String ip, String dbname, String u, String p,
 			AccountDetailsDbScript accountDetailsDb) {
+		this.market = m;
 		this.queue_name = qn;
 		this.conn_string = "jdbc:mysql://" + ip + "/" + dbname;
 		this.username = u;
@@ -768,7 +770,7 @@ public class StockDBScript {
 
 				}
 
-				StockOwned stockOwnedItem = new StockOwned(rs.getInt("StockId"), rs.getString("CompanyName"),
+				StockOwned stockOwnedItem = new StockOwned(this.market, rs.getInt("StockId"), rs.getString("CompanyName"),
 						rs.getString("TickerSymbol"), rs.getInt(4), rs.getInt(5));
 				System.out.println(stockOwnedItem.toString());
 				arrayListOwned.add(stockOwnedItem);

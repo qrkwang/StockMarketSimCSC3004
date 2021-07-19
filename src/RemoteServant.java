@@ -60,9 +60,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private final String HKDBName = "HKStockMarket";
 	private final String SGDBName = "SGStockMarket";
 
-//	private final String ACCOUNTSERVER = "localhost:3306"; // 192.168.87.54
-//	private final String ACCOUNTSERVER2 = "localhost:3306"; // 192.168.87.55
-//	private final String ACCOUNTSERVER3 = "localhost:3306"; // 192.168.87.56
+//	private final String ACCOUNTSERVER = "localhost"; // 192.168.87.54
+//	private final String ACCOUNTSERVER2 = "localhost"; // 192.168.87.55
+//	private final String ACCOUNTSERVER3 = "localhost"; // 192.168.87.56
 //	private final String USSERVERIPADDRESS = "localhost";
 //	private final String SGSERVERIPADDRESS = "localhost";
 //	private final String HKSERVERIPADDRESS = "localhost";
@@ -84,9 +84,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		// constructor called.
 
 		accountDetailsDb = new AccountDetailsDbScript(ACCOUNTSERVER + ":3306", AccountsDBName, "root", "root");
-		hkDb = new StockDBScript("HKMarket", HKSERVERIPADDRESS + ":3306", HKDBName, "root", "root", accountDetailsDb);
-		sgDb = new StockDBScript("SGMarket", SGSERVERIPADDRESS + ":3306", SGDBName, "root", "root", accountDetailsDb);
-		usaDb = new StockDBScript("USMarket", USSERVERIPADDRESS + ":3306", USDBName, "root", "root", accountDetailsDb);
+		hkDb = new StockDBScript(Market.HK.name(), "HKMarket", HKSERVERIPADDRESS + ":3306", HKDBName, "root", "root", accountDetailsDb);
+		sgDb = new StockDBScript(Market.SG.name(), "SGMarket", SGSERVERIPADDRESS + ":3306", SGDBName, "root", "root", accountDetailsDb);
+		usaDb = new StockDBScript(Market.US.name(), "USMarket", USSERVERIPADDRESS + ":3306", USDBName, "root", "root", accountDetailsDb);
 
 		clientHashMap = new HashMap<Integer, ClientInt>();
 		logMap = new HashMap<Integer, String>(); // for log (will be server name and generation number)
@@ -640,7 +640,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			channel.queueDeclare(QUEUE_NAME, false, false, false, null);
 			channel.basicPublish("", QUEUE_NAME, null, order.getBytes());
 
-			System.out.println(" [x] Sent '" + order + "'");
+			System.out.println(" [x] Sent '" + order + "'" + QUEUE_NAME);
 		} catch (IOException | TimeoutException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
