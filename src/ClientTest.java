@@ -43,30 +43,15 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		}
 	}
 
-	/*
-	@Test
-	public void testStartLeaderElectionAlgo() {
-		boolean algoResult = false;
-		algoResult = remoteServant.startLeaderElectionAlgo();
-		System.out.println("testing inside");
-		Assert.assertTrue("Fail to run the leader election (no leader server is selected)",algoResult);
-	}
-
-
 	
-*/
 	
-	/*
 	@Test
 	public void testGetAccountDetailsByUsernameAndPW_FalseCondition() {
 		String username = "demo";
 		String pw = "";
 		try {
-			String accountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc,  username, pw);
-			System.out.println(accountDetails + "  running here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-			
+			String accountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc,  username, pw);		
 			Assert.assertTrue("Fail to get accountDetails", accountDetails.matches("not found") || accountDetails.matches("problem"));	
-			//Assert.assertTrue("Fail to get accountDetails", ));		
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -89,13 +74,12 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		}
 	}
 	
-	*/
+	
 	
 	
 	@Test
 	public void testGetAccountHoldingsById_TrueCondition() {
 		int accountId = 2;
-		// cant test yet
 		try {
 			ArrayList<StockOwned> resultAccount = remoteObj.getAccountHoldingsById(accountId);
 			Assert.assertNotNull("The account Id exist", resultAccount);	
@@ -118,7 +102,6 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		}
 	}
 	
-	/*
 	
 	@Test
 	public void testretrieveMarketCache_TrueCondition() {
@@ -143,7 +126,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 			e.printStackTrace();
 		}
 	}
-	*/
+	
 	
 	
 	@Override
