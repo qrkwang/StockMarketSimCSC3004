@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -76,25 +77,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		super();
 		System.out.format("Creating server object\n"); // Print to client that server object is being created once
 		// constructor called.
-		accountDetailsDb = new AccountDetailsDbScript(); // Start the RabbitMQ Receiver that's in main method
-		hkDb = new StockDBScript("HKMarket", "localhost:3306", "hkstockmarket", "root", "root", accountDetailsDb); // Start
-																													// the
-																													// RabbitMQ
-																													// Receiver
-																													// that's
-		// in main method
-		sgDb = new StockDBScript("SGMarket", "localhost:3306", "sgstockmarket", "root", "root", accountDetailsDb); // Start
-																													// the
-																													// RabbitMQ
-																													// Receiver
-																													// that's
-		// in main method
-		usaDb = new StockDBScript("USMarket", "localhost:3306", "usstockmarket", "root", "root", accountDetailsDb); // Start
-																													// the
-																													// RabbitMQ
-																													// Receiver
-																													// that's
-		// in main method
+		accountDetailsDb = new AccountDetailsDbScript();
+		hkDb = new StockDBScript("HKMarket", "localhost:3306", "hkstockmarket", "root", "root", accountDetailsDb);
+		sgDb = new StockDBScript("SGMarket", "localhost:3306", "sgstockmarket", "root", "root", accountDetailsDb);
+		usaDb = new StockDBScript("USMarket", "localhost:3306", "usstockmarket", "root", "root", accountDetailsDb);
 
 		clientHashMap = new HashMap<Integer, ClientInt>();
 		logMap = new HashMap<Integer, String>(); // for log (will be server name and generation number)
@@ -453,6 +439,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			Entry<String, Long> entry = (Entry<String, Long>) it.next();
 			if (System.currentTimeMillis() - entry.getValue() > 600000) {
 				it.remove();
+				jedis.del(entry.getKey());
+				jedis.del(entry.getKey() + DELIMITER + "OrderBook");
 			} else {
 				cacheCompletedOrders(entry.getKey());
 				cacheOrderBook(entry.getKey());
@@ -461,7 +449,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	public String cacheCompletedOrders(String key) {
-		String[] keySplit = key.split(DELIMITER);
+		String[] keySplit = key.split(Pattern.quote(DELIMITER));
 		String market = keySplit[0];
 		int stockid = Integer.parseInt(keySplit[1]);
 		String value = retrieveCompletedOrders(market, stockid);
@@ -470,16 +458,17 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	}
 
 	public String cacheOrderBook(String key) {
-		String[] keySplit = key.split(DELIMITER);
+		String[] keySplit = key.split(Pattern.quote(DELIMITER));
 		String market = keySplit[0];
 		int stockid = Integer.parseInt(keySplit[1]);
 		String value = retrieveOrderBook(market, stockid);
-		jedis.set(key + DELIMITER + "OrderBook", value);
+		System.out.println("Order Book: " + value);
+		jedis.set(key+DELIMITER+"OrderBook", value);
 		return value;
 	}
 
 	public String retrieveStockCache(String market, int stockid, ClientInt client) throws RemoteException {
-		String key = market + stockid;
+		String key = market + DELIMITER + stockid;
 		lastSearchTimestamp.put(key, System.currentTimeMillis());
 		Thread thread = new Thread(new Runnable() {
 			@Override
@@ -493,9 +482,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		});
 		thread.start();
-		if (jedis.exists(key))
+		if (jedis.exists(key)) {
+			String orderbook = jedis.get(key + DELIMITER + "OrderBook");
+			client.sendOrderBook(orderbook);
 			return jedis.get(key);
-		else {
+		} else {
 			// Retrieve from database and cache if not found
 			String res = cacheCompletedOrders(key);
 			String orderbook = cacheOrderBook(key);
