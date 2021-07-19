@@ -635,11 +635,21 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			JPanel orderPane = new JPanel();
 			orderPane.add(new JScrollPane(buyOrderBookPanel));
 			orderPane.add(new JScrollPane(sellOrderBookPanel));
-			
-			JPanel openOrderPane = new JPanel();
-			
 			infoPanel.add("Order Book", orderPane);
-			infoPanel.add("Open Orders", openOrderPane);
+			
+			if(ownedQuantity != -1) {
+				JPanel openOrderPane = new JPanel();
+
+				addLabel(openOrderPane, "Quantity", 0, 0, LISTINSETS);
+				addLabel(openOrderPane, "Price", 1, 0, LISTINSETS);
+				for(StockOwned so : accountHoldings) {
+					if(so.getMarket().equals(currentDisplayMarket.name()) && so.getStockId() == currentDisplayStockId) {
+						addLabel(openOrderPane, so.getQuantity() + "", 0, 1, LISTINSETS);
+						addLabel(openOrderPane, so.getAvgPrice() + "", 1, 2, LISTINSETS);
+					}
+				}
+				infoPanel.add("Open Orders", openOrderPane);
+			}
 			
 	        gbc.fill = GridBagConstraints.HORIZONTAL;
 	        gbc.gridx = 0;
