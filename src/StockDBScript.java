@@ -961,9 +961,6 @@ public class StockDBScript {
 				if (count == 0) {
 					arrayListOrderBook = new ArrayList<OrderBook>(); // initialize arraylist if results to be found
 				}
-				java.sql.Timestamp dbSqlTimestamp = rs.getTimestamp("TransactionDate");
-				LocalDateTime localDateTime = dbSqlTimestamp.toLocalDateTime();
-
 				OrderBook orderbook = new OrderBook(rs.getString("Type"), rs.getInt("Quantity"), rs.getFloat("Price"));
 
 				System.out.println("Market Completed: ");

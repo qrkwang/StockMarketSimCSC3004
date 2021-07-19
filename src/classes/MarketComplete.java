@@ -87,7 +87,7 @@ public class MarketComplete implements Serializable {
 	@Override
 	public String toString() {
 		return "StockId: " + StockId + "\nBuyerId: " + BuyerId + "\nSellerId : " + SellerId + "\nQuantity: " + Quantity
-				+ "\nPrice: " + Price;
+				+ "\nPrice: " + Price + "\nTransactionDate: " + TransactionDate;
 	}
 
 }
