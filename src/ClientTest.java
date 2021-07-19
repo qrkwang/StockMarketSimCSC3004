@@ -20,9 +20,15 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 	
 	private RemoteInterface remoteObj;
 	private ClientInt cc = new Client();
-	
+	private RemoteServant remoteServant;
+
 	public ClientTest() throws RemoteException {
-		remoteObj = new RemoteServant();	
+		remoteObj = new RemoteServant();
+		remoteServant = new RemoteServant();	
+	}
+	
+	private enum Market {
+		SG, HK, US
 	}
 
 	public void setUp() throws Exception , RemoteException {
@@ -37,22 +43,17 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		}
 	}
 
-	/*
+	
 	
 	@Test
 	public void testStartLeaderElectionAlgo() {
 		boolean algoResult = false;
-		try {
-			algoResult = remoteObj.startLeaderElectionAlgo();
-			System.out.println("testing inside");
-			Assert.assertTrue("Fail to run the leader election (no leader server is selected)",algoResult);	
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		algoResult = remoteServant.startLeaderElectionAlgo();
+		System.out.println("testing inside");
+		Assert.assertTrue("Fail to run the leader election (no leader server is selected)",algoResult);
 	}
 
-*/	
+
 	
 
 	@Test
@@ -61,6 +62,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		String pw = "";
 		try {
 			String accountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc,  username, pw);
+			System.out.println(accountDetails + "  running here");
 			Assert.assertTrue("Fail to get accountDetails", accountDetails.matches("not found"));	
 			Assert.assertTrue("Fail to get accountDetails", accountDetails.matches("problem"));		
 		} catch (RemoteException e) {
@@ -74,6 +76,7 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		String pw = "password";
 		try {
 			String accountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc,  username, pw);
+			System.out.println(accountDetails + "  running here");
 			Assert.assertFalse("Fail to get accountDetails", accountDetails.matches("not found"));	
 			Assert.assertFalse("Fail to get accountDetails", accountDetails.matches("problem"));
 		} catch (RemoteException e) {
@@ -81,8 +84,6 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 			e.printStackTrace();
 		}
 	}
-	
-	
 	
 	@Test
 	public void testGetAccountHoldingsById_TrueCondition() {
@@ -109,76 +110,35 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 			e.printStackTrace();
 		}
 	}
-
-/*
+	
 	@Test
-	public void testgetAllStocksByMarket_TrueCondition() {
-		String market = "HK";
-		String getStock;
+	public void testretrieveMarketCache() {
+		String username = "demo";
+		String pw = "password";
 		try {
-			getStock = remoteObj.getAllStocksByMarket(market);
-			Assert.assertNotEquals("Fail to get back the stock market", getStock ,"empty");
+			String accountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc,  username, pw);
+			System.out.println(accountDetails + "  running here");
+			Assert.assertFalse("Fail to get accountDetails", accountDetails.matches("not found"));	
+			Assert.assertFalse("Fail to get accountDetails", accountDetails.matches("problem"));
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
-	@Test
-	public void testgetAllStocksByMarket_FailCondition() {
-		String market = "tttttttttt";
-		String getStock;
-		try {
-			getStock = remoteObj.getAllStocksByMarket(market);
-			System.out.println("printttttttttttttttt heeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeere  +" + getStock);
-			Assert.assertEquals("Stock Market is current empty", getStock , "empty");	
-			Assert.assertEquals("Fail to get back the sotck market", getStock , "error fetching");	
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-*/
-	// not too sure for retrieve cache
-/*
-	@Test
-	public void testRetrieveCache() {
-		String market = "";
-		int stockid	 = 0;	
-		try {
-			String cacheResult = remoteObj.retrieveCache(market, stockid);
-			Assert.assertNotNull("Cache result have been recieved", cacheResult);
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		// not sure what is the value in for stockId and market
-	}
+	//String retrievePendingOrders(String market, int stockId)
+	//retrieveCompletedOrders
 	
+	//String retrieveMarketCache(String market, ClientInt client) throws RemoteException
+	//String retrieveStockCache(String market, int stockid, ClientInt client) throws RemoteException 
 
-	@Test
-	public void testRemoveFromClientHashMap() {
-		// no return value . will need to check again
-		System.out.println("testing 1234567890");
-		fail("Not yet implemented");
-	}
-
-*/
+	
 	
 	@Override
 	public void printToClient(String s) throws RemoteException {
 		// TODO Auto-generated method stub	
 	}
 
-	public void updateMarket(String market, String res) throws RemoteException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void updateStock(String s) throws RemoteException {
-		// TODO Auto-generated method stub
-		
-	}
 
 	@Override
 	public void updateMarket(String market) throws RemoteException {
