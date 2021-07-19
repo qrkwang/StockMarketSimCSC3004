@@ -728,7 +728,12 @@ public class StockDBScript {
 			}
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
+			if (isbuyOrder) {
+				this.retrieveClientIntFromHashMap(buyerId).printToClient("error processing");
+			} else {
+				this.retrieveClientIntFromHashMap(sellerId).printToClient("error processing");
+
+			}
 			e.printStackTrace();
 		}
 	}
