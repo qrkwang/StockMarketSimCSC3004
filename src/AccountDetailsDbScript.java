@@ -5,27 +5,30 @@ import java.sql.CallableStatement;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.concurrent.TimeoutException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.mysql.jdbc.Connection;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.ConnectionFactory;
 
 import classes.AccountDetails;
 
 public class AccountDetailsDbScript {
 	private final static String QUEUE_NAME = "hello";
 	public final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
-	private final String USERNAME = "root";
-	private final String PASSWORD = "root";
+	private String username = "root";
+	private String password = "root";
 
-	// Change this string according to leader election
-	private String CONN_STRING = "jdbc:mysql://localhost:3306/accountdetailsserver"; // jdbc:mysql://ip:3306/DBNAME
+	private String conn_string; // jdbc:mysql://ip:3306/DBNAME
+
+	public AccountDetailsDbScript(String ip, String dbname, String u, String p) {
+		this.conn_string = "jdbc:mysql://" + ip + "/" + dbname;
+		this.username = u;
+		this.password = p;
+
+	}
 
 	public void setConnString(String ipandPort, String dbName) {
-		CONN_STRING = "jdbc:mysql://" + ipandPort + "/" + dbName;
+		conn_string = "jdbc:mysql://" + ipandPort + "/" + dbName;
 	}
 
 	public float getAccountBalanceById(int accountId) throws SQLException {
@@ -33,7 +36,7 @@ public class AccountDetailsDbScript {
 		float accountBalance = 0;
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(this.CONN_STRING, this.USERNAME, this.PASSWORD);
+			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
 			String query = "{CALL getAccountHoldingsById(?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 
@@ -47,6 +50,7 @@ public class AccountDetailsDbScript {
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return (Float) null;
 		}
 		return accountBalance;
 
@@ -56,7 +60,7 @@ public class AccountDetailsDbScript {
 		Connection con = null;
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+			con = (Connection) DriverManager.getConnection(conn_string, username, password);
 			System.out.println("Connected to DB");
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -105,26 +109,4 @@ public class AccountDetailsDbScript {
 		return "not found";
 	}
 
-	public void startWaitForMsg() throws SQLException {
-		System.out.println("starting wait for msg function");
-
-		try {
-			ConnectionFactory factory = new ConnectionFactory();
-			factory.setHost("localhost");
-			com.rabbitmq.client.Connection connection;
-			connection = factory.newConnection();
-
-			Channel channel = connection.createChannel();
-
-			channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-			System.out.println(" [*] AccountDetailsDbScript waiting for msg.");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TimeoutException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	}
 }
