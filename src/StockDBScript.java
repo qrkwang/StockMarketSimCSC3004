@@ -379,8 +379,8 @@ public class StockDBScript {
 
 	}
 
-	private void receiveOrder(String message) throws SQLException, RemoteException, ClassNotFoundException {
-		
+	private void receiveOrder(String message) throws RemoteException {
+
 		String[] splitArray = message.split(",");
 		int stockId = Integer.parseInt(splitArray[0]);
 		int sellerId = Integer.parseInt(splitArray[1]);
@@ -393,309 +393,320 @@ public class StockDBScript {
 
 		float accountBalance = 0;
 		// Check if is buyer or seller order first.
-		if (sellerId == -1 && buyerId != -1) {
-			isbuyOrder = true;
+		try {
 
-			if (buyerId == 0) {
-				isRandomGenOrder = true;
-			} else {
-				accountBalance = accountDetailsDb.getAccountBalanceById(buyerId);
-			}
-		} else {
-			isbuyOrder = false;
+			if (sellerId == -1 && buyerId != -1) {
+				isbuyOrder = true;
 
-			if (sellerId == 0) {
-				isRandomGenOrder = true;
-			} else {
-				accountBalance = accountDetailsDb.getAccountBalanceById(sellerId);
-			}
-		}
+				if (buyerId == 0) {
+					isRandomGenOrder = true;
+				} else {
+					accountBalance = accountDetailsDb.getAccountBalanceById(buyerId);
 
-		float orderValue = qty * price;
-		if ((accountBalance < orderValue) && !isRandomGenOrder) {
-			this.getCurrentClientInt().printToClient("not enough balance");
-		}
-
-		// Order processing
-		if (isbuyOrder) {
-			// its a buy order
-			System.out.println("Is Buy Order");
-			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(true, stockId, price);
-			// If return no entries for matching
-			if (fetchedOrders == null) {
-				System.out.println("No fetched orders, Inserting buy order ");
-
-				// No orders to match with, he want to buy but there's no one selling under his
-				// buy price or equals to
-
-				Class.forName(DRIVER_CLASS);
-				System.out.println("print conn string, username, password" + this.conn_string + " " + this.username + " "+ this.password);
-				con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
-				// If return no entry, create a marketpending order and insert.
-				String query1 = "{CALL InsertToMarketPending(?,?,?,?,?,?)}";
-				CallableStatement stmt1 = con.prepareCall(query1); // prepare to call
-				stmt1.setInt(1, stockId);
-				stmt1.setNull(2, Types.NULL);
-				stmt1.setInt(3, buyerId);
-				stmt1.setInt(4, qty);
-				stmt1.setFloat(5, price);
-				stmt1.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
-
-				ResultSet rs1 = stmt1.executeQuery();
-				con.close();
-
-				System.out.println(rs1);
-
-			} else {
-				System.out.println("Got fetched orders");
-				int buyOrderQuantity = qty;
-				int lastOrderQty = 0;
-				float avgPrice = 0; // average price throughout the filled orders
-
-				ArrayList<Integer> orderIds = new ArrayList<Integer>(); // get list of order IDs so later can use
-																		// for
-																		// updating them in DB.
-
-				// minus the quantity per order and then execute the update in SQL.
-				for (int i = 0; i < fetchedOrders.size(); i++) {
-					float moneyPaid = 0;
-					int totalQtyStocks = 0;
-					MarketPending order = fetchedOrders.get(i);
-
-					// minus my quantity here and see how much left.
-					// avg the price throughout when minus quantity
-					if (buyOrderQuantity <= 0) { // If buyOrderQuantity reached 0 or lesser, break the loop. Don't
-													// search for more orders anymore.
-						avgPrice = moneyPaid / totalQtyStocks;
-						break;
-					}
-
-					if (order.getQuantity() <= buyOrderQuantity) { // if the fetched order quantity is smaller or
-																	// equal
-																	// to buyorderquantity
-
-						buyOrderQuantity -= order.getQuantity();
-						moneyPaid += order.getPrice() * order.getQuantity(); // accumulate the money paid by adding
-																				// it
-																				// per order.
-						totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks bought by
-																// adding it
-																// per order.
-
-						orderIds.add(order.getMarketPendingId()); // keep array list of order ID so later can update
-																	// those orders through SQL.
-
-					} else if (order.getQuantity() > buyOrderQuantity) { // if fetched order qty bigger than
-																			// buyOrderQuantity
-
-						lastOrderQty = order.getQuantity() - buyOrderQuantity;
-						buyOrderQuantity = 0; // make buy order quantity 0 to break the loop, so will stop looking
-												// for more matches
-
-						moneyPaid += order.getPrice() * order.getQuantity(); // accumulate the money paid by adding
-																				// it per order.
-
-						totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks bought by
-																// adding it per order.
-
-						orderIds.add(order.getMarketPendingId()); // keep array list of order ID so later can update
-																	// those orders through SQL.
-
-					} else {
-						// Shouldn't reach here at all.
-					}
 				}
-				if (orderIds.size() == 0) {
-					// no matched orders, make a new marketpending order with initial values.
-					System.out.println("got fetched orders but no matched orders");
-					addMarketPendingOrder(true, stockId, buyerId, qty, price);
+			} else {
+				isbuyOrder = false;
+
+				if (sellerId == 0) {
+					isRandomGenOrder = true;
+				} else {
+					accountBalance = accountDetailsDb.getAccountBalanceById(sellerId);
+				}
+			}
+
+			float orderValue = qty * price;
+			if ((accountBalance < orderValue) && !isRandomGenOrder) {
+				this.getCurrentClientInt().printToClient("not enough balance");
+			}
+
+			// Order processing
+			if (isbuyOrder) {
+				// its a buy order
+				System.out.println("Is Buy Order");
+				ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(true, stockId, price);
+				// If return no entries for matching
+				if (fetchedOrders == null) {
+					System.out.println("No fetched orders, Inserting buy order ");
+
+					// No orders to match with, he want to buy but there's no one selling under his
+					// buy price or equals to
+
+					Class.forName(DRIVER_CLASS);
+					System.out.println("print conn string, username, password" + this.conn_string + " " + this.username
+							+ " " + this.password);
+					con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
+					// If return no entry, create a marketpending order and insert.
+					String query1 = "{CALL InsertToMarketPending(?,?,?,?,?,?)}";
+					CallableStatement stmt1 = con.prepareCall(query1); // prepare to call
+					stmt1.setInt(1, stockId);
+					stmt1.setNull(2, Types.NULL);
+					stmt1.setInt(3, buyerId);
+					stmt1.setInt(4, qty);
+					stmt1.setFloat(5, price);
+					stmt1.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
+
+					ResultSet rs1 = stmt1.executeQuery();
+					con.close();
+
+					System.out.println(rs1);
 
 				} else {
-					System.out.println("got fetched orders and got matched orders");
-					for (int i = 0; i < orderIds.size(); i++) { // loop through order IDs and update / delete them
-						// indicating match.
+					System.out.println("Got fetched orders");
+					int buyOrderQuantity = qty;
+					int lastOrderQty = 0;
+					float avgPrice = 0; // average price throughout the filled orders
 
-						if (i == orderIds.size() - 1) {
-							// once reach last item, check if lastOrderQty has any value. If have, update
-							// the last order with that qty.
+					ArrayList<Integer> orderIds = new ArrayList<Integer>(); // get list of order IDs so later can use
+																			// for
+																			// updating them in DB.
 
-							if (lastOrderQty != 0) {
-								// update last order here with that qty, call SQL function.
-								System.out.println("update last matched market pending order");
+					// minus the quantity per order and then execute the update in SQL.
+					for (int i = 0; i < fetchedOrders.size(); i++) {
+						float moneyPaid = 0;
+						int totalQtyStocks = 0;
+						MarketPending order = fetchedOrders.get(i);
 
-								updateLastMatchedMarketPendingOrder(orderIds.get(i), lastOrderQty);
-								break; // break to stop the loop and not let it close the last matched order.
-							}
+						// minus my quantity here and see how much left.
+						// avg the price throughout when minus quantity
+						if (buyOrderQuantity <= 0) { // If buyOrderQuantity reached 0 or lesser, break the loop. Don't
+														// search for more orders anymore.
+							avgPrice = moneyPaid / totalQtyStocks;
+							break;
 						}
 
-						System.out.println("closing sell market pending order");
-						// call closemarketpendingOrder
-						closeSellMarketPendingOrder(orderIds.get(i), buyerId); // this will delete marketpending
-																				// entries and create
-																				// corresponding marketcomplete
-																				// entries with buyerId.
+						if (order.getQuantity() <= buyOrderQuantity) { // if the fetched order quantity is smaller or
+																		// equal
+																		// to buyorderquantity
 
-					}
-
-					float totalPaid;
-					if (buyOrderQuantity != 0) {
-						// means that the order cannot be fulfilled fully, still need more quantity,
-						// will create a new marketpending order for the rest of the qty.
-						System.out.println("add market pending because after closing matched orders, still got more to buy.");
-						addMarketPendingOrder(true, stockId, buyerId, buyOrderQuantity, price);
-						// update the user account values with currently executed order total price.
-						int totalQtyBought = qty - buyOrderQuantity;
-						totalPaid = avgPrice * totalQtyBought;
-
-					} else {
-						// order fulfilled perfectly
-						// update the user account values with total cost spent
-						totalPaid = price * qty;
-
-					}
-					if (!isRandomGenOrder) {
-						this.updatePurchaseInAccount(buyerId, totalPaid);
-					}
-				}
-
-			}
-
-		} else
-
-		{
-			System.out.println("Is sell order");
-			// its a sell order
-			ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(false, stockId, price);
-			if (fetchedOrders == null) {
-				System.out.println("Inserting sell order");
-				// No orders to match with, he want to sell but there's no one buying above his
-				// sell price or equals to.
-				Class.forName(DRIVER_CLASS);
-				con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
-				// If return no entry, create a marketpending order and insert.
-				String query2 = "{CALL InsertToMarketPending(?,?,?,?,?,?)}";
-				CallableStatement stmt2 = con.prepareCall(query2); // prepare to call
-				stmt2.setInt(1, stockId);
-				stmt2.setInt(2, sellerId);
-				stmt2.setNull(3, Types.NULL);
-				stmt2.setInt(4, qty);
-				stmt2.setFloat(5, price);
-				stmt2.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
-
-				ResultSet rs2 = stmt2.executeQuery();
-				System.out.println(rs2);
-
-			} else {
-				// if there are orders fetched for matching.
-				int sellOrderQuantity = qty;
-				int lastOrderQty = 0;
-				float avgPrice = 0; // average price throughout the filled orders
-
-				ArrayList<Integer> orderIds = new ArrayList<Integer>(); // get list of order IDs so later can use
-																		// for
-																		// updating them in DB.
-
-				// minus the quantity per order and then execute the update in SQL.
-				for (int i = 0; i < fetchedOrders.size(); i++) {
-					float moneyReceived = 0;
-					int totalQtyStocks = 0;
-					MarketPending order = fetchedOrders.get(i);
-
-					// minus my quantity here and see how much left.
-					// avg the price throughout when minus quantity
-					if (sellOrderQuantity <= 0) { // If buyOrderQuantity reached 0 or lesser, break the loop. Don't
-													// search for more orders anymore.
-						avgPrice = moneyReceived / totalQtyStocks;
-						break;
-					}
-
-					if (order.getQuantity() <= sellOrderQuantity) { // if the fetched order quantity is smaller or
-																	// equal
-																	// to sellOrderQuantity
-
-						sellOrderQuantity -= order.getQuantity();
-						moneyReceived += order.getPrice() * order.getQuantity(); // accumulate the moneyReceived by
-																					// adding it
+							buyOrderQuantity -= order.getQuantity();
+							moneyPaid += order.getPrice() * order.getQuantity(); // accumulate the money paid by adding
+																					// it
 																					// per order.
-						totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks sold by
-																// adding it
-																// per order.
+							totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks bought by
+																	// adding it
+																	// per order.
 
-						orderIds.add(order.getMarketPendingId()); // keep array list of order ID so later can update
-																	// those orders through SQL.
+							orderIds.add(order.getMarketPendingId()); // keep array list of order ID so later can update
+																		// those orders through SQL.
 
-					} else if (order.getQuantity() > sellOrderQuantity) { // if fetched order qty bigger than
-																			// sellOrderQuantity
+						} else if (order.getQuantity() > buyOrderQuantity) { // if fetched order qty bigger than
+																				// buyOrderQuantity
 
-						lastOrderQty = order.getQuantity() - sellOrderQuantity;
-						sellOrderQuantity = 0; // make sell order quantity 0 to break the loop, so will stop looking
-												// for more matches
+							lastOrderQty = order.getQuantity() - buyOrderQuantity;
+							buyOrderQuantity = 0; // make buy order quantity 0 to break the loop, so will stop looking
+													// for more matches
 
-						moneyReceived += order.getPrice() * order.getQuantity(); // accumulate the money received by
-																					// adding
+							moneyPaid += order.getPrice() * order.getQuantity(); // accumulate the money paid by adding
 																					// it per order.
 
-						totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks bought by
-																// adding it per order.
+							totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks bought by
+																	// adding it per order.
 
-						orderIds.add(order.getMarketPendingId()); // keep array list of order ID so later can update
-																	// those orders through SQL.
+							orderIds.add(order.getMarketPendingId()); // keep array list of order ID so later can update
+																		// those orders through SQL.
+
+						} else {
+							// Shouldn't reach here at all.
+						}
+					}
+					if (orderIds.size() == 0) {
+						// no matched orders, make a new marketpending order with initial values.
+						System.out.println("got fetched orders but no matched orders");
+						addMarketPendingOrder(true, stockId, buyerId, qty, price);
 
 					} else {
-						// Shouldn't reach here at all.
-					}
+						System.out.println("got fetched orders and got matched orders");
+						for (int i = 0; i < orderIds.size(); i++) { // loop through order IDs and update / delete them
+							// indicating match.
 
-				}
-				if (orderIds.size() == 0) {
-					// no matched orders, make a new marketpending order with initial values.
-					addMarketPendingOrder(false, stockId, sellerId, qty, price);
+							if (i == orderIds.size() - 1) {
+								// once reach last item, check if lastOrderQty has any value. If have, update
+								// the last order with that qty.
 
-				} else {
-					for (int i = 0; i < orderIds.size(); i++) { // loop through order IDs and update / delete them
-						// indicating match.
+								if (lastOrderQty != 0) {
+									// update last order here with that qty, call SQL function.
+									System.out.println("update last matched market pending order");
 
-						if (i == orderIds.size() - 1) {
-							// once reach last item, check if lastOrderQty has any value. If have, update
-							// the last order with that qty.
-
-							if (lastOrderQty != 0) {
-								// update last order here with that qty, call SQL function.
-								updateLastMatchedMarketPendingOrder(orderIds.get(i), lastOrderQty);
-								break; // break to stop the loop and not let it close the last matched order.
+									updateLastMatchedMarketPendingOrder(orderIds.get(i), lastOrderQty);
+									break; // break to stop the loop and not let it close the last matched order.
+								}
 							}
+
+							System.out.println("closing sell market pending order");
+							// call closemarketpendingOrder
+							closeSellMarketPendingOrder(orderIds.get(i), buyerId); // this will delete marketpending
+																					// entries and create
+																					// corresponding marketcomplete
+																					// entries with buyerId.
+
 						}
 
-						// call closemarketpendingOrder
-						closeBuyMarketPendingOrder(orderIds.get(i), sellerId); // this will delete marketpending
-																				// entries and create
-																				// corresponding marketcomplete
-																				// entries with sellerId.
+						float totalPaid;
+						if (buyOrderQuantity != 0) {
+							// means that the order cannot be fulfilled fully, still need more quantity,
+							// will create a new marketpending order for the rest of the qty.
+							System.out.println(
+									"add market pending because after closing matched orders, still got more to buy.");
+							addMarketPendingOrder(true, stockId, buyerId, buyOrderQuantity, price);
+							// update the user account values with currently executed order total price.
+							int totalQtyBought = qty - buyOrderQuantity;
+							totalPaid = avgPrice * totalQtyBought;
 
+						} else {
+							// order fulfilled perfectly
+							// update the user account values with total cost spent
+							totalPaid = price * qty;
+
+						}
+						if (!isRandomGenOrder) {
+							this.updatePurchaseInAccount(buyerId, totalPaid);
+						}
 					}
 
-					float totalValueSold;
-					if (sellOrderQuantity != 0) {
-						// means that the order cannot be fulfilled fully, still need more quantity,
-						// will create a new marketpending order for the rest of the qty.
-						addMarketPendingOrder(false, stockId, sellerId, sellOrderQuantity, price);
-						// update the user account values with currently executed order total price.
-						int totalQtySold = qty - sellOrderQuantity;
-						totalValueSold = avgPrice * totalQtySold;
+				}
+
+			} else
+
+			{
+				System.out.println("Is sell order");
+				// its a sell order
+				ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(false, stockId, price);
+				if (fetchedOrders == null) {
+					System.out.println("Inserting sell order");
+					// No orders to match with, he want to sell but there's no one buying above his
+					// sell price or equals to.
+					Class.forName(DRIVER_CLASS);
+					con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
+					// If return no entry, create a marketpending order and insert.
+					String query2 = "{CALL InsertToMarketPending(?,?,?,?,?,?)}";
+					CallableStatement stmt2 = con.prepareCall(query2); // prepare to call
+					stmt2.setInt(1, stockId);
+					stmt2.setInt(2, sellerId);
+					stmt2.setNull(3, Types.NULL);
+					stmt2.setInt(4, qty);
+					stmt2.setFloat(5, price);
+					stmt2.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
+
+					ResultSet rs2 = stmt2.executeQuery();
+					System.out.println(rs2);
+
+				} else {
+					// if there are orders fetched for matching.
+					int sellOrderQuantity = qty;
+					int lastOrderQty = 0;
+					float avgPrice = 0; // average price throughout the filled orders
+
+					ArrayList<Integer> orderIds = new ArrayList<Integer>(); // get list of order IDs so later can use
+																			// for
+																			// updating them in DB.
+
+					// minus the quantity per order and then execute the update in SQL.
+					for (int i = 0; i < fetchedOrders.size(); i++) {
+						float moneyReceived = 0;
+						int totalQtyStocks = 0;
+						MarketPending order = fetchedOrders.get(i);
+
+						// minus my quantity here and see how much left.
+						// avg the price throughout when minus quantity
+						if (sellOrderQuantity <= 0) { // If buyOrderQuantity reached 0 or lesser, break the loop. Don't
+														// search for more orders anymore.
+							avgPrice = moneyReceived / totalQtyStocks;
+							break;
+						}
+
+						if (order.getQuantity() <= sellOrderQuantity) { // if the fetched order quantity is smaller or
+																		// equal
+																		// to sellOrderQuantity
+
+							sellOrderQuantity -= order.getQuantity();
+							moneyReceived += order.getPrice() * order.getQuantity(); // accumulate the moneyReceived by
+																						// adding it
+																						// per order.
+							totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks sold by
+																	// adding it
+																	// per order.
+
+							orderIds.add(order.getMarketPendingId()); // keep array list of order ID so later can update
+																		// those orders through SQL.
+
+						} else if (order.getQuantity() > sellOrderQuantity) { // if fetched order qty bigger than
+																				// sellOrderQuantity
+
+							lastOrderQty = order.getQuantity() - sellOrderQuantity;
+							sellOrderQuantity = 0; // make sell order quantity 0 to break the loop, so will stop looking
+													// for more matches
+
+							moneyReceived += order.getPrice() * order.getQuantity(); // accumulate the money received by
+																						// adding
+																						// it per order.
+
+							totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks bought by
+																	// adding it per order.
+
+							orderIds.add(order.getMarketPendingId()); // keep array list of order ID so later can update
+																		// those orders through SQL.
+
+						} else {
+							// Shouldn't reach here at all.
+						}
+
+					}
+					if (orderIds.size() == 0) {
+						// no matched orders, make a new marketpending order with initial values.
+						addMarketPendingOrder(false, stockId, sellerId, qty, price);
+
 					} else {
-						// order fulfilled perfectly
-						// update the user account values with total cost spent
-						totalValueSold = price * qty;
+						for (int i = 0; i < orderIds.size(); i++) { // loop through order IDs and update / delete them
+							// indicating match.
 
-					}
-					if (!isRandomGenOrder) {
+							if (i == orderIds.size() - 1) {
+								// once reach last item, check if lastOrderQty has any value. If have, update
+								// the last order with that qty.
 
-						this.updateSaleInAccount(sellerId, totalValueSold);
+								if (lastOrderQty != 0) {
+									// update last order here with that qty, call SQL function.
+									updateLastMatchedMarketPendingOrder(orderIds.get(i), lastOrderQty);
+									break; // break to stop the loop and not let it close the last matched order.
+								}
+							}
+
+							// call closemarketpendingOrder
+							closeBuyMarketPendingOrder(orderIds.get(i), sellerId); // this will delete marketpending
+																					// entries and create
+																					// corresponding marketcomplete
+																					// entries with sellerId.
+
+						}
+
+						float totalValueSold;
+						if (sellOrderQuantity != 0) {
+							// means that the order cannot be fulfilled fully, still need more quantity,
+							// will create a new marketpending order for the rest of the qty.
+							addMarketPendingOrder(false, stockId, sellerId, sellOrderQuantity, price);
+							// update the user account values with currently executed order total price.
+							int totalQtySold = qty - sellOrderQuantity;
+							totalValueSold = avgPrice * totalQtySold;
+						} else {
+							// order fulfilled perfectly
+							// update the user account values with total cost spent
+							totalValueSold = price * qty;
+
+						}
+						if (!isRandomGenOrder) {
+
+							this.updateSaleInAccount(sellerId, totalValueSold);
+						}
 					}
 				}
+
 			}
-
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-
 	}
 
 	public ArrayList<StockOwned> getOwnedStocks(int accountId) throws SQLException {

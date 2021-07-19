@@ -77,13 +77,24 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		System.out.format("Creating server object\n"); // Print to client that server object is being created once
 		// constructor called.
 		accountDetailsDb = new AccountDetailsDbScript(); // Start the RabbitMQ Receiver that's in main method
-		hkDb = new StockDBScript("HKMarket", "localhost:3306", "hkstockmarket", "root", "root", accountDetailsDb); // Start the RabbitMQ Receiver that's
-																					// in main method
-		sgDb = new StockDBScript("SGMarket", "localhost:3306", "sgstockmarket", "root", "root", accountDetailsDb); // Start the RabbitMQ Receiver that's
-																					// in main method
-		usaDb = new StockDBScript("USMarket", "localhost:3306", "usstockmarket", "root", "root", accountDetailsDb); // Start the RabbitMQ Receiver that's
-																					// in main method
-	
+		hkDb = new StockDBScript("HKMarket", "localhost:3306", "hkstockmarket", "root", "root", accountDetailsDb); // Start
+																													// the
+																													// RabbitMQ
+																													// Receiver
+																													// that's
+		// in main method
+		sgDb = new StockDBScript("SGMarket", "localhost:3306", "sgstockmarket", "root", "root", accountDetailsDb); // Start
+																													// the
+																													// RabbitMQ
+																													// Receiver
+																													// that's
+		// in main method
+		usaDb = new StockDBScript("USMarket", "localhost:3306", "usstockmarket", "root", "root", accountDetailsDb); // Start
+																													// the
+																													// RabbitMQ
+																													// Receiver
+																													// that's
+		// in main method
 
 		clientHashMap = new HashMap<Integer, ClientInt>();
 		logMap = new HashMap<Integer, String>(); // for log (will be server name and generation number)
@@ -99,7 +110,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			hkDb.startWaitForMsg();
 			sgDb.startWaitForMsg();
 			usaDb.startWaitForMsg();
-			
+
 		} catch (Exception e) {
 			System.out.println("error start wait for msg");
 			// TODO Auto-generated catch block
@@ -111,9 +122,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		startLeaderElectionAlgo();
 		startDataRedundancyAlgo();
 		startCache();
-		
-	
-		
+
 	}
 
 	/*
@@ -350,7 +359,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 					}
 				}
 			}
-			
+
 		});
 		thread.start();
 	}
@@ -421,7 +430,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 					try {
 						Thread.sleep(60000);
 						client.updateMarket(market);
-					}catch (ConnectException e) {
+					} catch (ConnectException e) {
 						Thread.currentThread().interrupt();
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
@@ -465,7 +474,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		String market = keySplit[0];
 		int stockid = Integer.parseInt(keySplit[1]);
 		String value = retrieveOrderBook(market, stockid);
-		jedis.set(key+DELIMITER+"OrderBook", value);
+		jedis.set(key + DELIMITER + "OrderBook", value);
 		return value;
 	}
 
@@ -547,9 +556,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public ArrayList<StockOwned> getAccountHoldingsById(int accountId) throws RemoteException {
 		System.out.println(" in remote srevant account id " + accountId);
+		ArrayList<StockOwned> allStockOwned;
 		try {
 			ArrayList<StockOwned> stockOwnedHk = hkDb.getOwnedStocks(accountId);
 			ArrayList<StockOwned> stockOwnedSg = sgDb.getOwnedStocks(accountId);
@@ -560,7 +571,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 			System.out.println("printing stock owned by account id " + accountId);
 
-			stockOwnedHk.forEach(item -> {
+			allStockOwned = (ArrayList<StockOwned>) stockOwnedHk.clone();
+			allStockOwned.forEach(item -> {
 				System.out.println(item);
 			});
 
@@ -572,17 +584,18 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 		// price and stock is combined, price is avg price.
 
-		return null;
+		return allStockOwned;
 	}
 
 	@Override
-	public String sendOrder(int accountId, String market, String order, boolean randomGeneration) throws RemoteException {
+	public String sendOrder(int accountId, String market, String order, boolean randomGeneration)
+			throws RemoteException {
 		System.out.println("sending order");
 		ConnectionFactory factory = new ConnectionFactory();
 		factory.setHost("localhost");
 
 		String QUEUE_NAME = "";
-		
+
 		// Get the clientInt of that accountId first then set on the DB class.
 		ClientInt user = this.retrieveClientIntFromHashMap(accountId);
 		if (!randomGeneration) {
@@ -603,7 +616,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				QUEUE_NAME = "HKMarket";
 			} else {
 				QUEUE_NAME = "SGMarket";
-			}	
+			}
 		}
 		try (com.rabbitmq.client.Connection connection = factory.newConnection();
 				Channel channel = connection.createChannel()) {
@@ -629,7 +642,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				arrayListStocks = hkDb.getPendingOrders(stockId);
 			else
 				arrayListStocks = sgDb.getPendingOrders(stockId);
-				
+
 			if (arrayListStocks == null)
 				return "empty";
 			// Serialize list of object to string for returning to client.
@@ -676,7 +689,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return sb.toString();
 	}
 
-
 	@SuppressWarnings("resource")
 	public String retrieveOrderBook(String market, int stockId) {
 		ArrayList<OrderBook> arrayListStocks = null;
@@ -685,12 +697,12 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		try {
 			if (market.equals("US"))
 				arrayListStocks = usaDb.getOrderBook(stockId);
-			else if (market.equals("HK")) 
+			else if (market.equals("HK"))
 				arrayListStocks = hkDb.getOrderBook(stockId);
 			else
 				arrayListStocks = sgDb.getOrderBook(stockId);
 
-			if (arrayListStocks == null) 
+			if (arrayListStocks == null)
 				return "empty";
 			// Serialize list of object to string for returning to client.
 			new ObjectOutputStream(new OutputStream() {
@@ -712,14 +724,14 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		StringBuilder sb = new StringBuilder();
 		ArrayList<Stock> arrayListStocks = null;
 		try {
-			if (market.equals(Market.US)) 
+			if (market.equals(Market.US))
 				arrayListStocks = usaDb.getAllStocks();
-			else if (market.equals(Market.HK)) 
-				arrayListStocks = hkDb.getAllStocks(); 
+			else if (market.equals(Market.HK))
+				arrayListStocks = hkDb.getAllStocks();
 			else if (market.equals(Market.SG))
 				arrayListStocks = sgDb.getAllStocks();
-			
-			if (arrayListStocks == null) 
+
+			if (arrayListStocks == null)
 				return "empty";
 			// Serialize list of object to string for returning to client.
 			new ObjectOutputStream(new OutputStream() {
@@ -739,60 +751,48 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	 * ----------------------RANDOM ORDER GENERATION----------------------
 	 * 
 	 */
-	
-	public void startRandomOrderGeneration(Market market) 
-	{
+
+	public void startRandomOrderGeneration(Market market) {
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				System.out.println("Generating new order");
-			
+
 				try {
 					ArrayList<Stock> arrayListStocks = null;
-					
-					if(market.equals(market.US)) 
-					{
+
+					if (market.equals(market.US)) {
 						arrayListStocks = usaDb.getAllStocks();
-					}
-					else if(market.equals(market.SG))
-					{
+					} else if (market.equals(market.SG)) {
 						arrayListStocks = sgDb.getAllStocks();
-					}
-					else 
-					{
+					} else {
 						arrayListStocks = hkDb.getAllStocks();
 					}
-	
+
 					String message = "";
 					for (Stock stock : arrayListStocks) {
 						for (int i = 0; i < 20; i++) {
-							if(market.equals(market.US))
-							{
+							if (market.equals(market.US)) {
 								message = usaDb.dbRandomOrderGeneration(stock.getStockId());
-							    sendOrder(0,market.US.toString(),message, true);
-							}
-							else if(market.equals(market.SG))
-							{
+								sendOrder(0, market.US.toString(), message, true);
+							} else if (market.equals(market.SG)) {
 								message = sgDb.dbRandomOrderGeneration(stock.getStockId());
-								sendOrder(0,market.SG.toString(),message, true);
-							}
-							else 
-							{
+								sendOrder(0, market.SG.toString(), message, true);
+							} else {
 								message = hkDb.dbRandomOrderGeneration(stock.getStockId());
-								sendOrder(0,market.HK.toString(),message, true);
+								sendOrder(0, market.HK.toString(), message, true);
 							}
-								
+
 						}
-						
+
 					}
-					
+
 					// TODO Auto-generated method stub
-				
-				}
-				catch(Exception ex) {
+
+				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
-			}		
+			}
 		});
 		thread.start();
 	}
