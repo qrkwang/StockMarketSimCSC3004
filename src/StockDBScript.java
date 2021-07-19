@@ -400,10 +400,18 @@ public class StockDBScript {
 		// Check if is buyer or seller order first.
 		if (sellerId == -1 && buyerId != -1) {
 			isbuyOrder = true;
+			if (!this.isOnline) {
+				this.retrieveClientIntFromHashMap(buyerId).printToClient("error processing");
 
+				return;
+			}
 		} else {
 			isbuyOrder = false;
+			if (!this.isOnline) {
+				this.retrieveClientIntFromHashMap(sellerId).printToClient("error processing");
 
+				return;
+			}
 		}
 		try {
 

@@ -48,13 +48,14 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	private HashMap<Integer, String> logMap; // for log (will be server name and generation number)
 	private List<String> listServer;
-	private final String ACCOUNTSERVER = "localhost";
-	private final String ACCOUNTSERVER2 = "localhost"; 
-	private final String ACCOUNTSERVER3 = "localhost"; 
-	private final String USSERVERIPADDRESS = "localhost";
-	private final String SGSERVERIPADDRESS = "localhost";
-	private final String HKSERVERIPADDRESS = "localhost";
-	
+	private final String ACCOUNTSERVER = "192.168.68.145"; // 192.168.87.54
+	private final String ACCOUNTSERVER2 = "192.168.68.146"; // 192.168.87.55
+	private final String ACCOUNTSERVER3 = "192.168.68.147"; // 192.168.87.56
+	private final String USSERVERIPADDRESS = "192.168.68.148";
+	private final String SGSERVERIPADDRESS = "192.168.68.149";
+	private final String HKSERVERIPADDRESS = "192.168.68.150";
+
+	private final String AccountsDBName = "AccountDetailsServer";
 	private final String USDBName = "USStockMarket";
 	private final String HKDBName = "HKStockMarket";
 	private final String SGDBName = "SGStockMarket";
@@ -82,13 +83,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		System.out.format("Creating server object\n"); // Print to client that server object is being created once
 		// constructor called.
 
-		accountDetailsDb = new AccountDetailsDbScript(ACCOUNTSERVER + ":3306", "accountdetailsserver", "root", "root");
-		hkDb = new StockDBScript("HKMarket", HKSERVERIPADDRESS + ":3306", "HKStockMarket", "root", "root",
-				accountDetailsDb);
-		sgDb = new StockDBScript("SGMarket", SGSERVERIPADDRESS + ":3306", "SGStockMarket", "root", "root",
-				accountDetailsDb);
-		usaDb = new StockDBScript("USMarket", USSERVERIPADDRESS + ":3306", "USStockMarket", "root", "root",
-				accountDetailsDb);
+		accountDetailsDb = new AccountDetailsDbScript(ACCOUNTSERVER + ":3306", AccountsDBName, "root", "root");
+		hkDb = new StockDBScript("HKMarket", HKSERVERIPADDRESS + ":3306", HKDBName, "root", "root", accountDetailsDb);
+		sgDb = new StockDBScript("SGMarket", SGSERVERIPADDRESS + ":3306", SGDBName, "root", "root", accountDetailsDb);
+		usaDb = new StockDBScript("USMarket", USSERVERIPADDRESS + ":3306", USDBName, "root", "root", accountDetailsDb);
 
 		clientHashMap = new HashMap<Integer, ClientInt>();
 		logMap = new HashMap<Integer, String>(); // for log (will be server name and generation number)
@@ -321,9 +319,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 						if (failedServer != null && usRequiredRecovery == false && sgRequiredRecovery == false
 								&& hkRequiredRecovery == false) {
-						
-						    
-							//System.out.println("The current working directory is " + currentDirectory);
+
+							// System.out.println("The current working directory is " + currentDirectory);
 							executeFile("src/sshRecoverIfFail.py", failedServer);
 							if (failedServer.equals(Market.US.name())) {
 								usRequiredRecovery = true;
@@ -338,7 +335,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 								|| (sgDb.isOnline() == true && sgRequiredRecovery == true)
 								|| (hkDb.isOnline() == true && hkRequiredRecovery == true)) {
 							executeFile("src/sshRecoverOriginalServer.py", failedServer);
-							
+
 							if (failedServer.equals(Market.US.name())) {
 								usaDb.setConnString(USSERVERIPADDRESS, USDBName);
 							} else if (failedServer.equals(Market.HK.name())) {
@@ -370,7 +367,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		});
 		thread.start();
 	}
-	
+
 	public static void executeFile(String fileName, String failedServer) {
 		try {
 			String[] cmd = { "python", fileName, failedServer };
