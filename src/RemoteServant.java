@@ -48,9 +48,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	private HashMap<Integer, String> logMap; // for log (will be server name and generation number)
 	private List<String> listServer;
-	private final String ACCOUNTSERVER = "localhost"; // 192.168.87.54
-	private final String ACCOUNTSERVER2 = "localhost"; // 192.168.87.55
-	private final String ACCOUNTSERVER3 = "localhost"; // 192.168.87.56
+	private final String ACCOUNTSERVER = "localhost";
+	private final String ACCOUNTSERVER2 = "localhost"; 
+	private final String ACCOUNTSERVER3 = "localhost"; 
 	private final String USSERVERIPADDRESS = "localhost";
 	private final String SGSERVERIPADDRESS = "localhost";
 	private final String HKSERVERIPADDRESS = "localhost";
@@ -83,11 +83,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		// constructor called.
 
 		accountDetailsDb = new AccountDetailsDbScript(ACCOUNTSERVER + ":3306", "accountdetailsserver", "root", "root");
-		hkDb = new StockDBScript("HKMarket", HKSERVERIPADDRESS + ":3306", "hkstockmarket", "root", "root",
+		hkDb = new StockDBScript("HKMarket", HKSERVERIPADDRESS + ":3306", "HKStockMarket", "root", "root",
 				accountDetailsDb);
-		sgDb = new StockDBScript("SGMarket", SGSERVERIPADDRESS + ":3306", "sgstockmarket", "root", "root",
+		sgDb = new StockDBScript("SGMarket", SGSERVERIPADDRESS + ":3306", "SGStockMarket", "root", "root",
 				accountDetailsDb);
-		usaDb = new StockDBScript("USMarket", USSERVERIPADDRESS + ":3306", "usstockmarket", "root", "root",
+		usaDb = new StockDBScript("USMarket", USSERVERIPADDRESS + ":3306", "USStockMarket", "root", "root",
 				accountDetailsDb);
 
 		clientHashMap = new HashMap<Integer, ClientInt>();
