@@ -39,7 +39,7 @@ public class AccountDetailsDbScript {
 			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
 			String query = "{CALL getAccountHoldingsById(?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
-
+			stmt.setInt(1, accountId); // Set the parameter
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
 				accountBalance = rs.getFloat("availableCash");

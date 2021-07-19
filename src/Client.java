@@ -74,6 +74,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
     	OTHER
     };
     private int currentDisplayStockId;
+    private int ownedQuantity;
     private Market currentDisplayMarket;
     private Page currentPage;
     
@@ -81,6 +82,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		try {
 			remoteObj = (RemoteInterface) Naming.lookup("rmi://localhost:1099/RemoteServer");
 			currentDisplayStockId = -1;
+			ownedQuantity = -1;
 			accountDetailsObj = null;
 			accountHoldings = null;
 			initialise();
@@ -225,7 +227,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		frame = new JFrame("Stock");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
-        frame.setBounds(100, 100, 800, 800);
+        frame.setBounds(100, 100, 1200, 800);
 		createLoginPanel();
 		createHomePanel();
 		chartPanel = new JPanel();
@@ -336,6 +338,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
     				if (accountHoldings == null) {
     					System.out.println("sql exception");
     				}
+    				createHomePanel();
     				switchPanel(homePanel);
 			}
     	}catch (Exception ex) {
@@ -355,51 +358,63 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
         gbc.insets = DEFAULTINSETS;
         homePanel.add(homePane, gbc);
 		JPanel dashboardPanel = new JPanel();
-		addLabel(dashboardPanel, accountDetailsObj.getUserName(), 0, 0, DEFAULTINSETS);
-		addLabel(dashboardPanel, "Total Account Value: $" + accountDetailsObj.getTotalAccountValue(), 1, 0, DEFAULTINSETS);
-		addLabel(dashboardPanel, "Available Value: $" + accountDetailsObj.getAvailableCash(), 2, 0, DEFAULTINSETS);
-		addLabel(dashboardPanel, "Security Value: $" + accountDetailsObj.getTotalSecurityValue(), 3, 0, DEFAULTINSETS);
-		
-		JTabbedPane holdingPane = new JTabbedPane();
-		JPanel SGHoldingPanel = new JPanel();
-		JPanel HKHoldingPanel = new JPanel();
-		JPanel USHoldingPanel = new JPanel();
-		SGHoldingPanel.setLayout(new GridBagLayout());
-		HKHoldingPanel.setLayout(new GridBagLayout());
-		USHoldingPanel.setLayout(new GridBagLayout());
-		holdingPane.add("SG Holding", SGHoldingPanel);
-		holdingPane.add("HK Holding", HKHoldingPanel);
-		holdingPane.add("US Holding", USHoldingPanel);
+		dashboardPanel.setLayout(new GridBagLayout());
+		if(accountDetailsObj != null) {
+			addLabel(dashboardPanel, accountDetailsObj.getUserName(), 0, 0, DEFAULTINSETS);
+			addLabel(dashboardPanel, "Total Account Value: $" + accountDetailsObj.getTotalAccountValue(), 1, 0, DEFAULTINSETS);
+			addLabel(dashboardPanel, "Available Value: $" + accountDetailsObj.getAvailableCash(), 2, 0, DEFAULTINSETS);
+			addLabel(dashboardPanel, "Security Value: $" + accountDetailsObj.getTotalSecurityValue(), 3, 0, DEFAULTINSETS);
+			
+			JTabbedPane holdingPane = new JTabbedPane();
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        gbc.gridx = 0;
+	        gbc.gridy = 1;
+	        gbc.gridwidth = 4;
+	        gbc.insets = DEFAULTINSETS;
+			dashboardPanel.add(holdingPane, gbc);
+	        gbc.gridwidth = 1;
+	        
+			JPanel SGHoldingPanel = new JPanel();
+			JPanel HKHoldingPanel = new JPanel();
+			JPanel USHoldingPanel = new JPanel();
+			SGHoldingPanel.setLayout(new GridBagLayout());
+			HKHoldingPanel.setLayout(new GridBagLayout());
+			USHoldingPanel.setLayout(new GridBagLayout());
+			holdingPane.add("SG Holding", SGHoldingPanel);
+			holdingPane.add("HK Holding", HKHoldingPanel);
+			holdingPane.add("US Holding", USHoldingPanel);
 
-		addLabel(SGHoldingPanel, "Company Name", 0, 0, LISTINSETS);
-		addLabel(SGHoldingPanel, "Ticker Symbol", 1, 0, LISTINSETS);
-		addLabel(SGHoldingPanel, "Quantity", 2, 0, LISTINSETS);
-		addLabel(SGHoldingPanel, "Average Price", 3, 0, LISTINSETS);
+			addLabel(SGHoldingPanel, "Company Name", 0, 0, LISTINSETS);
+			addLabel(SGHoldingPanel, "Ticker Symbol", 1, 0, LISTINSETS);
+			addLabel(SGHoldingPanel, "Quantity", 2, 0, LISTINSETS);
+			addLabel(SGHoldingPanel, "Average Price", 3, 0, LISTINSETS);
 
-		addLabel(HKHoldingPanel, "Company Name", 0, 0, LISTINSETS);
-		addLabel(HKHoldingPanel, "Ticker Symbol", 1, 0, LISTINSETS);
-		addLabel(HKHoldingPanel, "Quantity", 2, 0, LISTINSETS);
-		addLabel(HKHoldingPanel, "Average Price", 3, 0, LISTINSETS);
+			addLabel(HKHoldingPanel, "Company Name", 0, 0, LISTINSETS);
+			addLabel(HKHoldingPanel, "Ticker Symbol", 1, 0, LISTINSETS);
+			addLabel(HKHoldingPanel, "Quantity", 2, 0, LISTINSETS);
+			addLabel(HKHoldingPanel, "Average Price", 3, 0, LISTINSETS);
 
-		addLabel(USHoldingPanel, "Company Name", 0, 0, LISTINSETS);
-		addLabel(USHoldingPanel, "Ticker Symbol", 1, 0, LISTINSETS);
-		addLabel(USHoldingPanel, "Quantity", 2, 0, LISTINSETS);
-		addLabel(USHoldingPanel, "Average Price", 3, 0, LISTINSETS);
-		
-		int sgCount = 1;
-		int hkCount = 1;
-		int usCount = 1;
-		for(StockOwned so : accountHoldings) {
-			if(so.getMarket().equals(Market.SG.name())) {
-				setUpHoldingRow(SGHoldingPanel, Market.SG.name(), so.getStockId(), so.getCompanyName(), so.getTickerSymbol(), so.getQuantity(), so.getAvgPrice(), sgCount);
-				sgCount++;
-			} else if(so.getMarket().equals(Market.HK.name())) {
-				setUpHoldingRow(HKHoldingPanel, Market.SG.name(), so.getStockId(), so.getCompanyName(), so.getTickerSymbol(), so.getQuantity(), so.getAvgPrice(), hkCount);
-				hkCount++;
-			} else if(so.getMarket().equals(Market.US.name())) {
-				setUpHoldingRow(USHoldingPanel, Market.SG.name(), so.getStockId(), so.getCompanyName(), so.getTickerSymbol(), so.getQuantity(), so.getAvgPrice(), usCount);
-				usCount++;
+			addLabel(USHoldingPanel, "Company Name", 0, 0, LISTINSETS);
+			addLabel(USHoldingPanel, "Ticker Symbol", 1, 0, LISTINSETS);
+			addLabel(USHoldingPanel, "Quantity", 2, 0, LISTINSETS);
+			addLabel(USHoldingPanel, "Average Price", 3, 0, LISTINSETS);
+			
+			int sgCount = 1;
+			int hkCount = 1;
+			int usCount = 1;
+			for(StockOwned so : accountHoldings) {
+				if(so.getMarket().equals(Market.SG.name())) {
+					setUpHoldingRow(SGHoldingPanel, Market.SG, so.getStockId(), so.getCompanyName(), so.getTickerSymbol(), so.getQuantity(), so.getAvgPrice(), sgCount);
+					sgCount++;
+				} else if(so.getMarket().equals(Market.HK.name())) {
+					setUpHoldingRow(HKHoldingPanel, Market.HK, so.getStockId(), so.getCompanyName(), so.getTickerSymbol(), so.getQuantity(), so.getAvgPrice(), hkCount);
+					hkCount++;
+				} else if(so.getMarket().equals(Market.US.name())) {
+					setUpHoldingRow(USHoldingPanel, Market.US, so.getStockId(), so.getCompanyName(), so.getTickerSymbol(), so.getQuantity(), so.getAvgPrice(), usCount);
+					usCount++;
+				}
 			}
+			
 		}
 		
 		JPanel SGPanel = createCountryPanel(Market.SG);
@@ -441,16 +456,21 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		homePanel.add(btnLogout, gbc);
 	}
 	
-	public void setUpHoldingRow(JPanel holdingPanel, String market, int stockId, String companyName, String tickerSymbol, int quantity, float avgPrice, int count) {
+	public void setUpHoldingRow(JPanel holdingPanel, Market market, int stockId, String companyName, String tickerSymbol, int quantity, float avgPrice, int count) {
 		GridBagConstraints gbc = new GridBagConstraints();
 		addLabel(holdingPanel, companyName, 0, count, LISTINSETS);
 		addLabel(holdingPanel, tickerSymbol, 1, count, LISTINSETS);
 		addLabel(holdingPanel, quantity + "", 2, count, LISTINSETS);
 		addLabel(holdingPanel, avgPrice + "", 3, count, LISTINSETS);
-		JButton submitBtn = new JButton("Sell " + tickerSymbol);
+		JButton submitBtn = new JButton("View " + tickerSymbol);
 		submitBtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-            	buySellStockFrame(market, stockId, false, quantity);
+				ownedQuantity = quantity;
+				currentDisplayStockId = stockId;
+				currentDisplayMarket = market;
+				chartPanel = createChartPanel();
+				currentPage = Page.STOCK;
+				switchPanel(chartPanel);
             }
         });
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -494,11 +514,12 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 					JButton submitBtn = new JButton("Trade " + s.getTickerSymbol());
 					submitBtn.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
+							checkOwnHolding(market, s.getStockId());
 							currentDisplayStockId = s.getStockId();
 							currentDisplayMarket = market;
 							chartPanel = createChartPanel();
-							switchPanel(chartPanel);
 							currentPage = Page.STOCK;
+							switchPanel(chartPanel);
 			            }
 			        });
 			        gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -515,16 +536,21 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		}
 		return JSPane;
 	}
+	
+	public void checkOwnHolding(Market market, int stockId) {
+		boolean found = false;
+		for(StockOwned so : accountHoldings) {
+			if(so.getMarket().equals(market.name()) && so.getStockId() == stockId) {
+				ownedQuantity = so.getQuantity();
+				found = true;
+				break;
+			}
+		}
+		if(!found)
+			ownedQuantity = -1;
+	}
 
 	@SuppressWarnings("unchecked")
-//	public JPanel createChartPanel(
-//			OHLCChart chart,
-//			XChartPanel<OHLCChart> ohlcChart,
-//			List<Date> xData,
-//			List<Double> openData,
-//			List<Double> highData,
-//			List<Double> lowData,
-//			List<Double> closeData) {
 	public JPanel createChartPanel() {	
 		OHLCChart chart = new OHLCChartBuilder().width(800).height(600).title("Prices").build();
 		List<Date> xData = new ArrayList<Date>();
@@ -539,6 +565,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		if(currentDisplayStockId != -1) {
 			try {
 				ArrayList<MarketComplete> arrayListCompleteOrders = null;
+				updateOrderBook(null);
 				String orderCompleted = remoteObj.retrieveStockCache(currentDisplayMarket.name(), currentDisplayStockId, this);
 				if (orderCompleted.equals("empty")) {
 					
@@ -585,105 +612,110 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 						chart.getStyler().setToolTipsEnabled(true);
 					}
 					System.out.println(arrayListCompleteOrders.toString());
-					JPanel bottomPanel = new JPanel();
-					bottomPanel.setLayout(new GridBagLayout());
-					JTabbedPane infoPanel = new JTabbedPane();
-					JPanel orderPane = new JPanel();
-					orderPane.add(new JScrollPane(buyOrderBookPanel));
-					orderPane.add(new JScrollPane(sellOrderBookPanel));
 					
-					addLabel(buyOrderBookPanel, "Type", 0, 0, LISTINSETS);
-					addLabel(buyOrderBookPanel, "Quantity", 1, 0, LISTINSETS);
-					addLabel(buyOrderBookPanel, "Price", 2, 0, LISTINSETS);
-					
-					addLabel(sellOrderBookPanel, "Type", 0, 0, LISTINSETS);
-					addLabel(sellOrderBookPanel, "Quantity", 1, 0, LISTINSETS);
-					addLabel(sellOrderBookPanel, "Price", 2, 0, LISTINSETS);
-					
-					JPanel openOrderPane = new JPanel();
-					
-					infoPanel.add("Order Book", orderPane);
-					infoPanel.add("Open Orders", openOrderPane);
-					
-			        gbc.fill = GridBagConstraints.HORIZONTAL;
-			        gbc.gridx = 0;
-			        gbc.gridy = 0;
-			        gbc.insets = DEFAULTINSETS;
-			        bottomPanel.add(infoPanel,gbc);
-			        
-			        JPanel buttonPanel = new JPanel();
-			        buttonPanel.setLayout(new GridBagLayout());
-					JButton btnBuy = new JButton("Buy Stock");
-					btnBuy.addActionListener(new ActionListener() {
-			            public void actionPerformed(ActionEvent e) {
-			            	//Buy stock
-			            	buySellStockFrame(currentDisplayMarket.name(), currentDisplayStockId, true, 0);
-			            }
-			        });
-			        gbc.fill = GridBagConstraints.HORIZONTAL;
-			        gbc.gridx = 0;
-			        gbc.gridy = 0;
-			        gbc.insets = new Insets(0, 0, 10, 10);
-			        gbc.anchor = GridBagConstraints.NORTH;
-			        buttonPanel.add(btnBuy, gbc);
-			        
-					JButton btnBack = new JButton("Back to Home");
-					btnBack.addActionListener(new ActionListener() {
-			            public void actionPerformed(ActionEvent e) {
-			            	//Redirect to homePanel
-			            	switchPanel(homePanel);
-							currentPage = Page.OTHER;
-			            }
-			        });
-			        gbc.fill = GridBagConstraints.HORIZONTAL;
-			        gbc.gridx = 0;
-			        gbc.gridy = 1;
-			        gbc.insets = new Insets(0, 0, 10, 10);
-			        gbc.anchor = GridBagConstraints.NORTH;
-			        buttonPanel.add(btnBack, gbc);
-			        
-					JButton btnLogout = new JButton("Log out");
-					btnLogout.addActionListener(new ActionListener() {
-			            public void actionPerformed(ActionEvent e) {
-			            	//Redirect to loginPanel
-			            	switchPanel(loginPanel);
-							currentPage = Page.OTHER;
-			            }
-			        });
-			        gbc.fill = GridBagConstraints.HORIZONTAL;
-			        gbc.gridx = 0;
-			        gbc.gridy = 2;
-			        gbc.insets = new Insets(0, 0, 10, 10);
-			        gbc.anchor = GridBagConstraints.NORTH;
-			        buttonPanel.add(btnLogout, gbc);
-			        
-			        gbc.fill = GridBagConstraints.HORIZONTAL;
-			        gbc.gridx = 1;
-			        gbc.gridy = 0;
-			        gbc.insets = DEFAULTINSETS;
-			        bottomPanel.add(buttonPanel,gbc);
-			        
-			        gbc.fill = GridBagConstraints.HORIZONTAL;
-			        gbc.gridx = 0;
-			        gbc.gridy = 1;
-			        gbc.insets = DEFAULTINSETS;
-					chartPanel.add(bottomPanel,gbc);
 				}
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			// Create Chart
+			XChartPanel<OHLCChart> ohlcChart = new XChartPanel<OHLCChart>(chart);
+			JPanel ohlcPanel = ohlcChart;
+			ohlcChart.repaint();
+			frame.repaint();
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        gbc.gridx = 0;
+	        gbc.gridy = 0;
+	        gbc.insets = DEFAULTINSETS;
+			chartPanel.add(ohlcPanel, gbc);
+			
+			JPanel bottomPanel = new JPanel();
+			bottomPanel.setLayout(new GridBagLayout());
+			JTabbedPane infoPanel = new JTabbedPane();
+			JPanel orderPane = new JPanel();
+			orderPane.add(new JScrollPane(buyOrderBookPanel));
+			orderPane.add(new JScrollPane(sellOrderBookPanel));
+			
+			JPanel openOrderPane = new JPanel();
+			
+			infoPanel.add("Order Book", orderPane);
+			infoPanel.add("Open Orders", openOrderPane);
+			
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        gbc.gridx = 0;
+	        gbc.gridy = 0;
+	        gbc.insets = DEFAULTINSETS;
+	        bottomPanel.add(infoPanel,gbc);
+	        
+	        JPanel buttonPanel = new JPanel();
+	        buttonPanel.setLayout(new GridBagLayout());
+			JButton btnBuy = new JButton("Buy Stock");
+			btnBuy.addActionListener(new ActionListener() {
+	            public void actionPerformed(ActionEvent e) {
+	            	//Buy stock
+	            	buySellStockFrame(currentDisplayMarket.name(), currentDisplayStockId, true, 0);
+	            }
+	        });
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        gbc.gridx = 0;
+	        gbc.gridy = 0;
+	        gbc.insets = new Insets(0, 0, 10, 10);
+	        buttonPanel.add(btnBuy, gbc);
+	        if(ownedQuantity != -1) {
+				JButton btnSell = new JButton("Sell Stock");
+				btnSell.addActionListener(new ActionListener() {
+		            public void actionPerformed(ActionEvent e) {
+		            	//Buy stock
+		            	buySellStockFrame(currentDisplayMarket.name(), currentDisplayStockId, false, ownedQuantity);
+		            }
+		        });
+		        gbc.fill = GridBagConstraints.HORIZONTAL;
+		        gbc.gridx = 0;
+		        gbc.gridy = 1;
+		        gbc.insets = new Insets(0, 0, 10, 10);
+		        buttonPanel.add(btnSell, gbc);
+	        }
+	        
+			JButton btnBack = new JButton("Back to Home");
+			btnBack.addActionListener(new ActionListener() {
+	            public void actionPerformed(ActionEvent e) {
+	            	//Redirect to homePanel
+	            	switchPanel(homePanel);
+					currentPage = Page.OTHER;
+	            }
+	        });
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        gbc.gridx = 0;
+	        gbc.gridy = 2;
+	        gbc.insets = new Insets(0, 0, 10, 10);
+	        buttonPanel.add(btnBack, gbc);
+	        
+			JButton btnLogout = new JButton("Log out");
+			btnLogout.addActionListener(new ActionListener() {
+	            public void actionPerformed(ActionEvent e) {
+	            	//Redirect to loginPanel
+	            	switchPanel(loginPanel);
+					currentPage = Page.OTHER;
+	            }
+	        });
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        gbc.gridx = 0;
+	        gbc.gridy = 3;
+	        gbc.insets = new Insets(0, 0, 10, 10);
+	        buttonPanel.add(btnLogout, gbc);
+	        
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        gbc.gridx = 1;
+	        gbc.gridy = 0;
+	        gbc.insets = DEFAULTINSETS;
+	        bottomPanel.add(buttonPanel,gbc);
+	        
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        gbc.gridx = 0;
+	        gbc.gridy = 1;
+	        gbc.insets = DEFAULTINSETS;
+			chartPanel.add(bottomPanel,gbc);
 		}
-//		// Create Chart
-		XChartPanel<OHLCChart> ohlcChart = new XChartPanel<OHLCChart>(chart);
-		JPanel ohlcPanel = ohlcChart;
-		ohlcChart.repaint();
-		frame.repaint();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.insets = DEFAULTINSETS;
-		chartPanel.add(ohlcPanel, gbc);
 		return chartPanel;
 	}
 
@@ -731,8 +763,13 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		orderStockFrame.setVisible(true);
 		JPanel orderPanel = new JPanel();
 		orderPanel.setLayout(new GridBagLayout());
-		
-		addLabel(orderPanel, "Quantity:", 0, 0, DEFAULTINSETS);
+
+        if(!buy) {
+        	addLabel(orderPanel, "Owned Quantiy: ", 0,0, DEFAULTINSETS);
+        	addLabel(orderPanel, ownedQuantity + "", 1,0, DEFAULTINSETS);
+        }
+        
+		addLabel(orderPanel, "Quantity:", 0, 1, DEFAULTINSETS);
 
 		SpinnerModel sm = new SpinnerNumberModel(0,0,max,1);
 		if(buy)
@@ -740,16 +777,17 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		JSpinner quantitySpinner  = new JSpinner(sm);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
-        gbc.gridy = 0;
+        gbc.gridy = 1;
         gbc.insets = DEFAULTINSETS;
         orderPanel.add(quantitySpinner, gbc);
         
-		addLabel(orderPanel, "Price:", 0, 1, DEFAULTINSETS);
+		addLabel(orderPanel, "Price:", 0, 2, DEFAULTINSETS);
 
+		sm = new SpinnerNumberModel(0.0,0.0,null,0.1);
 		JSpinner priceSpinner  = new JSpinner(sm);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.insets = DEFAULTINSETS;
         orderPanel.add(priceSpinner, gbc);
         
@@ -773,7 +811,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 	            		order = generateOrder(StockId, accountId, -1, quantity, price);
 	            	else
 	            		order = generateOrder(StockId, -1, accountId, quantity, price);
-					remoteObj.sendOrder(accountId, currentDisplayMarket.name(), order, false); // -1 to indicate null, i will change to null on
+					remoteObj.sendOrder(accountId, market, order, false); // -1 to indicate null, i will change to null on
 					orderStockFrame.dispose();
 				} catch (ParseException | RemoteException e) {
 					// TODO Auto-generated catch block
@@ -783,9 +821,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
         });
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.insets = new Insets(0, 0, 10, 10);
-        gbc.anchor = GridBagConstraints.NORTH;
         orderPanel.add(btnSubmit, gbc);
         orderStockFrame.add(orderPanel);
 	}
