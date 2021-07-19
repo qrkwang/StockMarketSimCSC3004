@@ -361,6 +361,7 @@ BEGIN
     DECLARE insertId int;
     DECLARE insertBuyerId int DEFAULT 0;
     DECLARE insertSellerId int default 0;
+    DECLARE getTime timestamp;
     
     
 	WHILE counterid <=(SELECT COUNT(*) FROM stock) do
@@ -372,22 +373,28 @@ BEGIN
         from stock
         WHERE StockId = counterid;
 		SET insertSellerId = 0;
-        SET insertBuyerId = 6;
+        SET insertBuyerId = 11;
         SET insertId = 1;
-        WHILE insertId <=5 do
+        SET getTime = now();
+        WHILE insertId <=10 do
         SET insertSellerId = insertSellerId + 1;
         SET insertBuyerId = insertBuyerId - 1;
         SET InsertQuantity = InsertQuantity + 1;
         SET @insertPrice = @insertPrice + 0.1;
-        
+		if insertId < 4 then 
         INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
-		VALUES(@insertStockId,insertSellerId, insertBuyerId, InsertQuantity,@insertPrice, now());
-        
+		VALUES(@insertStockId,insertSellerId, insertBuyerId, InsertQuantity,@insertPrice, getTime);
+        else
+        SET getTime = getTime + INTERVAL 1 minute;
+        INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
+		VALUES(@insertStockId,insertSellerId, insertBuyerId, InsertQuantity,@insertPrice, getTime);
+        END IF;
         SET insertId = insertId +1;
         END WHILE;
         SET counterid = counterid + 1;
 	END WHILE;
 END$$
+
 
 -- Uncomment if first time run the stored procedure
 -- CALL InsertMarketCompletedData();
