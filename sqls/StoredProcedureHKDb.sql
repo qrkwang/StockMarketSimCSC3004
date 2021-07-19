@@ -25,7 +25,8 @@ CREATE PROCEDURE `GetAllMarketCompleted`()
 BEGIN
 
 SELECT * 
-FROM marketcompleted;
+FROM marketcompleted
+ORDER BY TransactionDate ASC;
 
 END$$
 DELIMITER ;
@@ -208,7 +209,8 @@ BEGIN
 
 SELECT * 
 FROM marketcompleted
-where StockId = inputStockId;
+where StockId = inputStockId
+ORDER BY TransactionDate ASC;
 
 END$$
 DELIMITER ;
@@ -387,7 +389,8 @@ BEGIN
 	END WHILE;
 END$$
 
-CALL InsertMarketCompletedData();
+-- Uncomment if first time run the stored procedure
+-- CALL InsertMarketCompletedData();
 
 
 
