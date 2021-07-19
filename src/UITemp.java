@@ -83,24 +83,23 @@ public class UITemp {
 //		frame.getContentPane().add(homePanel, BorderLayout.CENTER);
 //		while(true) {
 //		     try {
-////				Thread.sleep(100);
-////				cal.add(Calendar.DATE, 1);
-////				xData.add(cal.getTime());
-////				
-////				double previous = data;
-////				
-////				data = getNewClose(data, startPrice);
-////				System.out.println(", data: "+data);
-////				openData.add(previous);
-////				double high = getHigh(Math.max(previous, data), startPrice);
-////				System.out.println(", high: "+high);
-////				highData.add(high);
-////				double low = getLow(Math.min(previous, data), startPrice);
-////				System.out.println(", low: "+low);
-////				lowData.add(low);
-////				
-////				closeData.add(data);
-////				System.out.println("previous: "+previous+", data: "+data+", high: "+high+", low: "+low);
+//				Thread.sleep(100);
+//				cal.add(Calendar.DATE, 1);
+//				xData.add(cal.getTime());
+//				double previous = data;
+//				
+//				data = getNewClose(data, startPrice);
+//				System.out.println(", data: "+data);
+//				openData.add(previous);
+//				double high = getHigh(Math.max(previous, data), startPrice);
+//				System.out.println(", high: "+high);
+//				highData.add(high);
+//				double low = getLow(Math.min(previous, data), startPrice);
+//				System.out.println(", low: "+low);
+//				lowData.add(low);
+//				
+//				closeData.add(data);
+//				System.out.println("previous: "+previous+", data: "+data+", high: "+high+", low: "+low);
 //				chart.updateOHLCSeries("Series", xData, openData, highData, lowData, closeData);
 //				ohlcChart.repaint();
 //				frame.repaint();
@@ -184,13 +183,13 @@ public class UITemp {
 			public void stateChanged(ChangeEvent e) {
 				JPanel selected = (JPanel) homePane.getSelectedComponent();
 				System.out.print(homePane.getSelectedIndex());
-				if(homePane.getSelectedIndex()==2) {
+				if(homePane.getSelectedIndex()==1) {
 					selected = createCountryPanel(Country.SG);
 				}
-				else if(homePane.getSelectedIndex()==3) {
+				else if(homePane.getSelectedIndex()==2) {
 					selected = createCountryPanel(Country.HK);
 				}
-				else if(homePane.getSelectedIndex()==4) {
+				else if(homePane.getSelectedIndex()==3) {
 					selected = createCountryPanel(Country.US);
 				}
 			}});

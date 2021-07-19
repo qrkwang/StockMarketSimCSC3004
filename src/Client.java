@@ -58,6 +58,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
     private JPanel buyOrderBookPanel;
     private JPanel sellOrderBookPanel;
     private AccountDetails accountDetailsObj;
+    private ArrayList<StockOwned> accountHoldings;
 	private final Insets DEFAULTINSETS = new Insets(0, 0, 10, 10);
 	private final Insets LISTINSETS = new Insets(0, 0, 10, 50);
     private enum Market{
@@ -80,6 +81,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		try {
 			remoteObj = (RemoteInterface) Naming.lookup("rmi://localhost:1099/RemoteServer");
 			currentDisplayStockId = -1;
+			accountDetailsObj = null;
+			accountHoldings = null;
 			initialise();
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
@@ -329,7 +332,11 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
                 	//Redirect to homePanel
     				ObjectMapper objectMapper = new ObjectMapper();
     				accountDetailsObj = objectMapper.readValue(resAccountDetails, AccountDetails.class);
-                	switchPanel(homePanel);
+    				accountHoldings = remoteObj.getAccountHoldingsById(accountDetailsObj.getAccountId());
+    				if (accountHoldings == null) {
+    					System.out.println("sql exception");
+    				}
+    				switchPanel(homePanel);
 			}
     	}catch (Exception ex) {
 			System.out.format("Error obtaining remoteServer/remoteInterface from registry");
@@ -348,7 +355,53 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
         gbc.insets = DEFAULTINSETS;
         homePanel.add(homePane, gbc);
 		JPanel dashboardPanel = new JPanel();
-		addLabel(dashboardPanel, "", 0, 0, DEFAULTINSETS);
+		addLabel(dashboardPanel, accountDetailsObj.getUserName(), 0, 0, DEFAULTINSETS);
+		addLabel(dashboardPanel, "Total Account Value: $" + accountDetailsObj.getTotalAccountValue(), 1, 0, DEFAULTINSETS);
+		addLabel(dashboardPanel, "Available Value: $" + accountDetailsObj.getAvailableCash(), 2, 0, DEFAULTINSETS);
+		addLabel(dashboardPanel, "Security Value: $" + accountDetailsObj.getTotalSecurityValue(), 3, 0, DEFAULTINSETS);
+		
+		JTabbedPane holdingPane = new JTabbedPane();
+		JPanel SGHoldingPanel = new JPanel();
+		JPanel HKHoldingPanel = new JPanel();
+		JPanel USHoldingPanel = new JPanel();
+		SGHoldingPanel.setLayout(new GridBagLayout());
+		HKHoldingPanel.setLayout(new GridBagLayout());
+		USHoldingPanel.setLayout(new GridBagLayout());
+		holdingPane.add("SG Holding", SGHoldingPanel);
+		holdingPane.add("HK Holding", HKHoldingPanel);
+		holdingPane.add("US Holding", USHoldingPanel);
+
+		addLabel(SGHoldingPanel, "Company Name", 0, 0, LISTINSETS);
+		addLabel(SGHoldingPanel, "Ticker Symbol", 1, 0, LISTINSETS);
+		addLabel(SGHoldingPanel, "Quantity", 2, 0, LISTINSETS);
+		addLabel(SGHoldingPanel, "Average Price", 3, 0, LISTINSETS);
+
+		addLabel(HKHoldingPanel, "Company Name", 0, 0, LISTINSETS);
+		addLabel(HKHoldingPanel, "Ticker Symbol", 1, 0, LISTINSETS);
+		addLabel(HKHoldingPanel, "Quantity", 2, 0, LISTINSETS);
+		addLabel(HKHoldingPanel, "Average Price", 3, 0, LISTINSETS);
+
+		addLabel(USHoldingPanel, "Company Name", 0, 0, LISTINSETS);
+		addLabel(USHoldingPanel, "Ticker Symbol", 1, 0, LISTINSETS);
+		addLabel(USHoldingPanel, "Quantity", 2, 0, LISTINSETS);
+		addLabel(USHoldingPanel, "Average Price", 3, 0, LISTINSETS);
+		
+		int sgCount = 1;
+		int hkCount = 1;
+		int usCount = 1;
+		for(StockOwned so : accountHoldings) {
+			if(so.getMarket().equals(Market.SG.name())) {
+				setUpHoldingRow(SGHoldingPanel, Market.SG.name(), so.getStockId(), so.getCompanyName(), so.getTickerSymbol(), so.getQuantity(), so.getAvgPrice(), sgCount);
+				sgCount++;
+			} else if(so.getMarket().equals(Market.HK.name())) {
+				setUpHoldingRow(HKHoldingPanel, Market.SG.name(), so.getStockId(), so.getCompanyName(), so.getTickerSymbol(), so.getQuantity(), so.getAvgPrice(), hkCount);
+				hkCount++;
+			} else if(so.getMarket().equals(Market.US.name())) {
+				setUpHoldingRow(USHoldingPanel, Market.SG.name(), so.getStockId(), so.getCompanyName(), so.getTickerSymbol(), so.getQuantity(), so.getAvgPrice(), usCount);
+				usCount++;
+			}
+		}
+		
 		JPanel SGPanel = createCountryPanel(Market.SG);
 		JPanel HKPanel = createCountryPanel(Market.HK);
 		JPanel USPanel = createCountryPanel(Market.US);
@@ -386,6 +439,25 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		gbc.insets = new Insets(20, 0, 10, 10);
 		gbc.anchor = GridBagConstraints.NORTH;
 		homePanel.add(btnLogout, gbc);
+	}
+	
+	public void setUpHoldingRow(JPanel holdingPanel, String market, int stockId, String companyName, String tickerSymbol, int quantity, float avgPrice, int count) {
+		GridBagConstraints gbc = new GridBagConstraints();
+		addLabel(holdingPanel, companyName, 0, count, LISTINSETS);
+		addLabel(holdingPanel, tickerSymbol, 1, count, LISTINSETS);
+		addLabel(holdingPanel, quantity + "", 2, count, LISTINSETS);
+		addLabel(holdingPanel, avgPrice + "", 3, count, LISTINSETS);
+		JButton submitBtn = new JButton("Sell " + tickerSymbol);
+		submitBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+            	buySellStockFrame(market, stockId, false, quantity);
+            }
+        });
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 4;
+        gbc.gridy = count;
+        gbc.insets = DEFAULTINSETS;
+        holdingPanel.add(submitBtn, gbc);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -545,7 +617,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 					btnBuy.addActionListener(new ActionListener() {
 			            public void actionPerformed(ActionEvent e) {
 			            	//Buy stock
-			            	buyStockFrame(1);
+			            	buySellStockFrame(currentDisplayMarket.name(), currentDisplayStockId, true, 0);
 			            }
 			        });
 			        gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -652,35 +724,41 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		}
 	}
 	
-	public void buyStockFrame(int StockId) {
+	public void buySellStockFrame(String market, int StockId, boolean buy, int max) {
 		GridBagConstraints gbc = new GridBagConstraints();
-		JFrame buyStockFrame = new JFrame();
-		buyStockFrame.setBounds(100, 100, 550, 550);
-		buyStockFrame.setVisible(true);
-		JPanel buyPanel = new JPanel();
-		buyPanel.setLayout(new GridBagLayout());
+		JFrame orderStockFrame = new JFrame();
+		orderStockFrame.setBounds(100, 100, 550, 550);
+		orderStockFrame.setVisible(true);
+		JPanel orderPanel = new JPanel();
+		orderPanel.setLayout(new GridBagLayout());
 		
-		addLabel(buyPanel, "Quantity:", 0, 0, DEFAULTINSETS);
+		addLabel(orderPanel, "Quantity:", 0, 0, DEFAULTINSETS);
 
-		SpinnerModel sm = new SpinnerNumberModel(0,0,null,1);
+		SpinnerModel sm = new SpinnerNumberModel(0,0,max,1);
+		if(buy)
+			sm = new SpinnerNumberModel(0,0,null,1);
 		JSpinner quantitySpinner  = new JSpinner(sm);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.insets = DEFAULTINSETS;
-        buyPanel.add(quantitySpinner, gbc);
+        orderPanel.add(quantitySpinner, gbc);
         
-		addLabel(buyPanel, "Price:", 0, 1, DEFAULTINSETS);
-		
-		sm = new SpinnerNumberModel(0.0,0.0,null,0.1);
+		addLabel(orderPanel, "Price:", 0, 1, DEFAULTINSETS);
+
 		JSpinner priceSpinner  = new JSpinner(sm);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.insets = DEFAULTINSETS;
-        buyPanel.add(priceSpinner, gbc);
+        orderPanel.add(priceSpinner, gbc);
         
-		JButton btnSubmit = new JButton("Buy");
+		JButton btnSubmit = new JButton();
+		if(buy)
+			btnSubmit.setText("Buy");
+		else
+			btnSubmit.setText("Sell");
+			
 		btnSubmit.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
             	//Send buy order
@@ -690,9 +768,13 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 	            	int quantity = Integer.parseInt(quantitySpinner.getValue() +"");
 	            	float price = Float.parseFloat(priceSpinner.getValue() +"");
 	            	int accountId = accountDetailsObj.getAccountId();
-	            	String order = generateOrder(StockId, accountId, -1, quantity, price);
+	            	String order = "";
+	            	if(buy)
+	            		order = generateOrder(StockId, accountId, -1, quantity, price);
+	            	else
+	            		order = generateOrder(StockId, -1, accountId, quantity, price);
 					remoteObj.sendOrder(accountId, currentDisplayMarket.name(), order, false); // -1 to indicate null, i will change to null on
-	            	buyStockFrame.dispose();
+					orderStockFrame.dispose();
 				} catch (ParseException | RemoteException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -704,8 +786,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 0, 10, 10);
         gbc.anchor = GridBagConstraints.NORTH;
-        buyPanel.add(btnSubmit, gbc);
-        buyStockFrame.add(buyPanel);
+        orderPanel.add(btnSubmit, gbc);
+        orderStockFrame.add(orderPanel);
 	}
 
 	// Please send in format (accountId, "US", "StockId, SellerId, BuyerId, Qty,
@@ -720,6 +802,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			RemoteInterface remoteObj = (RemoteInterface) Naming.lookup("rmi://localhost:1099/RemoteServer");
 			ClientInt cc = new Client();
 
+//			remoteObj.sendOrder(1, "SG", "1,1,-1,11,0.5", false);
+//			remoteObj.sendOrder(2, "HK", "5,-1,2,100,23.3", false);
 			// Interface for login
 //			String username = "demo";
 //			String pw = "password";
