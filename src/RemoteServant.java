@@ -554,18 +554,26 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	@Override
 	public ArrayList<StockOwned> getAccountHoldingsById(int accountId) throws RemoteException {
 		System.out.println(" in remote srevant account id " + accountId);
-		ArrayList<StockOwned> allStockOwned;
+		ArrayList<StockOwned> allStockOwned = new ArrayList<StockOwned>();
 		try {
 			ArrayList<StockOwned> stockOwnedHk = hkDb.getOwnedStocks(accountId);
 			ArrayList<StockOwned> stockOwnedSg = sgDb.getOwnedStocks(accountId);
 			ArrayList<StockOwned> stockOwnedUsa = usaDb.getOwnedStocks(accountId);
 
-			stockOwnedHk.addAll(stockOwnedUsa);
-			stockOwnedHk.addAll(stockOwnedSg);
+			if (stockOwnedHk != null) {
+				allStockOwned.addAll(stockOwnedHk);
+			}
+			if (stockOwnedSg != null) {
+				allStockOwned.addAll(stockOwnedSg);
+
+			}
+			if (stockOwnedUsa != null) {
+				allStockOwned.addAll(stockOwnedUsa);
+
+			}
 
 			System.out.println("printing stock owned by account id " + accountId);
 
-			allStockOwned = (ArrayList<StockOwned>) stockOwnedHk.clone();
 			allStockOwned.forEach(item -> {
 				System.out.println(item);
 			});
