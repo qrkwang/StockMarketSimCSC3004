@@ -696,7 +696,6 @@ public class StockDBScript {
 
 		}
 
-		//con.close();
 	}
 
 	public ArrayList<StockOwned> getOwnedStocks(int accountId) throws SQLException {
