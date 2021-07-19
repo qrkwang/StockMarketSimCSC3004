@@ -7,7 +7,7 @@ public class StockOwned implements Serializable {
 	private int StockId;
 	private String CompanyName;
 	private String TickerSymbol;
-	private String market;
+	private String Market;
 	private int Quantity;
 	private float avgPrice;
 
@@ -17,7 +17,7 @@ public class StockOwned implements Serializable {
 
 	public StockOwned(String market, int stockId, String companyName, String tickerSymbol, int quantity, int avgPrice) {
 		super();
-		this.market = market;
+		this.Market = market;
 		this.StockId = stockId;
 		this.CompanyName = companyName;
 		this.TickerSymbol = tickerSymbol;
@@ -47,6 +47,15 @@ public class StockOwned implements Serializable {
 
 	public void setTickerSymbol(String tickerSymbol) {
 		TickerSymbol = tickerSymbol;
+	}
+
+
+	public String getMarket() {
+		return Market;
+	}
+
+	public void setMarket(String market) {
+		Market = market;
 	}
 
 	public int getQuantity() {
