@@ -371,10 +371,10 @@ BEGIN
         from stock
         WHERE StockId = counterid;
 		SET insertSellerId = 0;
-        SET insertBuyerId = 11;
+        SET insertBuyerId = 101;
         SET insertId = 1;
         SET getTime = now();
-        WHILE insertId <=10 do
+        WHILE insertId <=100 do
         SET insertSellerId = insertSellerId + 1;
         SET insertBuyerId = insertBuyerId - 1;
         SET InsertQuantity = InsertQuantity + 1;
