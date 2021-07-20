@@ -134,12 +134,12 @@ USE `SGStockMarket`$$
 CREATE PROCEDURE `getTotalHoldingsByAccountId`(IN inputBuyerId int)
 BEGIN
 
-SELECT s.CompanyName,s.StockId, s.TickerSymbol, sum(m.Quantity), avg(m.Price)
+SELECT s.CompanyName,s.StockId, s.TickerSymbol, (totalQuantity - IFNULL(soldQuantity,0)) AS Quantity, (totalPrice - IFNULL(soldPrice,0))/(totalQuantity - IFNULL(soldQuantity,0)) AS Price
 FROM stock s
-INNER JOIN marketcompleted m 
-ON s.StockId = m.StockId
-Where m.BuyerId = inputBuyerId
-group by m.StockId;
+JOIN (SELECT m.StockId, SUM(m.Quantity) AS totalQuantity, SUM(m.Price * m.Quantity) AS totalPrice
+FROM marketcompleted m WHERE m.BuyerId = inputBuyerId GROUP BY m.StockId) total ON total.StockId = s.StockId
+LEFT JOIN (SELECT m.StockId, SUM(m.Quantity) AS soldQuantity, SUM(m.Price * m.Quantity) AS soldPrice
+FROM marketcompleted m WHERE m.SellerId = inputBuyerId GROUP BY m.StockId) sold ON sold.StockId = total.StockId;
 
 END$$
 DELIMITER ;
@@ -405,13 +405,13 @@ USE `SGStockMarket`$$
 CREATE PROCEDURE `getQuantityByAccountIdAndStockId`(IN inputBuyerId int, IN inputStockId int)
 BEGIN
 
-SELECT sum(m.Quantity) AS Quantity
+SELECT (totalQuantity - IFNULL(soldQuantity,0)) AS Quantity
 FROM stock s
-INNER JOIN marketcompleted m 
-ON s.StockId = m.StockId
-Where m.BuyerId = inputBuyerId
-AND s.StockId = inputStockId
-group by m.StockId;
+JOIN (SELECT m.StockId, SUM(m.Quantity) AS totalQuantity
+FROM marketcompleted m WHERE m.BuyerId = inputBuyerId GROUP BY m.StockId) total ON total.StockId = s.StockId
+LEFT JOIN (SELECT m.StockId, SUM(m.Quantity) AS soldQuantity
+FROM marketcompleted m WHERE m.SellerId = inputBuyerId GROUP BY m.StockId) sold ON sold.StockId = total.StockId
+WHERE s.StockId = inputStockId;
 
 END$$
 DELIMITER ;
