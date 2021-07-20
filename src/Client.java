@@ -405,8 +405,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			addLabel(dashboardPanel, accountDetailsObj.getUserName(), 0, 0, DEFAULTINSETS);
 			addLabel(dashboardPanel, "Total Account Value: $" + accountDetailsObj.getTotalAccountValue(), 1, 0,
 					DEFAULTINSETS);
-			addLabel(dashboardPanel, "Available Value: $" + accountDetailsObj.getAvailableCash(), 2, 0, DEFAULTINSETS);
-			addLabel(dashboardPanel, "Security Value: $" + accountDetailsObj.getTotalSecurityValue(), 3, 0,
+			addLabel(dashboardPanel, "Available Cash: $" + accountDetailsObj.getAvailableCash(), 2, 0, DEFAULTINSETS);
+			addLabel(dashboardPanel, "Securities Value: $" + accountDetailsObj.getTotalSecurityValue(), 3, 0,
 					DEFAULTINSETS);
 
 			JTabbedPane holdingPane = new JTabbedPane();

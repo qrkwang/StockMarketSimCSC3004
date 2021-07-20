@@ -376,38 +376,36 @@ public class StockDBScript {
 			isbuyOrder = false;
 
 		}
+
+		if (buyerId == 0 || sellerId == 0) {
+			System.out.println("receive order is randomGen order");
+
+			// order is randomGenOrder
+			isRandomGenOrder = true;
+
+		}
 		try {
 
-			if (buyerId == 0 && isbuyOrder) {
-				System.out.println("receive order is randomGen order and is buy order");
-
-				// order is randomGenOrder
-				isRandomGenOrder = true;
-
-			} else {
-				System.out.println("receive order is not randomGen order");
+			if (!isRandomGenOrder && isbuyOrder) {
+				// received order is not randomGen order and is buy order
+				System.out.println("received order is not randomGen order and is buy order");
 
 				// check balance if not randomGenOrder
 				accountBalance = accountDetailsDb.getAccountBalanceById(buyerId);
-				if (!this.isOnline) { // If server down and is not order from bot, print to client
+				if (!this.isOnline) {
 					// server down and order is not bot order, print to buyer error message.
 					this.retrieveClientIntFromHashMap(buyerId).printToClient("error processing");
 					return;
 				}
-			}
-
-			if (sellerId == 0 && !isbuyOrder) {
-				System.out.println("receive order is randomGen order and is sell order");
-
-				// order is randomGenOrder
-				isRandomGenOrder = true;
-
-			} else {
+			} else if (!isRandomGenOrder && !isbuyOrder) {
+				// received order is not randomGen order and is sell order
 				accountBalance = accountDetailsDb.getAccountBalanceById(sellerId);
-				if (!this.isOnline) { // If server down and is not order from bot, print to client
+
+				if (!this.isOnline) {
 					// server down and order is not bot order, print to seller error message.
 					this.retrieveClientIntFromHashMap(sellerId).printToClient("error processing");
 					return;
+
 				}
 			}
 
@@ -418,6 +416,11 @@ public class StockDBScript {
 
 				float orderValue = qty * price;
 				if ((accountBalance < orderValue) && !isRandomGenOrder) {
+					System.out.println("account bal" + accountBalance);
+					System.out.println("qty and price " + qty + " " + price);
+
+					System.out.println("order Value " + orderValue);
+
 					System.out.println("account balance not enough");
 					try {
 						int accountId;
