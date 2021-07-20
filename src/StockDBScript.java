@@ -370,7 +370,6 @@ public class StockDBScript {
 		if (sellerId == -1 && buyerId != -1) {
 			System.out.println("receive order is buyer order");
 			isbuyOrder = true;
-
 		} else {
 			System.out.println("receive order is seller order");
 

@@ -437,16 +437,19 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			int sgCount = 1;
 			int hkCount = 1;
 			int usCount = 1;
-			if(accountHoldings != null) {
-				for(StockOwned so : accountHoldings) {
-					if(so.getMarket().equals(Market.SG.name())) {
-						setUpHoldingRow(SGHoldingPanel, Market.SG, so.getStockId(), so.getCompanyName(), so.getTickerSymbol(), so.getQuantity(), so.getAvgPrice(), sgCount);
+			if (accountHoldings != null) {
+				for (StockOwned so : accountHoldings) {
+					if (so.getMarket().equals(Market.SG.name())) {
+						setUpHoldingRow(SGHoldingPanel, Market.SG, so.getStockId(), so.getCompanyName(),
+								so.getTickerSymbol(), so.getQuantity(), so.getAvgPrice(), sgCount);
 						sgCount++;
-					} else if(so.getMarket().equals(Market.HK.name())) {
-						setUpHoldingRow(HKHoldingPanel, Market.HK, so.getStockId(), so.getCompanyName(), so.getTickerSymbol(), so.getQuantity(), so.getAvgPrice(), hkCount);
+					} else if (so.getMarket().equals(Market.HK.name())) {
+						setUpHoldingRow(HKHoldingPanel, Market.HK, so.getStockId(), so.getCompanyName(),
+								so.getTickerSymbol(), so.getQuantity(), so.getAvgPrice(), hkCount);
 						hkCount++;
-					} else if(so.getMarket().equals(Market.US.name())) {
-						setUpHoldingRow(USHoldingPanel, Market.US, so.getStockId(), so.getCompanyName(), so.getTickerSymbol(), so.getQuantity(), so.getAvgPrice(), usCount);
+					} else if (so.getMarket().equals(Market.US.name())) {
+						setUpHoldingRow(USHoldingPanel, Market.US, so.getStockId(), so.getCompanyName(),
+								so.getTickerSymbol(), so.getQuantity(), so.getAvgPrice(), usCount);
 						usCount++;
 					}
 				}
@@ -897,7 +900,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			ClientInt cc = new Client();
 
 			// stockid, seller, buyer, qty, price, isbotboolean
-			remoteObj.sendOrder(1, "SG", "1,1,-1,12,12.38", false);
 
 //			remoteObj.sendOrder(1, "SG", "1,1,-1,11,0.5", false);
 //			remoteObj.sendOrder(2, "HK", "5,-1,2,100,23.3", false);

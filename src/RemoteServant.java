@@ -485,11 +485,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		String market = keySplit[0];
 		int stockid = Integer.parseInt(keySplit[1]);
 		String value = retrieveOrderBook(market, stockid);
-		if(value.equals("empty") && value.equals("error fetching"))
+		if (value.equals("empty") && value.equals("error fetching"))
 			value = null;
 		System.out.println("Order Book: " + value);
 		jedis.set(key + DELIMITER + "OrderBook", value);
-		System.out.println(key + " - " +value);
+		System.out.println(key + " - " + value);
 		return value;
 	}
 
@@ -564,6 +564,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 //			String password = jsonNodePW.asText();
 			int accountId = Integer.parseInt(jsonNodeAccountId.asText());
 			addToClientHashMap(cc, accountId);
+			usaDb.addToClientHashMap(cc, accountId);
+			hkDb.addToClientHashMap(cc, accountId);
+			sgDb.addToClientHashMap(cc, accountId);
+
 			return resAccountDetail;
 		} catch (SQLException | JsonProcessingException e) {
 			// TODO Auto-generated catch block
