@@ -296,28 +296,26 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 							failedServer = Market.US.name();
 							System.out.println("Cannot ping US");
 							usaDb.setOnline(false);
-							usaDb.setConnString(SGSERVERIPADDRESS, USDBName);
+							usaDb.setConnString(SGSERVERIPADDRESS +":3306", USDBName);
+							System.out.println(usaDb.getConnString());
 						} else {
 							usaDb.setOnline(true);
-							usaDb.setConnString(USSERVERIPADDRESS, USDBName);
 						}
 						if (sendPingRequest(SGSERVERIPADDRESS) == false) {
 							failedServer = Market.SG.name();
 							System.out.println("Cannot ping SG");
 							sgDb.setOnline(false);
-							sgDb.setConnString(HKSERVERIPADDRESS, SGDBName);
+							sgDb.setConnString(HKSERVERIPADDRESS +":3306", SGDBName);
 						} else {
 							sgDb.setOnline(true);
-							sgDb.setConnString(SGSERVERIPADDRESS, SGDBName);
 						}
 						if (sendPingRequest(HKSERVERIPADDRESS) == false) {
 							failedServer = Market.HK.name();
 							System.out.println("Cannot ping HK");
 							hkDb.setOnline(false);
-							hkDb.setConnString(USSERVERIPADDRESS, HKDBName);
+							hkDb.setConnString(USSERVERIPADDRESS +":3306", HKDBName);
 						} else {
 							hkDb.setOnline(true);
-							hkDb.setConnString(HKSERVERIPADDRESS, HKDBName);
 						}
 
 						if (failedServer != null && usRequiredRecovery == false && sgRequiredRecovery == false
@@ -340,11 +338,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 							executeFile("src/sshRecoverOriginalServer.py", failedServer);
 
 							if (failedServer.equals(Market.US.name())) {
-								usaDb.setConnString(USSERVERIPADDRESS, USDBName);
+								usaDb.setConnString(USSERVERIPADDRESS +":3306", USDBName);
 							} else if (failedServer.equals(Market.HK.name())) {
-								hkDb.setConnString(HKSERVERIPADDRESS, HKDBName);
+								hkDb.setConnString(HKSERVERIPADDRESS +":3306", HKDBName);
 							} else if (failedServer.equals(Market.SG.name())) {
-								sgDb.setConnString(SGSERVERIPADDRESS, SGDBName);
+								sgDb.setConnString(SGSERVERIPADDRESS +":3306", SGDBName);
 							}
 							failedServer = null;
 							usRequiredRecovery = false;
@@ -779,34 +777,34 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				System.out.println("Generating new order");
 
 				try {
-					ArrayList<Stock> arrayListStocks = null;
-
-					if (market.equals(market.US)) {
-						arrayListStocks = usaDb.getAllStocks();
-					} else if (market.equals(market.SG)) {
-						arrayListStocks = sgDb.getAllStocks();
+					StockDBScript db = null;
+					String marketStr = "";
+					if (market.equals(Market.US)) {
+						db = usaDb;
+						marketStr = Market.US.toString();
+					} else if (market.equals(Market.SG)) {
+						db = sgDb;
+						marketStr = Market.SG.toString();
 					} else {
-						arrayListStocks = hkDb.getAllStocks();
+						db = hkDb;
+						marketStr = Market.HK.toString();
 					}
-
+					ArrayList<Stock> arrayListStocks = null;
+					while(true) {
+						arrayListStocks = db.getAllStocks();
+						if(arrayListStocks != null) {
+							break;
+						}
+					}
+					System.out.println("All Stock Retrieved For " + marketStr + " - " + arrayListStocks);
 					String message = "";
 					for (Stock stock : arrayListStocks) {
 						for (int i = 0; i < 20; i++) {
-							if (market.equals(market.US)) {
-								message = usaDb.dbRandomOrderGeneration(stock.getStockId());
-								sendOrder(0, market.US.toString(), message, true);
-							} else if (market.equals(market.SG)) {
-								message = sgDb.dbRandomOrderGeneration(stock.getStockId());
-								sendOrder(0, market.SG.toString(), message, true);
-							} else {
-								message = hkDb.dbRandomOrderGeneration(stock.getStockId());
-								sendOrder(0, market.HK.toString(), message, true);
-							}
-
+							message = db.dbRandomOrderGeneration(stock.getStockId());
+							sendOrder(0, marketStr, message, true);
 						}
 
 					}
-
 					// TODO Auto-generated method stub
 
 				} catch (Exception ex) {

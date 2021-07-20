@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
@@ -54,7 +55,11 @@ public class StockDBScript {
 	}
 
 	public void setConnString(String ipandPort, String dbName) {
-		conn_string = "jdbc:mysql//" + ipandPort + dbName;
+		conn_string = "jdbc:mysql://" + ipandPort + "/" + dbName;
+	}
+	
+	public String getConnString() {
+		return conn_string;
 	}
 
 	public boolean isOnline() {
@@ -782,9 +787,10 @@ public class StockDBScript {
 	public ArrayList<Stock> getAllStocks() throws SQLException {
 		ArrayList<Stock> arrayListStocks = null;
 		Connection con = null;
+		String currConn = conn_string;
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(conn_string, username, password);
+			con = (Connection) DriverManager.getConnection(currConn, username, password);
 
 			String query = "{CALL getAllStocks}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
@@ -811,6 +817,11 @@ public class StockDBScript {
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (CommunicationsException e) {
+			e.printStackTrace();
+			System.out.println(market + "-" + currConn);
+			return null;
+			
 		}
 		con.close();
 		return arrayListStocks;
