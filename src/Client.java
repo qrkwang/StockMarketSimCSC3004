@@ -186,7 +186,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 					accountDetailsObj = objectMapper.readValue(resAccountDetails, AccountDetails.class);
 					accountHoldings = remoteObj.getAccountHoldingsById(accountDetailsObj.getAccountId());
 					createHomePanel();
-					switchPanel(homePanel);
 				}
 			} catch (Exception ex) {
 				System.out.format("Error obtaining remoteServer/remoteInterface from registry");

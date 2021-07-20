@@ -48,24 +48,24 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	private HashMap<Integer, String> logMap; // for log (will be server name and generation number)
 	private List<String> listServer;
-	private final String ACCOUNTSERVER = "192.168.68.145"; // 192.168.87.54
-	private final String ACCOUNTSERVER2 = "192.168.68.146"; // 192.168.87.55
-	private final String ACCOUNTSERVER3 = "192.168.68.147"; // 192.168.87.56
-	private final String USSERVERIPADDRESS = "192.168.68.148";
-	private final String SGSERVERIPADDRESS = "192.168.68.149";
-	private final String HKSERVERIPADDRESS = "192.168.68.150";
+//	private final String ACCOUNTSERVER = "192.168.68.145"; // 192.168.87.54
+//	private final String ACCOUNTSERVER2 = "192.168.68.146"; // 192.168.87.55
+//	private final String ACCOUNTSERVER3 = "192.168.68.147"; // 192.168.87.56
+//	private final String USSERVERIPADDRESS = "192.168.68.148";
+//	private final String SGSERVERIPADDRESS = "192.168.68.149";
+//	private final String HKSERVERIPADDRESS = "192.168.68.150";
 
 	private final String AccountsDBName = "AccountDetailsServer";
 	private final String USDBName = "USStockMarket";
 	private final String HKDBName = "HKStockMarket";
 	private final String SGDBName = "SGStockMarket";
 
-//	private final String ACCOUNTSERVER = "localhost"; // 192.168.87.54
-//	private final String ACCOUNTSERVER2 = "localhost"; // 192.168.87.55
-//	private final String ACCOUNTSERVER3 = "localhost"; // 192.168.87.56
-//	private final String USSERVERIPADDRESS = "localhost";
-//	private final String SGSERVERIPADDRESS = "localhost";
-//	private final String HKSERVERIPADDRESS = "localhost";
+	private final String ACCOUNTSERVER = "localhost"; // 192.168.87.54
+	private final String ACCOUNTSERVER2 = "localhost"; // 192.168.87.55
+	private final String ACCOUNTSERVER3 = "localhost"; // 192.168.87.56
+	private final String USSERVERIPADDRESS = "localhost";
+	private final String SGSERVERIPADDRESS = "localhost";
+	private final String HKSERVERIPADDRESS = "localhost";
 	private String accountUser;
 
 	private boolean leaseAlive;
@@ -111,11 +111,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		startRandomOrderGeneration(Market.US);
-		startRandomOrderGeneration(Market.SG);
-		startRandomOrderGeneration(Market.HK);
-		startLeaderElectionAlgo();
-		startDataRedundancyAlgo();
+//		startRandomOrderGeneration(Market.US);
+//		startRandomOrderGeneration(Market.SG);
+//		startRandomOrderGeneration(Market.HK);
+//		startLeaderElectionAlgo();
+//		startDataRedundancyAlgo();
 		startCache();
 
 	}
