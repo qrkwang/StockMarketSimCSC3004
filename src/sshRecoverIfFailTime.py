@@ -18,7 +18,7 @@ client = paramiko.SSHClient()
 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
 # Server that fail
-failedServer = sys.argv[1]
+failedServer = "US"
 username = "joy"
 # Database password
 dbUser = "root"
@@ -53,55 +53,68 @@ hkReceivingFile = "HKPart2.sql"
 hkReceivingServer = "joy@" + sgIPAddress + ":/home/joy/HKPart2.sql"
 # the file has already stored in US server
 hkCurrentFile = "HKPart1.sql"
+i = 0
 try:
     if failedServer == "SG":
         # Connecting to HK server via SSH
         client.connect(hostname=sgHostname, username=username)
-        print("HK Server Connected successfully")
+        #print("HK Server Connected successfully")
         # Command to execute bash script
-        execCommand = "bash SGServerRecoveryInHK.sh -a '" + sgDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + sgReceivingFile + "' -e '" + sgReceivingServer + "' -f '" + sgCurrentFile + "'"
+        execCommand = "time bash SGServerRecoveryInHK.sh -a '" + sgDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + sgReceivingFile + "' -e '" + sgReceivingServer + "' -f '" + sgCurrentFile + "'"
         # execute the BASH script
         stdin, stdout, stderr = client.exec_command(execCommand)
         # read the standard output and print it
         print(stdout.read().decode())
         # print errors if there are any
         err = stderr.read().decode()
-        if err:
-            print(err)
+        x = err.split("\t")
+        # print(x)
+        # print("Timing to backup the US Server: ", x[1])
+        x1 = x[1].split("\n")
+        print("Timing to set up the temporary SG Server: ", x1[0])
         # close the connection
         client.close()
 
     elif failedServer == "US":
         # Connecting to SG server via SSH
         client.connect(hostname=usHostname, username=username)
-        print("SG Server Connected successfully")
+        #print("SG Server Connected successfully")
         # Command to execute bash script
-        execCommand = "bash USServerRecoveryInSG.sh -a '" + usDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + usReceivingFile + "' -e '" + usReceivingServer + "' -f '" + usCurrentFile + "'"
+        execCommand = "time bash USServerRecoveryInSG.sh -a '" + usDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + usReceivingFile + "' -e '" + usReceivingServer + "' -f '" + usCurrentFile + "'"
         # execute the BASH script
         stdin, stdout, stderr = client.exec_command(execCommand)
         # read the standard output and print it
         print(stdout.read().decode())
         # print errors if there are any
         err = stderr.read().decode()
-        if err:
-            print(err)
+        x = err.split("\t")
+        # print(x)
+        # print("Timing to backup the US Server: ", x[1])
+        x1 = x[1].split("\n")
+        print("Timing to set up the temporary US Server: ", x1[0])
         # close the connection
         client.close()
 
     elif failedServer == "HK":
         # Connecting to US server via SSH
         client.connect(hostname=hkHostname, username=username)
-        print("US Server Connected successfully")
+        #print("US Server Connected successfully")
         # Command to execute bash script
-        execCommand = "bash HKServerRecoveryInUS.sh -a '" + hkDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + hkReceivingFile + "' -e '" + hkReceivingServer + "' -f '" + hkCurrentFile + "'"
+        execCommand = "time bash HKServerRecoveryInUS.sh -a '" + hkDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + hkReceivingFile + "' -e '" + hkReceivingServer + "' -f '" + hkCurrentFile + "'"
         # execute the BASH script
         stdin, stdout, stderr = client.exec_command(execCommand)
         # read the standard output and print it
         print(stdout.read().decode())
         # print errors if there are any
         err = stderr.read().decode()
-        if err:
-            print(err)
+        # if err:
+        #     print(err)
+
+        x = err.split("\t")
+        # print(x)
+        # print("Timing to backup the US Server: ", x[1])
+        x1 = x[1].split("\n")
+        print("Timing to set up the temporary HK Server: ", x1[0])
         # close the connection
         client.close()
 

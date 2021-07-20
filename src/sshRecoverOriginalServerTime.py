@@ -6,10 +6,10 @@ import sys
 # Declare a constant Ip Address
 usIPAddress = "192.168.1.16"
 sgIPAddress = "192.168.1.17"
-HkIPAddress = "192.168.1.18"
+HkIPaddress = "192.168.1.18"
 
 # Database that was failed previously, going to recover now
-recoveringServer = sys.argv[1]
+recoveringServer = "US"
 
 # initialize the SSH client
 client = paramiko.SSHClient()
@@ -25,12 +25,12 @@ hkTempServer = usIPAddress
 hkDatabaseName = "HKStockMarket"
 hkFileName = "HKBackup.sql"
 # File location to send back to the HK server
-hkDestinationServer = "joy@" + HkIPAddress + ":/home/joy/HKBackup.sql"
+hkDestinationServer = "joy@" + HkIPaddress + ":/home/joy/HKBackup.sql"
 # The original HK server
-hkDestinationIP = "joy@" + HkIPAddress
+hkDestinationIP = "joy@" + HkIPaddress
 
 # Server that temporary running the sg database
-sgTempServer = HkIPAddress
+sgTempServer = HkIPaddress
 sgDatabaseName = "SGStockMarket"
 sgFileName = "SGBackup.sql"
 # File location to send back to the SG server
@@ -46,23 +46,27 @@ usFileName = "USBackup.sql"
 usDestinationServer = "joy@"+ usIPAddress + ":/home/joy/USBackup.sql"
 # The original US server
 usDestinationIP = "joy@" + usIPAddress
-
+i = 0
 try:
     # bringing HK DB back to the original server
     if recoveringServer == "HK":
         # Connecting to US server via SSH
         client.connect(hostname=hkTempServer, username=username)
-        print("US Server Connected successfully")
+        #print("US Server Connected successfully")
         # Command to execute bash script
-        execCommand = "bash RecoverHK.sh -a '" + hkDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + hkFileName + "' -e '" + hkDestinationServer + "' -f '" + hkDestinationIP + "'"
+        execCommand = "time bash RecoverHK.sh -a '" + hkDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + hkFileName + "' -e '" + hkDestinationServer + "' -f '" + hkDestinationIP + "'"
         # execute the BASH script
         stdin, stdout, stderr = client.exec_command(execCommand)
         # read the standard output and print it
         print(stdout.read().decode())
         # print errors if there are any
         err = stderr.read().decode()
-        if err:
-            print(err)
+
+        x = err.split("\t")
+        x1 = x[1].split("\n")
+        print("Timing to recover the HK Server: ", x1[0])
+        #if err:
+            #print(err)
         # close the connection
         client.close()
 
@@ -70,37 +74,51 @@ try:
     elif recoveringServer == "SG":
         # Connecting to HK server via SSH
         client.connect(hostname=sgTempServer, username=username)
-        print("HK Server Connected successfully")
+        #print("HK Server Connected successfully")
         # Command to execute bash script
-        execCommand = "bash RecoverSG.sh -a '" + sgDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + sgFileName + "' -e '" + sgDestinationServer + "' -f '" + sgDestinationIP + "'"
+        execCommand = "time bash RecoverSG.sh -a '" + sgDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + sgFileName + "' -e '" + sgDestinationServer + "' -f '" + sgDestinationIP + "'"
         # execute the BASH script
         stdin, stdout, stderr = client.exec_command(execCommand)
         # read the standard output and print it
         print(stdout.read().decode())
         # print errors if there are any
         err = stderr.read().decode()
-        if err:
-            print(err)
+
+        x = err.split("\t")
+        # print(x)
+        # print("Timing to backup the US Server: ", x[1])
+        x1 = x[1].split("\n")
+        print("Timing to recover the SG Server: ", x1[0])
+        # if err:
+        #     print(err)
         # close the connection
         client.close()
     # bring US DB back to the original server
     elif recoveringServer == "US":
         # Connecting to SG server via SSH
         client.connect(hostname=usTempServer, username=username)
-        print("SG Server Connected successfully")
+        #print("SG Server Connected successfully")
         # Command to execute bash script
-        execCommand = "bash RecoverUS.sh -a '" + usDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + usFileName + "' -e '" + usDestinationServer + "' -f '" + usDestinationIP + "'"
+        execCommand = "time bash RecoverUS.sh -a '" + usDatabaseName + "' -b '" + dbUser + "' -c '" + dbPassword + "' -d '" + usFileName + "' -e '" + usDestinationServer + "' -f '" + usDestinationIP + "'"
         # execute the BASH script
         stdin, stdout, stderr = client.exec_command(execCommand)
         # read the standard output and print it
         print(stdout.read().decode())
         # print errors if there are any
         err = stderr.read().decode()
-        if err:
-            print(err)
+
+        x = err.split("\t")
+        # print(x)
+        # print("Timing to backup the US Server: ", x[1])
+        x1 = x[1].split("\n")
+        print("Timing to recover the US Server: ", x1[0])
+        # if err:
+        #     print(err)
         # close the connection
         client.close()
-except err:
+
+
+except:
     print(err)
     print("[!] Cannot connect to the SSH Server")
     exit()
