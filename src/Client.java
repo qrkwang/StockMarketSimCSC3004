@@ -394,6 +394,18 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 //			System.exit(1);
 		}
 	}
+	
+	public void logout(){
+		try {
+			remoteObj.removeFromClientHashMap(accountDetailsObj.getAccountId());
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// Redirect to loginPanel
+		switchPanel(loginPanel);
+		currentPage = Page.OTHER;
+	}
 
 	public void createHomePanel() {
 		homePanel = new JPanel();
@@ -498,9 +510,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		JButton btnLogout = new JButton("Log out");
 		btnLogout.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				// Redirect to homePanel
-				switchPanel(loginPanel);
-				currentPage = Page.OTHER;
+				logout();
 			}
 		});
 		gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -795,9 +805,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			JButton btnLogout = new JButton("Log out");
 			btnLogout.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					// Redirect to loginPanel
-					switchPanel(loginPanel);
-					currentPage = Page.OTHER;
+					logout();
 				}
 			});
 			gbc.fill = GridBagConstraints.HORIZONTAL;
