@@ -97,6 +97,7 @@ public class StockDBScript {
 		try {
 			ConnectionFactory factory = new ConnectionFactory();
 			factory.setHost("localhost");
+			factory.setAutomaticRecoveryEnabled(false);
 			com.rabbitmq.client.Connection connection;
 			connection = factory.newConnection();
 
@@ -108,7 +109,12 @@ public class StockDBScript {
 			DeliverCallback deliverCallback = (consumerTag, delivery) -> {
 				String message = new String(delivery.getBody(), "UTF-8");
 				System.out.println(" [x] Received '" + message + "'");
-				receiveOrder(message);
+				try {
+					receiveOrder(message);
+				} catch (Exception e) {
+					System.out.println("error during receiveOrder function");
+					e.printStackTrace();
+				}
 			};
 			channel.basicConsume(queue_name, true, deliverCallback, consumerTag -> {
 			});
@@ -346,6 +352,7 @@ public class StockDBScript {
 	}
 
 	private void receiveOrder(String message) throws RemoteException {
+		System.out.println("receive order with msg " + message);
 		String[] splitArray = message.split(",");
 		int stockId = Integer.parseInt(splitArray[0]);
 		int sellerId = Integer.parseInt(splitArray[1]);
@@ -361,49 +368,47 @@ public class StockDBScript {
 		float accountBalance = 0;
 		// Check if is buyer or seller order first.
 		if (sellerId == -1 && buyerId != -1) {
+			System.out.println("receive order is buyer order");
 			isbuyOrder = true;
 
 		} else {
+			System.out.println("receive order is seller order");
+
 			isbuyOrder = false;
 
 		}
 		try {
 
 			if (buyerId == 0 && isbuyOrder) {
+				System.out.println("receive order is randomGen order and is buy order");
+
+				// order is randomGenOrder
 				isRandomGenOrder = true;
 
 			} else {
+				System.out.println("receive order is not randomGen order");
+
+				// check balance if not randomGenOrder
 				accountBalance = accountDetailsDb.getAccountBalanceById(buyerId);
 				if (!this.isOnline) { // If server down and is not order from bot, print to client
+					// server down and order is not bot order, print to buyer error message.
 					this.retrieveClientIntFromHashMap(buyerId).printToClient("error processing");
 					return;
 				}
 			}
 
 			if (sellerId == 0 && !isbuyOrder) {
+				System.out.println("receive order is randomGen order and is sell order");
+
+				// order is randomGenOrder
 				isRandomGenOrder = true;
+
 			} else {
 				accountBalance = accountDetailsDb.getAccountBalanceById(sellerId);
 				if (!this.isOnline) { // If server down and is not order from bot, print to client
+					// server down and order is not bot order, print to seller error message.
 					this.retrieveClientIntFromHashMap(sellerId).printToClient("error processing");
 					return;
-				}
-			}
-
-			float orderValue = qty * price;
-			if ((accountBalance < orderValue) && !isRandomGenOrder) {
-				try {
-					int accountId;
-					if (isbuyOrder) {
-						this.retrieveClientIntFromHashMap(buyerId).printToClient("not enough balance");
-
-					} else {
-						this.retrieveClientIntFromHashMap(sellerId).printToClient("not enough balance");
-					}
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					System.out.println("client offline / cannot connect to client");
-					e.printStackTrace();
 				}
 			}
 
@@ -411,6 +416,28 @@ public class StockDBScript {
 			if (isbuyOrder) {
 				// its a buy order
 				System.out.println("Is Buy Order");
+
+				float orderValue = qty * price;
+				if ((accountBalance < orderValue) && !isRandomGenOrder) {
+					System.out.println("account balance not enough");
+					try {
+						int accountId;
+						if (isbuyOrder) {
+							this.retrieveClientIntFromHashMap(buyerId).printToClient("not enough balance");
+							return;
+
+						} else {
+							this.retrieveClientIntFromHashMap(sellerId).printToClient("not enough balance");
+							return;
+
+						}
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						System.out.println("client offline / cannot connect to client");
+						e.printStackTrace();
+					}
+				}
+
 				ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(true, stockId, price, currConn);
 				// If return no entries for matching
 				if (fetchedOrders == null) {
@@ -560,6 +587,9 @@ public class StockDBScript {
 			{
 				System.out.println("Is sell order");
 				// its a sell order
+
+				// check if sell qty match with his own holdings qty.
+
 				ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(false, stockId, price, currConn);
 				if (fetchedOrders == null) {
 					System.out.println("Inserting sell order");
