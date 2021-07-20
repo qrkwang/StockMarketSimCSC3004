@@ -146,7 +146,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				panel = createCountryPanel(Market.US);
 				break;
 			}
-			
+			frame.revalidate();
 		}
 	}
 
@@ -154,7 +154,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		if (currentPage.name().equals("STOCK") && currentDisplayMarket.name().equals(market)
 				&& stockId == currentDisplayStockId) {
 			createChartPanel();
-			frame.repaint();
 		}
 	}
 
@@ -494,7 +493,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				ownedQuantity = quantity;
 				currentDisplayStockId = stockId;
 				currentDisplayMarket = market;
-				chartPanel = createChartPanel();
+				createChartPanel();
 				currentPage = Page.STOCK;
 				switchPanel(chartPanel);
             }
@@ -544,7 +543,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 							checkOwnHolding(market, s.getStockId());
 							currentDisplayStockId = s.getStockId();
 							currentDisplayMarket = market;
-							chartPanel = createChartPanel();
+							createChartPanel();
 							currentPage = Page.STOCK;
 							switchPanel(chartPanel);
 			            }
@@ -578,7 +577,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 	}
 
 	@SuppressWarnings("unchecked")
-	public JPanel createChartPanel() {	
+	public void createChartPanel() {	
 		OHLCChart chart = new OHLCChartBuilder().width(800).height(600).title("Prices").build();
 		List<Date> xData = new ArrayList<Date>();
 		List<Float> openData = new ArrayList<Float>();
@@ -587,7 +586,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		List<Float> closeData = new ArrayList<Float>();
 		
 		GridBagConstraints gbc = new GridBagConstraints();
-		JPanel chartPanel = new JPanel();
+		chartPanel = new JPanel();
 		chartPanel.setLayout(new GridBagLayout());
 		if(currentDisplayStockId != -1) {
 			try {
@@ -753,7 +752,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 	        gbc.insets = DEFAULTINSETS;
 			chartPanel.add(bottomPanel,gbc);
 		}
-		return chartPanel;
+		frame.repaint();
+		frame.revalidate();
 	}
 
 	public void updateOrderBook(ArrayList<OrderBook> arrayListOrderBook) {
