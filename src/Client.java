@@ -146,13 +146,15 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				panel = createCountryPanel(Market.US);
 				break;
 			}
+			
 		}
 	}
 
 	public void updateStock(String market, int stockId) throws java.rmi.RemoteException {
 		if (currentPage.name().equals("STOCK") && currentDisplayMarket.name().equals(market)
 				&& stockId == currentDisplayStockId) {
-
+			createChartPanel();
+			frame.repaint();
 		}
 	}
 
@@ -488,6 +490,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		JButton submitBtn = new JButton("View " + tickerSymbol);
 		submitBtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				createChartPanel();
 				ownedQuantity = quantity;
 				currentDisplayStockId = stockId;
 				currentDisplayMarket = market;
@@ -537,6 +540,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 					JButton submitBtn = new JButton("Trade " + s.getTickerSymbol());
 					submitBtn.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
+							createChartPanel();
 							checkOwnHolding(market, s.getStockId());
 							currentDisplayStockId = s.getStockId();
 							currentDisplayMarket = market;
