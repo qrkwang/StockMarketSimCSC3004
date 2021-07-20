@@ -863,9 +863,9 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 					int accountId = accountDetailsObj.getAccountId();
 					String order = "";
 					if (buy)
-						order = generateOrder(StockId, accountId, -1, quantity, price);
-					else
 						order = generateOrder(StockId, -1, accountId, quantity, price);
+					else
+						order = generateOrder(StockId, accountId, -1, quantity, price);
 					remoteObj.sendOrder(accountId, market, order, false); // -1 to indicate null, i will change to null
 																			// on
 					orderStockFrame.dispose();
