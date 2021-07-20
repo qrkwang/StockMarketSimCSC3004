@@ -33,10 +33,12 @@ public class AccountDetailsDbScript {
 
 	public float getAccountBalanceById(int accountId) throws SQLException {
 		Connection con = null;
+		String currConn = this.conn_string;
+
 		float accountBalance = 0;
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
+			con = (Connection) DriverManager.getConnection(currConn, this.username, this.password);
 			String query = "{CALL getAccountHoldingsById(?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 			stmt.setInt(1, accountId); // Set the parameter
@@ -58,9 +60,10 @@ public class AccountDetailsDbScript {
 
 	public String getAccountDetails(String userName, String pw) throws SQLException {
 		Connection con = null;
+		String currConn = this.conn_string;
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(conn_string, username, password);
+			con = (Connection) DriverManager.getConnection(currConn, username, password);
 			System.out.println("Connected to DB");
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -109,4 +112,49 @@ public class AccountDetailsDbScript {
 		return "not found";
 	}
 
+	public void updatePurchaseInAccount(int buyerId, float totalPaid) throws SQLException {
+		Connection con = null;
+//		( minus acc value, + securityvalue, - available cash)
+		String currConn = this.conn_string;
+
+		try {
+			Class.forName(DRIVER_CLASS);
+			con = (Connection) DriverManager.getConnection(currConn, this.username, this.password);
+
+			String query = "{CALL updatePurchaseInAccount(?,?)}";
+			CallableStatement stmt = con.prepareCall(query); // prepare to call
+
+			stmt.setInt(1, buyerId);
+			stmt.setFloat(2, totalPaid);
+			ResultSet rs = stmt.executeQuery();
+			System.out.println(rs);
+			con.close();
+
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void updateSaleInAccount(int sellerId, float value) throws SQLException {
+		Connection con = null;
+		String currConn = this.conn_string;
+		try {
+			Class.forName(DRIVER_CLASS);
+			con = (Connection) DriverManager.getConnection(currConn, this.username, this.password);
+
+			String query = "{CALL updateSaleInAccount(?,?)}";
+			CallableStatement stmt = con.prepareCall(query); // prepare to call
+
+			stmt.setInt(1, sellerId);
+			stmt.setFloat(2, value);
+			ResultSet rs = stmt.executeQuery();
+			System.out.println(rs);
+			con.close();
+
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 }
