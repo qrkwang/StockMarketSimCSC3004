@@ -6,7 +6,7 @@ import sys
 # Declare a constant Ip Address
 usIPAddress = "192.168.1.16"
 sgIPAddress = "192.168.1.17"
-HkIPAddress = "192.168.1.18"
+hkIPAddress = "192.168.1.18"
 
 # Database that was failed previously, going to recover now
 recoveringServer = sys.argv[1]
@@ -25,12 +25,12 @@ hkTempServer = usIPAddress
 hkDatabaseName = "HKStockMarket"
 hkFileName = "HKBackup.sql"
 # File location to send back to the HK server
-hkDestinationServer = "joy@" + HkIPAddress + ":/home/joy/HKBackup.sql"
+hkDestinationServer = "joy@" + hkIPAddress + ":/home/joy/HKBackup.sql"
 # The original HK server
-hkDestinationIP = "joy@" + HkIPAddress
+hkDestinationIP = "joy@" + hkIPAddress
 
 # Server that temporary running the sg database
-sgTempServer = HkIPAddress
+sgTempServer = hkIPAddress
 sgDatabaseName = "SGStockMarket"
 sgFileName = "SGBackup.sql"
 # File location to send back to the SG server

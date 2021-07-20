@@ -6,7 +6,7 @@ import paramiko
 # Declare a constant Ip Address
 usIPAddress = "192.168.1.16"
 sgIPAddress = "192.168.1.17"
-HkIPAddress = "192.168.1.18"
+hkIPAddress = "192.168.1.18"
 
 
 # initialize the SSH client
@@ -25,18 +25,18 @@ usDatabaseName = "USStockMarket"
 usFileNamePart1 = "USPart1.sql"
 usDestinationServerPart1 = "joy@" + sgIPAddress + ":/home/joy/USPart1.sql"
 usFileNamePart2 = "USPart2.sql"
-usDestinationServerPart2 = "joy@" + HkIPAddress + ":/home/joy/USPart2.sql"
+usDestinationServerPart2 = "joy@" + hkIPAddress + ":/home/joy/USPart2.sql"
 
 # SG Server Info
 sgHostname = sgIPAddress
 sgDatabaseName = "SGStockMarket"
 sgFileNamePart1 = "SGPart1.sql"
-sgDestinationServerPart1 = "joy@" + HkIPAddress + ":/home/joy/SGPart1.sql"
+sgDestinationServerPart1 = "joy@" + hkIPAddress + ":/home/joy/SGPart1.sql"
 sgFileNamePart2 = "SGPart2.sql"
 sgDestinationServerPart2 = "joy@"+usIPAddress+":/home/joy/SGPart2.sql"
 
 # HK Server Info
-hkHostname = HkIPAddress
+hkHostname = hkIPAddress
 hkDatabaseName = "HKStockMarket"
 hkFileNamePart1 = "HKPart1.sql"
 hkDestinationServerPart1 = "joy@"+usIPAddress+":/home/joy/HKPart1.sql"

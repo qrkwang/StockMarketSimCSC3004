@@ -10,7 +10,7 @@ import paramiko
 # Declare a constant Ip Addresses
 usIPAddress = "192.168.1.16"
 sgIPAddress = "192.168.1.17"
-HkIPAddress = "192.168.1.18"
+hkIPAddress = "192.168.1.18"
 
 # initialize the SSH client
 client = paramiko.SSHClient()
@@ -26,7 +26,7 @@ dbPassword = "root"
 
 # enter HK server to make a temporary DB for SG
 # SG server is down
-sgHostname = HkIPAddress
+sgHostname = hkIPAddress
 sgDatabaseName = "SGStockMarket"
 sgReceivingFile = "SGPart2.sql"
 # Retrieve the other half of the file
@@ -40,7 +40,7 @@ usHostname = sgIPAddress
 usDatabaseName = "USStockMarket"
 usReceivingFile = "USPart2.sql"
 # Retrieve the other half of the file
-usReceivingServer = "joy@"+HkIPAddress + ":/home/joy/USPart2.sql"
+usReceivingServer = "joy@"+hkIPAddress + ":/home/joy/USPart2.sql"
 # the file has already stored in SG server
 usCurrentFile = "USPart1.sql"
 
