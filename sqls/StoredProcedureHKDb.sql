@@ -184,12 +184,12 @@ CREATE PROCEDURE `getOrderBookByStockId`(IN inputStockId int)
 BEGIN
 
 SELECT "BUY" as "Type", sum(Quantity) as "Quantity", Price
-FROM hkstockmarket.marketpending
+FROM marketpending
 WHERE SellerId IS NULL AND StockId = 1
 GROUP BY Price
 UNION 
 SELECT "SELL" as "Type", sum(Quantity) as "Quantity", Price
-FROM hkstockmarket.marketpending
+FROM marketpending
 WHERE BuyerId IS NULL AND StockId = 1
 GROUP BY Price
 ORDER BY type, Price asc;
@@ -372,10 +372,10 @@ BEGIN
         from stock
         WHERE StockId = counterid;
 		SET insertSellerId = 0;
-        SET insertBuyerId = 11;
+        SET insertBuyerId = 101;
         SET insertId = 1;
         SET getTime = now();
-        WHILE insertId <=10 do
+        WHILE insertId <=100 do
         SET insertSellerId = insertSellerId + 1;
         SET insertBuyerId = insertBuyerId - 1;
         SET InsertQuantity = InsertQuantity + 1;
