@@ -360,10 +360,7 @@ BEGIN
     DECLARE insertPrice double;
     DECLARE InsertQuantity int DEFAULT 20;
     DECLARE insertId int;
-    DECLARE insertBuyerId int DEFAULT 0;
-    DECLARE insertSellerId int default 0;
     DECLARE getTime timestamp;
-    
     
 	WHILE counterid <=(SELECT COUNT(*) FROM stock) do
 		SELECT @insertStockId := StockId
@@ -373,22 +370,18 @@ BEGIN
         SELECT @insertPrice := CurrentValue
         from stock
         WHERE StockId = counterid;
-		SET insertSellerId = 0;
-        SET insertBuyerId = 101;
         SET insertId = 1;
         SET getTime = now();
         WHILE insertId <=100 do
-        SET insertSellerId = insertSellerId + 1;
-        SET insertBuyerId = insertBuyerId - 1;
         SET InsertQuantity = InsertQuantity + 1;
         SET @insertPrice = @insertPrice + 0.1;
 		if insertId < 4 then 
         INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
-		VALUES(@insertStockId,insertSellerId, insertBuyerId, InsertQuantity,@insertPrice, getTime);
+		VALUES(@insertStockId,0,0,InsertQuantity,@insertPrice, getTime);
         else
         SET getTime = getTime + INTERVAL 1 minute;
         INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
-		VALUES(@insertStockId,insertSellerId, insertBuyerId, InsertQuantity,@insertPrice, getTime);
+		VALUES(@insertStockId,0,0,InsertQuantity,@insertPrice, getTime);
         END IF;
         SET insertId = insertId +1;
         END WHILE;
