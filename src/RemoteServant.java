@@ -95,6 +95,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		leaseAlive = false;
 
 		jedis = new Jedis();
+		jedis.flushDB();
 		lastSearchTimestamp = new HashMap<String, Long>();
 
 		try {
@@ -481,8 +482,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		String market = keySplit[0];
 		int stockid = Integer.parseInt(keySplit[1]);
 		String value = retrieveOrderBook(market, stockid);
+		if(value.equals("empty") && value.equals("error fetching"))
+			value = null;
 		System.out.println("Order Book: " + value);
 		jedis.set(key + DELIMITER + "OrderBook", value);
+		System.out.println(key + " - " +value);
 		return value;
 	}
 
@@ -501,7 +505,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			}
 		});
 		thread.start();
-		if (jedis.exists(key)) {
+		if (jedis.exists(key + DELIMITER + "OrderBook")) {
 			String orderbook = jedis.get(key + DELIMITER + "OrderBook");
 			client.sendOrderBook(orderbook);
 			return jedis.get(key);
