@@ -387,7 +387,6 @@ public class StockDBScript {
 	}
 
 	private void receiveOrder(String message) throws RemoteException {
-
 		String[] splitArray = message.split(",");
 		int stockId = Integer.parseInt(splitArray[0]);
 		int sellerId = Integer.parseInt(splitArray[1]);
@@ -402,32 +401,32 @@ public class StockDBScript {
 		// Check if is buyer or seller order first.
 		if (sellerId == -1 && buyerId != -1) {
 			isbuyOrder = true;
-			if (!this.isOnline) {
-				this.retrieveClientIntFromHashMap(buyerId).printToClient("error processing");
 
-				return;
-			}
 		} else {
 			isbuyOrder = false;
-			if (!this.isOnline) {
-				this.retrieveClientIntFromHashMap(sellerId).printToClient("error processing");
 
-				return;
-			}
 		}
 		try {
 
 			if (buyerId == 0 && isbuyOrder) {
 				isRandomGenOrder = true;
+
 			} else {
 				accountBalance = accountDetailsDb.getAccountBalanceById(buyerId);
-
+				if (!this.isOnline) { // If server down and is not order from bot, print to client
+					this.retrieveClientIntFromHashMap(buyerId).printToClient("error processing");
+					return;
+				}
 			}
 
 			if (sellerId == 0 && !isbuyOrder) {
 				isRandomGenOrder = true;
 			} else {
 				accountBalance = accountDetailsDb.getAccountBalanceById(sellerId);
+				if (!this.isOnline) { // If server down and is not order from bot, print to client
+					this.retrieveClientIntFromHashMap(sellerId).printToClient("error processing");
+					return;
+				}
 			}
 
 			float orderValue = qty * price;
@@ -728,23 +727,17 @@ public class StockDBScript {
 				}
 
 			}
-		} catch (SQLException e) {
+		} catch (SQLException | ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			if (isbuyOrder) {
+			if (isbuyOrder && !isRandomGenOrder) {
 				this.retrieveClientIntFromHashMap(buyerId).printToClient("error processing");
-			} else {
+			} else if (!isbuyOrder && !isRandomGenOrder) {
 				this.retrieveClientIntFromHashMap(sellerId).printToClient("error processing");
-				
-			}
-		} catch (ClassNotFoundException e) {
-			if (isbuyOrder) {
-				this.retrieveClientIntFromHashMap(buyerId).printToClient("error processing");
 			} else {
-				this.retrieveClientIntFromHashMap(sellerId).printToClient("error processing");
-
+				// will reach here if it is randomGenOrder, if randomGenOrder, cannot print to client, just print statement.
+				System.out.println("Error when processing random gen order");
 			}
-			e.printStackTrace();
 		}
 	}
 
@@ -770,8 +763,8 @@ public class StockDBScript {
 
 				}
 
-				StockOwned stockOwnedItem = new StockOwned(this.market, rs.getInt("StockId"), rs.getString("CompanyName"),
-						rs.getString("TickerSymbol"), rs.getInt(4), rs.getInt(5));
+				StockOwned stockOwnedItem = new StockOwned(this.market, rs.getInt("StockId"),
+						rs.getString("CompanyName"), rs.getString("TickerSymbol"), rs.getInt(4), rs.getInt(5));
 				System.out.println(stockOwnedItem.toString());
 				arrayListOwned.add(stockOwnedItem);
 				count++;
