@@ -27,7 +27,6 @@ import classes.StockOwned;
 
 public class StockDBScript {
 	private boolean isOnline = true; // will be true unless algo detected offline in RemoteServant.java
-	private ClientInt currentClientInt;
 	private String queue_name;
 	public final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
 	private String username;
@@ -359,6 +358,8 @@ public class StockDBScript {
 		int buyerId = Integer.parseInt(splitArray[2]);
 		int qty = Integer.parseInt(splitArray[3]);
 		float price = Float.parseFloat(splitArray[4]);
+		ClientInt currClient = null;
+		int accountId = -1;
 		Connection con = null;
 		String currConn = conn_string;
 
@@ -369,10 +370,13 @@ public class StockDBScript {
 		// Check if is buyer or seller order first.
 		if (sellerId == -1 && buyerId != -1) {
 			System.out.println("receive order is buyer order");
+			currClient = this.retrieveClientIntFromHashMap(buyerId);
+			accountId = buyerId;
 			isbuyOrder = true;
 		} else {
 			System.out.println("receive order is seller order");
-
+			currClient = this.retrieveClientIntFromHashMap(sellerId);
+			accountId = sellerId;
 			isbuyOrder = false;
 
 		}
@@ -386,28 +390,18 @@ public class StockDBScript {
 		}
 		try {
 
-			if (!isRandomGenOrder && isbuyOrder) {
+			if (!isRandomGenOrder) {
 				// received order is not randomGen order and is buy order
 				System.out.println("received order is not randomGen order and is buy order");
 
 				// check balance if not randomGenOrder
-				accountBalance = accountDetailsDb.getAccountBalanceById(buyerId);
+				accountBalance = accountDetailsDb.getAccountBalanceById(accountId);
 				if (!this.isOnline) {
 					// server down and order is not bot order, print to buyer error message.
-					this.retrieveClientIntFromHashMap(buyerId).printToClient("error processing");
+					currClient.printToClient("error processing");
 					return;
 				}
-			} else if (!isRandomGenOrder && !isbuyOrder) {
-				// received order is not randomGen order and is sell order
-				accountBalance = accountDetailsDb.getAccountBalanceById(sellerId);
-
-				if (!this.isOnline) {
-					// server down and order is not bot order, print to seller error message.
-					this.retrieveClientIntFromHashMap(sellerId).printToClient("error processing");
-					return;
-
-				}
-			}
+			} 
 
 			// Order processing
 			if (isbuyOrder) {
@@ -423,16 +417,8 @@ public class StockDBScript {
 
 					System.out.println("account balance not enough");
 					try {
-						int accountId;
-						if (isbuyOrder) {
-							this.retrieveClientIntFromHashMap(buyerId).printToClient("not enough balance");
-							return;
-
-						} else {
-							this.retrieveClientIntFromHashMap(sellerId).printToClient("not enough balance");
-							return;
-
-						}
+						currClient.printToClient("not enough balance");
+						return;
 					} catch (RemoteException e) {
 						// TODO Auto-generated catch block
 						System.out.println("client offline / cannot connect to client");
@@ -715,21 +701,20 @@ public class StockDBScript {
 
 						}
 						if (!isRandomGenOrder) {
-
+							
 							this.accountDetailsDb.updateSaleInAccount(sellerId, totalValueSold);
 						}
 					}
 				}
-
+				
 			}
+			currClient.updateOrderBook(market, stockId);
 		} catch (SQLException | ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			if (isbuyOrder && !isRandomGenOrder) {
-				this.retrieveClientIntFromHashMap(buyerId).printToClient("error processing");
-			} else if (!isbuyOrder && !isRandomGenOrder) {
-				this.retrieveClientIntFromHashMap(sellerId).printToClient("error processing");
-			} else {
+			if (!isRandomGenOrder) {
+				currClient.printToClient("error processing");
+			}else {
 				// will reach here if it is randomGenOrder, if randomGenOrder, cannot print to
 				// client, just print statement.
 				System.out.println("Error when processing random gen order");

@@ -477,9 +477,14 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				jedis.del(entry.getKey());
 				jedis.del(entry.getKey() + DELIMITER + "OrderBook");
 			} else {
-				HashMap<String, String> data = retrieveFromKey(entry.getKey());
-				cacheCompletedOrders(data.get("market"), Integer.parseInt(data.get("stockId")));
-				cacheOrderBook(data.get("market"), Integer.parseInt(data.get("stockId")));
+				try {
+					HashMap<String, String> data = retrieveFromKey(entry.getKey());
+					cacheCompletedOrders(data.get("market"), Integer.parseInt(data.get("stockId")));
+					cacheOrderBook(data.get("market"), Integer.parseInt(data.get("stockId")));
+				} catch (NumberFormatException | RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -491,7 +496,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return value;
 	}
 
-	public String cacheOrderBook(String market, int stockId) {
+	public String cacheOrderBook(String market, int stockId)  throws RemoteException {
 		String key = generateJedisKey(market, stockId);
 		String value = retrieveOrderBook(market, stockId);
 		if (value.equals("empty") && value.equals("error fetching"))

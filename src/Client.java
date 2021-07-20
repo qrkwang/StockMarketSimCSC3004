@@ -152,10 +152,20 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		}
 	}
 
+	public void updateOrderBook(String market, int stockId) throws java.rmi.RemoteException {
+		// TODO Auto-generated method stub
+		if (currentPage.name().equals("STOCK") && currentDisplayMarket.name().equals(market)
+				&& stockId == currentDisplayStockId) {
+			remoteObj.cacheOrderBook(market, stockId);
+			createChartPanel(false);
+			switchPanel(chartPanel);
+		}
+	}
+	
 	public void updateStock(String market, int stockId) throws java.rmi.RemoteException {
 		if (currentPage.name().equals("STOCK") && currentDisplayMarket.name().equals(market)
 				&& stockId == currentDisplayStockId) {
-			createChartPanel();
+			createChartPanel(true);
 			switchPanel(chartPanel);
 		}
 	}
@@ -500,13 +510,12 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		JButton submitBtn = new JButton("View " + tickerSymbol);
 		submitBtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				createChartPanel();
 				ownedQuantity = quantity;
 				currentDisplayStockId = stockId;
 				currentDisplayMarket = market;
 				currentDisplayCompanyName = companyName;
 				currentDisplayTickerSymbol = tickerSymbol;
-				createChartPanel();
+				createChartPanel(true);
 				currentPage = Page.STOCK;
 				switchPanel(chartPanel);
 			}
@@ -552,13 +561,12 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 					JButton submitBtn = new JButton("Trade " + s.getTickerSymbol());
 					submitBtn.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
-							createChartPanel();
 							checkOwnHolding(market, s.getStockId());
 							currentDisplayStockId = s.getStockId();
 							currentDisplayCompanyName = s.getCompanyName();
 							currentDisplayTickerSymbol = s.getTickerSymbol();
 							currentDisplayMarket = market;
-							createChartPanel();
+							createChartPanel(true);
 							currentPage = Page.STOCK;
 							switchPanel(chartPanel);
 						}
@@ -592,7 +600,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 	}
 
 	@SuppressWarnings("unchecked")
-	public void createChartPanel() {
+	public void createChartPanel(boolean callback) {
 		OHLCChart chart = new OHLCChartBuilder().width(800).height(600).title(currentDisplayTickerSymbol + " - " + currentDisplayCompanyName).build();
 		List<Date> xData = new ArrayList<Date>();
 		List<Float> openData = new ArrayList<Float>();
@@ -612,7 +620,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				ArrayList<MarketComplete> arrayListCompleteOrders = null;
 //				updateOrderBook(null);
 				HashMap<String, String> res = remoteObj.retrieveStockCache(currentDisplayMarket.name(), currentDisplayStockId,
-						this, true);
+						this, callback);
 				String orderCompleted = res.get("orderCompleted");
 				if (orderCompleted.equals("empty")) {
 
@@ -905,8 +913,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 					remoteObj.sendOrder(accountId, market, order, false); // -1 to indicate null, i will change to null
 																			// on
 					orderStockFrame.dispose();
-					createChartPanel();
-					createHomePanel();
 				} catch (ParseException | RemoteException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -1069,4 +1075,5 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			System.exit(1);
 		}
 	}
+
 }
