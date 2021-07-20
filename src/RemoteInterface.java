@@ -16,5 +16,5 @@ public interface RemoteInterface extends Remote {
 	public void removeFromClientHashMap(int accountId) throws RemoteException;
 	
 	public String retrieveMarketCache(String market, ClientInt client)  throws RemoteException;
-	public HashMap<String, String> retrieveStockCache(String market, int stockid, ClientInt client) throws RemoteException;
+	public HashMap<String, String> retrieveStockCache(String market, int stockid, ClientInt client, boolean callback) throws RemoteException;
 }

@@ -406,6 +406,18 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	 * ----------------------CACHING----------------------
 	 * 
 	 */
+	public String generateJedisKey(String market, int stockId) {
+		return market + DELIMITER + stockId;
+	}
+	
+	public HashMap<String, String> retrieveFromKey(String key){
+		HashMap<String, String> data = new HashMap<String, String>();
+		String[] keySplit = key.split(Pattern.quote(DELIMITER));
+		data.put("market",keySplit[0]);
+		data.put("stockId", keySplit[1]);
+		return data;
+	}
+	
 	public void startCache() {
 		Thread thread = new Thread(new Runnable() {
 			@Override
@@ -465,26 +477,23 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				jedis.del(entry.getKey());
 				jedis.del(entry.getKey() + DELIMITER + "OrderBook");
 			} else {
-				cacheCompletedOrders(entry.getKey());
-				cacheOrderBook(entry.getKey());
+				HashMap<String, String> data = retrieveFromKey(entry.getKey());
+				cacheCompletedOrders(data.get("market"), Integer.parseInt(data.get("stockId")));
+				cacheOrderBook(data.get("market"), Integer.parseInt(data.get("stockId")));
 			}
 		}
 	}
 
-	public String cacheCompletedOrders(String key) {
-		String[] keySplit = key.split(Pattern.quote(DELIMITER));
-		String market = keySplit[0];
-		int stockid = Integer.parseInt(keySplit[1]);
-		String value = retrieveCompletedOrders(market, stockid);
+	public String cacheCompletedOrders(String market, int stockId) {
+		String key = generateJedisKey(market, stockId);
+		String value = retrieveCompletedOrders(market, stockId);
 		jedis.set(key, value);
 		return value;
 	}
 
-	public String cacheOrderBook(String key) {
-		String[] keySplit = key.split(Pattern.quote(DELIMITER));
-		String market = keySplit[0];
-		int stockid = Integer.parseInt(keySplit[1]);
-		String value = retrieveOrderBook(market, stockid);
+	public String cacheOrderBook(String market, int stockId) {
+		String key = generateJedisKey(market, stockId);
+		String value = retrieveOrderBook(market, stockId);
 		if (value.equals("empty") && value.equals("error fetching"))
 			value = null;
 		System.out.println("Order Book: " + value);
@@ -493,30 +502,32 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return value;
 	}
 
-	public HashMap<String, String> retrieveStockCache(String market, int stockid, ClientInt client) throws RemoteException {
-		String key = market + DELIMITER + stockid;
+	public HashMap<String, String> retrieveStockCache(String market, int stockId, ClientInt client, boolean callback) throws RemoteException {
+		String key = generateJedisKey(market,stockId);
 		lastSearchTimestamp.put(key, System.currentTimeMillis());
 		HashMap<String, String> result = new HashMap<String, String>();
-		Thread thread = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					Thread.sleep(60000);
-					client.updateStock(market, stockid);
-				} catch (InterruptedException | RemoteException e) {
-					e.printStackTrace();
+		if(callback) {
+			Thread thread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						Thread.sleep(60000);
+						client.updateStock(market, stockId);
+					} catch (InterruptedException | RemoteException e) {
+						e.printStackTrace();
+					}
 				}
-			}
-		});
-		thread.start();
+			});
+			thread.start();
+		}
 		if (jedis.exists(key + DELIMITER + "OrderBook")) {
 			result.put("orderCompleted", jedis.get(key));
 			result.put("orderBook", jedis.get(key + DELIMITER + "OrderBook"));
 			return result;
 		} else {
 			// Retrieve from database and cache if not found
-			String res = cacheCompletedOrders(key);
-			String orderbook = cacheOrderBook(key);
+			String res = cacheCompletedOrders(market, stockId);
+			String orderbook = cacheOrderBook(market, stockId);
 			result.put("orderCompleted", res);
 			result.put("orderBook", orderbook);
 			return result;

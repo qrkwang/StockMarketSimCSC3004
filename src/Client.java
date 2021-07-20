@@ -612,7 +612,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				ArrayList<MarketComplete> arrayListCompleteOrders = null;
 //				updateOrderBook(null);
 				HashMap<String, String> res = remoteObj.retrieveStockCache(currentDisplayMarket.name(), currentDisplayStockId,
-						this);
+						this, true);
 				String orderCompleted = res.get("orderCompleted");
 				if (orderCompleted.equals("empty")) {
 
