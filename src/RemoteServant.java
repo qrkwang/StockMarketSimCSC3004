@@ -809,41 +809,41 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			@Override
 			public void run() {
 				System.out.println("Generating new order");
-
-				try {
-					StockDBScript db = null;
-					String marketStr = "";
-					if (market.equals(Market.US)) {
-						db = usaDb;
-						marketStr = Market.US.toString();
-					} else if (market.equals(Market.SG)) {
-						db = sgDb;
-						marketStr = Market.SG.toString();
-					} else {
-						db = hkDb;
-						marketStr = Market.HK.toString();
-					}
-					ArrayList<Stock> arrayListStocks = null;
-					while (true) {
-						arrayListStocks = db.getAllStocks();
-						if (arrayListStocks != null) {
-							break;
+				while(true) {
+					try {
+						StockDBScript db = null;
+						String marketStr = "";
+						if (market.equals(Market.US)) {
+							db = usaDb;
+							marketStr = Market.US.toString();
+						} else if (market.equals(Market.SG)) {
+							db = sgDb;
+							marketStr = Market.SG.toString();
+						} else {
+							db = hkDb;
+							marketStr = Market.HK.toString();
 						}
-					}
-					System.out.println("All Stock Retrieved For " + marketStr + " - " + arrayListStocks);
-					String message = "";
-					for (Stock stock : arrayListStocks) {
-						for (int i = 0; i < 20; i++) {
-							message = db.dbRandomOrderGeneration(stock.getStockId());
-							sendOrder(0, marketStr, message, true);
+						ArrayList<Stock> arrayListStocks = null;
+						while (true) {
+							arrayListStocks = db.getAllStocks();
+							if (arrayListStocks != null) {
+								break;
+							}
 						}
+						System.out.println("All Stock Retrieved For " + marketStr + " - " + arrayListStocks);
+						String message = "";
+						for (Stock stock : arrayListStocks) {
+								message = db.dbRandomOrderGeneration(stock.getStockId());
+								sendOrder(0, marketStr, message, true);
+								Thread.sleep(5000);
+						}
+						// TODO Auto-generated method stub
 
+					} catch (Exception ex) {
+						ex.printStackTrace();
 					}
-					// TODO Auto-generated method stub
-
-				} catch (Exception ex) {
-					ex.printStackTrace();
 				}
+			
 			}
 		});
 		thread.start();
