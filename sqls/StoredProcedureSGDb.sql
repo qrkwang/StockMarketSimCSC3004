@@ -187,12 +187,12 @@ BEGIN
 
 SELECT "BUY" as "Type", sum(Quantity) as "Quantity", Price
 FROM hkstockmarket.marketpending
-WHERE SellerId IS NULL AND StockId = 1
+WHERE SellerId IS NULL AND StockId = inputStockId
 GROUP BY Price
 UNION 
 SELECT "SELL" as "Type", sum(Quantity) as "Quantity", Price
 FROM hkstockmarket.marketpending
-WHERE BuyerId IS NULL AND StockId = 1
+WHERE BuyerId IS NULL AND StockId = inputStockId
 GROUP BY Price
 ORDER BY type, Price asc;
 
