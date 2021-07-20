@@ -152,10 +152,21 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		}
 	}
 
-	public void updateOrderBook(String market, int stockId) throws java.rmi.RemoteException {
+	public void updateOrderBook(String market, int stockId, boolean bought, boolean sold, int quantity) throws java.rmi.RemoteException {
 		// TODO Auto-generated method stub
 		if (currentPage.name().equals("STOCK") && currentDisplayMarket.name().equals(market)
 				&& stockId == currentDisplayStockId) {
+			if(bought) {
+				if(ownedQuantity == -1)
+					ownedQuantity = quantity;
+				else
+					ownedQuantity += quantity;
+			}
+			if(sold) {
+				ownedQuantity -= quantity;
+				if(ownedQuantity == 0)
+					ownedQuantity = -1;
+			}
 			remoteObj.cacheOrderBook(market, stockId);
 			createChartPanel(false);
 			switchPanel(chartPanel);

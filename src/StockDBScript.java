@@ -358,6 +358,9 @@ public class StockDBScript {
 		int buyerId = Integer.parseInt(splitArray[2]);
 		int qty = Integer.parseInt(splitArray[3]);
 		float price = Float.parseFloat(splitArray[4]);
+		int totalQtyStocks = 0;
+		boolean bought = false;
+		boolean sold = false;
 		ClientInt currClient = null;
 		int accountId = -1;
 		Connection con = null;
@@ -467,7 +470,6 @@ public class StockDBScript {
 					// minus the quantity per order and then execute the update in SQL.
 					for (int i = 0; i < fetchedOrders.size(); i++) {
 						float moneyPaid = 0;
-						int totalQtyStocks = 0;
 						MarketPending order = fetchedOrders.get(i);
 
 						// minus my quantity here and see how much left.
@@ -497,14 +499,15 @@ public class StockDBScript {
 																				// buyOrderQuantity
 
 							lastOrderQty = order.getQuantity() - buyOrderQuantity;
-							buyOrderQuantity = 0; // make buy order quantity 0 to break the loop, so will stop looking
-													// for more matches
 
 							moneyPaid += order.getPrice() * order.getQuantity(); // accumulate the money paid by adding
 																					// it per order.
 
-							totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks bought by
+							totalQtyStocks += buyOrderQuantity; // accumulate the total qty of stocks bought by
 																	// adding it per order.
+							
+							buyOrderQuantity = 0; // make buy order quantity 0 to break the loop, so will stop looking
+							// for more matches
 
 							orderIds.add(order.getMarketPendingId()); // keep array list of order ID so later can update
 																		// those orders through SQL.
@@ -565,6 +568,7 @@ public class StockDBScript {
 						}
 						if (!isRandomGenOrder) {
 							this.accountDetailsDb.updatePurchaseInAccount(buyerId, totalPaid);
+							bought = true;
 						}
 					}
 
@@ -611,7 +615,6 @@ public class StockDBScript {
 					// minus the quantity per order and then execute the update in SQL.
 					for (int i = 0; i < fetchedOrders.size(); i++) {
 						float moneyReceived = 0;
-						int totalQtyStocks = 0;
 						MarketPending order = fetchedOrders.get(i);
 
 						// minus my quantity here and see how much left.
@@ -641,16 +644,18 @@ public class StockDBScript {
 																				// sellOrderQuantity
 
 							lastOrderQty = order.getQuantity() - sellOrderQuantity;
-							sellOrderQuantity = 0; // make sell order quantity 0 to break the loop, so will stop looking
-													// for more matches
 
+							
 							moneyReceived += order.getPrice() * order.getQuantity(); // accumulate the money received by
 																						// adding
 																						// it per order.
 
-							totalQtyStocks += order.getQuantity(); // accumulate the total qty of stocks bought by
+							totalQtyStocks += sellOrderQuantity; // accumulate the total qty of stocks bought by
 																	// adding it per order.
 
+							sellOrderQuantity = 0; // make sell order quantity 0 to break the loop, so will stop looking
+							// for more matches
+							
 							orderIds.add(order.getMarketPendingId()); // keep array list of order ID so later can update
 																		// those orders through SQL.
 
@@ -701,14 +706,14 @@ public class StockDBScript {
 
 						}
 						if (!isRandomGenOrder) {
-							
 							this.accountDetailsDb.updateSaleInAccount(sellerId, totalValueSold);
+							sold = true;
 						}
 					}
 				}
 				
 			}
-			currClient.updateOrderBook(market, stockId);
+			currClient.updateOrderBook(market, stockId, bought, sold, totalQtyStocks);
 		} catch (SQLException | ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
