@@ -84,9 +84,12 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		// constructor called.
 
 		accountDetailsDb = new AccountDetailsDbScript(ACCOUNTSERVER + ":3306", AccountsDBName, "root", "root");
-		hkDb = new StockDBScript(Market.HK.name(), "HKMarket", HKSERVERIPADDRESS + ":3306", HKDBName, "root", "root", accountDetailsDb);
-		sgDb = new StockDBScript(Market.SG.name(), "SGMarket", SGSERVERIPADDRESS + ":3306", SGDBName, "root", "root", accountDetailsDb);
-		usaDb = new StockDBScript(Market.US.name(), "USMarket", USSERVERIPADDRESS + ":3306", USDBName, "root", "root", accountDetailsDb);
+		hkDb = new StockDBScript(Market.HK.name(), "HKMarket", HKSERVERIPADDRESS + ":3306", HKDBName, "root", "root",
+				accountDetailsDb);
+		sgDb = new StockDBScript(Market.SG.name(), "SGMarket", SGSERVERIPADDRESS + ":3306", SGDBName, "root", "root",
+				accountDetailsDb);
+		usaDb = new StockDBScript(Market.US.name(), "USMarket", USSERVERIPADDRESS + ":3306", USDBName, "root", "root",
+				accountDetailsDb);
 
 		clientHashMap = new HashMap<Integer, ClientInt>();
 		logMap = new HashMap<Integer, String>(); // for log (will be server name and generation number)
@@ -108,9 +111,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		startRandomOrderGeneration(Market.US);
-		startRandomOrderGeneration(Market.SG);
-		startRandomOrderGeneration(Market.HK);
+//		startRandomOrderGeneration(Market.US);
+//		startRandomOrderGeneration(Market.SG);
+//		startRandomOrderGeneration(Market.HK);
 		startLeaderElectionAlgo();
 		startDataRedundancyAlgo();
 		startCache();
@@ -297,7 +300,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 							failedServer = Market.US.name();
 							System.out.println("Cannot ping US");
 							usaDb.setOnline(false);
-							usaDb.setConnString(SGSERVERIPADDRESS +":3306", USDBName);
+							usaDb.setConnString(SGSERVERIPADDRESS + ":3306", USDBName);
 							System.out.println(usaDb.getConnString());
 						} else {
 							usaDb.setOnline(true);
@@ -306,7 +309,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 							failedServer = Market.SG.name();
 							System.out.println("Cannot ping SG");
 							sgDb.setOnline(false);
-							sgDb.setConnString(HKSERVERIPADDRESS +":3306", SGDBName);
+							sgDb.setConnString(HKSERVERIPADDRESS + ":3306", SGDBName);
 						} else {
 							sgDb.setOnline(true);
 						}
@@ -314,7 +317,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 							failedServer = Market.HK.name();
 							System.out.println("Cannot ping HK");
 							hkDb.setOnline(false);
-							hkDb.setConnString(USSERVERIPADDRESS +":3306", HKDBName);
+							hkDb.setConnString(USSERVERIPADDRESS + ":3306", HKDBName);
 						} else {
 							hkDb.setOnline(true);
 						}
@@ -339,11 +342,11 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 							executeFile("src/sshRecoverOriginalServer.py", failedServer);
 
 							if (failedServer.equals(Market.US.name())) {
-								usaDb.setConnString(USSERVERIPADDRESS +":3306", USDBName);
+								usaDb.setConnString(USSERVERIPADDRESS + ":3306", USDBName);
 							} else if (failedServer.equals(Market.HK.name())) {
-								hkDb.setConnString(HKSERVERIPADDRESS +":3306", HKDBName);
+								hkDb.setConnString(HKSERVERIPADDRESS + ":3306", HKDBName);
 							} else if (failedServer.equals(Market.SG.name())) {
-								sgDb.setConnString(SGSERVERIPADDRESS +":3306", SGDBName);
+								sgDb.setConnString(SGSERVERIPADDRESS + ":3306", SGDBName);
 							}
 							failedServer = null;
 							usRequiredRecovery = false;
@@ -794,9 +797,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 						marketStr = Market.HK.toString();
 					}
 					ArrayList<Stock> arrayListStocks = null;
-					while(true) {
+					while (true) {
 						arrayListStocks = db.getAllStocks();
-						if(arrayListStocks != null) {
+						if (arrayListStocks != null) {
 							break;
 						}
 					}
