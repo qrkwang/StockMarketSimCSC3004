@@ -183,16 +183,17 @@ USE `HKStockMarket`$$
 CREATE PROCEDURE `getOrderBookByStockId`(IN inputStockId int)
 BEGIN
 
-SELECT "BUY" as "Type", sum(Quantity) as "Quantity", Price
+(SELECT "BUY" as "Type", sum(Quantity) as "Quantity", Price
 FROM marketpending
 WHERE SellerId IS NULL AND StockId = inputStockId
 GROUP BY Price
+ORDER BY Price desc)
 UNION 
-SELECT "SELL" as "Type", sum(Quantity) as "Quantity", Price
+(SELECT "SELL" as "Type", sum(Quantity) as "Quantity", Price
 FROM marketpending
 WHERE BuyerId IS NULL AND StockId = inputStockId
 GROUP BY Price
-ORDER BY type, Price asc;
+ORDER BY Price asc);
 
 END$$
 DELIMITER ;
