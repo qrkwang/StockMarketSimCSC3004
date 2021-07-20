@@ -1,6 +1,7 @@
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public interface RemoteInterface extends Remote {
 	// Client will need to display account details, send buy/sell order, list of
@@ -15,5 +16,5 @@ public interface RemoteInterface extends Remote {
 	public void removeFromClientHashMap(int accountId) throws RemoteException;
 	
 	public String retrieveMarketCache(String market, ClientInt client)  throws RemoteException;
-	public String retrieveStockCache(String market, int stockid, ClientInt client) throws RemoteException;
+	public HashMap<String, String> retrieveStockCache(String market, int stockid, ClientInt client) throws RemoteException;
 }

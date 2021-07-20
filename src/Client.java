@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -56,8 +57,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 	private JPanel loginPanel;
 	private JPanel homePanel;
 	private JPanel chartPanel;
-	private JPanel buyOrderBookPanel;
-	private JPanel sellOrderBookPanel;
 	private AccountDetails accountDetailsObj;
 	private ArrayList<StockOwned> accountHoldings;
 	private final Insets DEFAULTINSETS = new Insets(0, 0, 10, 10);
@@ -157,20 +156,10 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		if (currentPage.name().equals("STOCK") && currentDisplayMarket.name().equals(market)
 				&& stockId == currentDisplayStockId) {
 			createChartPanel();
+			switchPanel(chartPanel);
 		}
 	}
 
-	public void sendOrderBook(String orderbook) throws java.rmi.RemoteException {
-		System.out.println("Updating: " + orderbook);
-		if(orderbook.equals("empty")) {
-			updateOrderBook(null);
-		}else {
-			ArrayList<OrderBook> arrayListOrderBook = (ArrayList<OrderBook>) deserializeString(orderbook, "orderBook");
-			updateOrderBook(arrayListOrderBook);
-		}
-		chartPanel.revalidate();
-		frame.revalidate();
-	}
 	// Client will need to display account details, send buy/sell order, list of
 	// account stock holdings, polling of stock price per interval (not necessarily
 	// need polling, can be on update) when on that page, stock page orders.
@@ -263,13 +252,9 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		createLoginPanel();
 		createHomePanel();
 		chartPanel = new JPanel();
-		buyOrderBookPanel = new JPanel();
-		buyOrderBookPanel.setLayout(new GridBagLayout());
-		sellOrderBookPanel = new JPanel();
-		sellOrderBookPanel.setLayout(new GridBagLayout());
 		switchPanel(loginPanel);
 		currentPage = Page.OTHER;
-		System.out.println("Done initialised!");
+		////System.out.println("Done initialised!");
 	}
 
 	public void createLoginPanel() {
@@ -377,7 +362,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				accountDetailsObj = objectMapper.readValue(resAccountDetails, AccountDetails.class);
 				accountHoldings = remoteObj.getAccountHoldingsById(accountDetailsObj.getAccountId());
 				if (accountHoldings == null) {
-					System.out.println("sql exception");
+					////System.out.println("sql exception");
 				}
 				createHomePanel();
 				switchPanel(homePanel);
@@ -547,10 +532,10 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 			// SG MARKET PAGE
 			if (result.equals("empty")) {
-				System.out.println("db does not have any row");
+				////System.out.println("db does not have any row");
 
 			} else if (result.equals("error fetching")) {
-				System.out.println("had some issue fetching from server");
+				////System.out.println("had some issue fetching from server");
 
 			} else {
 				ArrayList<Stock> arrayListStocks = (ArrayList<Stock>) deserializeString(result, "stock");
@@ -614,6 +599,10 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		List<Float> highData = new ArrayList<Float>();
 		List<Float> lowData = new ArrayList<Float>();
 		List<Float> closeData = new ArrayList<Float>();
+		JPanel buyOrderBookPanel = new JPanel();
+		buyOrderBookPanel.setLayout(new GridBagLayout());
+		JPanel sellOrderBookPanel = new JPanel();
+		sellOrderBookPanel.setLayout(new GridBagLayout());
 
 		GridBagConstraints gbc = new GridBagConstraints();
 		chartPanel = new JPanel();
@@ -621,9 +610,10 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		if (currentDisplayStockId != -1) {
 			try {
 				ArrayList<MarketComplete> arrayListCompleteOrders = null;
-				updateOrderBook(null);
-				String orderCompleted = remoteObj.retrieveStockCache(currentDisplayMarket.name(), currentDisplayStockId,
+//				updateOrderBook(null);
+				HashMap<String, String> res = remoteObj.retrieveStockCache(currentDisplayMarket.name(), currentDisplayStockId,
 						this);
+				String orderCompleted = res.get("orderCompleted");
 				if (orderCompleted.equals("empty")) {
 
 				} else if (orderCompleted.equals("error fetching")) {
@@ -640,8 +630,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 								.plusMinutes(1);
 						xData.add(java.sql.Timestamp.valueOf(currentDT));
 						float latestClose = firstMC.getPrice();
-						System.out.println("Time: " + java.sql.Timestamp.valueOf(currentDT));
-						System.out.println("Open: " + firstMC.getPrice());
+						////System.out.println("Time: " + java.sql.Timestamp.valueOf(currentDT));
+						////System.out.println("Open: " + firstMC.getPrice());
 						for (int i = 1; i < arrayListCompleteOrders.size(); i++) {
 							MarketComplete mc = arrayListCompleteOrders.get(i);
 							LocalDateTime minuteRoundCeiling = mc.getTransactionDate().truncatedTo(ChronoUnit.MINUTES)
@@ -649,19 +639,19 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 							if (!currentDT.equals(minuteRoundCeiling)) {
 								xData.add(java.sql.Timestamp.valueOf(currentDT));
 								closeData.add(latestClose);
-								System.out.println("Close: " + latestClose);
+								////System.out.println("Close: " + latestClose);
 								openData.add(latestClose);
 								highData.add(latestClose);
 								lowData.add(latestClose);
-								System.out.println("Time: " + java.sql.Timestamp.valueOf(currentDT));
-								System.out.println("Open: " + latestClose);
+								////System.out.println("Time: " + java.sql.Timestamp.valueOf(currentDT));
+								////System.out.println("Open: " + latestClose);
 
 							}
 							currentDT = minuteRoundCeiling;
 							latestClose = mc.getPrice();
 						}
 						closeData.add(latestClose);
-						System.out.println("Close: " + latestClose);
+						////System.out.println("Close: " + latestClose);
 //						// Customize Chart
 						chart.getStyler().setLegendPosition(Styler.LegendPosition.OutsideS);
 						chart.getStyler().setLegendLayout(Styler.LegendLayout.Horizontal);
@@ -671,9 +661,35 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 								.setDownColor(Color.RED);
 						chart.getStyler().setToolTipsEnabled(true);
 					}
-					System.out.println(arrayListCompleteOrders.toString());
+					////System.out.println(arrayListCompleteOrders.toString());
 
 				}
+				String orderbook = res.get("orderBook");
+				if(!orderbook.equals("empty") && !orderbook.equals("error fetching")) {
+					ArrayList<OrderBook> arrayListOrderBook = (ArrayList<OrderBook>) deserializeString(orderbook, "orderBook");
+					int buyOBCount = 1;
+					int sellOBCount = 1;
+					for (int i = 0; i < arrayListOrderBook.size(); i++) {
+						OrderBook ob = arrayListOrderBook.get(i);
+						if (ob.getType().equals("BUY")) {
+							addLabel(buyOrderBookPanel, ob.getType(), 0, buyOBCount, LISTINSETS);
+							addLabel(buyOrderBookPanel, ob.getQuantity() + "", 1, buyOBCount, LISTINSETS);
+							addLabel(buyOrderBookPanel, ob.getPrice() + "", 2, buyOBCount, LISTINSETS);
+							buyOBCount++;
+						} else {
+							addLabel(sellOrderBookPanel, ob.getType(), 0, sellOBCount, LISTINSETS);
+							addLabel(sellOrderBookPanel, ob.getQuantity() + "", 1, sellOBCount, LISTINSETS);
+							addLabel(sellOrderBookPanel, ob.getPrice() + "", 2, sellOBCount, LISTINSETS);
+							sellOBCount++;
+						}
+					}
+					System.out.println("INSIDE");
+					for(OrderBook ob : arrayListOrderBook) {
+						System.out.println("ORDER BOOK - " + ob.getType() + " - " + ob.getQuantity() + " - " + ob.getPrice());
+					}
+				}
+				
+				
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -691,17 +707,28 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 			JPanel bottomPanel = new JPanel();
 			bottomPanel.setLayout(new GridBagLayout());
-			JTabbedPane infoPanel = new JTabbedPane();
-			JPanel orderPane = new JPanel();
-			orderPane.add(new JScrollPane(buyOrderBookPanel));
-			orderPane.add(new JScrollPane(sellOrderBookPanel));
-			infoPanel.add("Order Book", orderPane);
+			JTabbedPane infoPane = new JTabbedPane();
+			JPanel orderPanel = new JPanel();
+			orderPanel.add(new JScrollPane(buyOrderBookPanel));
+			orderPanel.add(new JScrollPane(sellOrderBookPanel));
+			
+			addLabel(buyOrderBookPanel, "Type", 0, 0, LISTINSETS);
+			addLabel(buyOrderBookPanel, "Quantity", 1, 0, LISTINSETS);
+			addLabel(buyOrderBookPanel, "Price", 2, 0, LISTINSETS);
+
+			addLabel(sellOrderBookPanel, "Type", 0, 0, LISTINSETS);
+			addLabel(sellOrderBookPanel, "Quantity", 1, 0, LISTINSETS);
+			addLabel(sellOrderBookPanel, "Price", 2, 0, LISTINSETS);
+
+			
+			
+			infoPane.add("Order Book", orderPanel);
 
 			gbc.fill = GridBagConstraints.HORIZONTAL;
 			gbc.gridx = 0;
 			gbc.gridy = 0;
 			gbc.insets = DEFAULTINSETS;
-			bottomPanel.add(infoPanel, gbc);
+			bottomPanel.add(infoPane, gbc);
 
 			JPanel buttonPanel = new JPanel();
 			buttonPanel.setLayout(new GridBagLayout());
@@ -771,49 +798,54 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			gbc.gridy = 1;
 			gbc.insets = DEFAULTINSETS;
 			chartPanel.add(bottomPanel, gbc);
+
+			chartPanel.revalidate();
+			chartPanel.repaint();
+			frame.revalidate();
+			frame.repaint();
 		}
-		frame.repaint();
-		chartPanel.revalidate();
-		frame.revalidate();
 	}
 
-	public void updateOrderBook(ArrayList<OrderBook> arrayListOrderBook) {
-		buyOrderBookPanel = new JPanel();
-		buyOrderBookPanel.removeAll();
-		buyOrderBookPanel.setLayout(new GridBagLayout());
-		sellOrderBookPanel = new JPanel();
-		sellOrderBookPanel.removeAll();
-		sellOrderBookPanel.setLayout(new GridBagLayout());
-
-		addLabel(buyOrderBookPanel, "Type", 0, 0, LISTINSETS);
-		addLabel(buyOrderBookPanel, "Quantity", 1, 0, LISTINSETS);
-		addLabel(buyOrderBookPanel, "Price", 2, 0, LISTINSETS);
-
-		addLabel(sellOrderBookPanel, "Type", 0, 0, LISTINSETS);
-		addLabel(sellOrderBookPanel, "Quantity", 1, 0, LISTINSETS);
-		addLabel(sellOrderBookPanel, "Price", 2, 0, LISTINSETS);
-
-		int buyOBCount = 1;
-		int sellOBCount = 1;
-		if (arrayListOrderBook != null) {
-			for (int i = 0; i < arrayListOrderBook.size(); i++) {
-				OrderBook ob = arrayListOrderBook.get(i);
-				if (ob.getType().equals("BUY")) {
-					addLabel(buyOrderBookPanel, ob.getType(), 0, buyOBCount, LISTINSETS);
-					addLabel(buyOrderBookPanel, ob.getQuantity() + "", 1, buyOBCount, LISTINSETS);
-					addLabel(buyOrderBookPanel, ob.getPrice() + "", 2, buyOBCount, LISTINSETS);
-					buyOBCount++;
-				} else {
-					addLabel(sellOrderBookPanel, ob.getType(), 0, sellOBCount, LISTINSETS);
-					addLabel(sellOrderBookPanel, ob.getQuantity() + "", 1, sellOBCount, LISTINSETS);
-					addLabel(sellOrderBookPanel, ob.getPrice() + "", 2, sellOBCount, LISTINSETS);
-					sellOBCount++;
-				}
-			}
-		}
-		chartPanel.revalidate();
-		frame.revalidate();
-	}
+//	public void updateOrderBook(ArrayList<OrderBook> arrayListOrderBook) {
+//
+//		addLabel(buyOrderBookPanel, "Type", 0, 0, LISTINSETS);
+//		addLabel(buyOrderBookPanel, "Quantity", 1, 0, LISTINSETS);
+//		addLabel(buyOrderBookPanel, "Price", 2, 0, LISTINSETS);
+//
+//		addLabel(sellOrderBookPanel, "Type", 0, 0, LISTINSETS);
+//		addLabel(sellOrderBookPanel, "Quantity", 1, 0, LISTINSETS);
+//		addLabel(sellOrderBookPanel, "Price", 2, 0, LISTINSETS);
+//
+//		int buyOBCount = 1;
+//		int sellOBCount = 1;
+//		if (arrayListOrderBook != null) {
+//			for (int i = 0; i < arrayListOrderBook.size(); i++) {
+//				OrderBook ob = arrayListOrderBook.get(i);
+//				if (ob.getType().equals("BUY")) {
+//					addLabel(buyOrderBookPanel, ob.getType(), 0, buyOBCount, LISTINSETS);
+//					addLabel(buyOrderBookPanel, ob.getQuantity() + "", 1, buyOBCount, LISTINSETS);
+//					addLabel(buyOrderBookPanel, ob.getPrice() + "", 2, buyOBCount, LISTINSETS);
+//					buyOBCount++;
+//				} else {
+//					addLabel(sellOrderBookPanel, ob.getType(), 0, sellOBCount, LISTINSETS);
+//					addLabel(sellOrderBookPanel, ob.getQuantity() + "", 1, sellOBCount, LISTINSETS);
+//					addLabel(sellOrderBookPanel, ob.getPrice() + "", 2, sellOBCount, LISTINSETS);
+//					sellOBCount++;
+//				}
+//			}
+//			System.out.println("INSIDE");
+//			for(OrderBook ob : arrayListOrderBook) {
+//				System.out.println("ORDER BOOK - " + ob.getType() + " - " + ob.getQuantity() + " - " + ob.getPrice());
+//			}
+//		}else
+//			System.out.println(arrayListOrderBook);
+//		buyOrderBookPanel.revalidate();
+//		sellOrderBookPanel.revalidate();
+////		orderPanel.revalidate();
+////		chartPanel.revalidate();
+//		frame.revalidate();
+//		frame.repaint();
+//	}
 
 	public void buySellStockFrame(String market, int StockId, boolean buy, int max) {
 		GridBagConstraints gbc = new GridBagConstraints();
@@ -873,6 +905,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 					remoteObj.sendOrder(accountId, market, order, false); // -1 to indicate null, i will change to null
 																			// on
 					orderStockFrame.dispose();
+					createChartPanel();
 					createHomePanel();
 				} catch (ParseException | RemoteException e) {
 					// TODO Auto-generated catch block
@@ -914,13 +947,13 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 //			String resAccountDetails = remoteObj.getAccountDetailsByUsernameAndPW(cc, username, pw);
 //			// convert json string to object
 //			if (resAccountDetails.equals("not found")) {
-//				System.out.println("your username does not exist. Try again.");
+//				////System.out.println("your username does not exist. Try again.");
 //
 //			} else if (resAccountDetails.equals("problem")) {
-//				System.out.println("there's a problem while accessing the server");
+//				////System.out.println("there's a problem while accessing the server");
 //
 //			} else if (resAccountDetails.equals("wrong pw")) {
-//				System.out.println("your pw is wrong");
+//				////System.out.println("your pw is wrong");
 //
 //			} else {
 //				// Successfully logged in cause all cases checked.
@@ -931,13 +964,13 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 //				AccountDetails accountDetailsObj = objectMapper.readValue(resAccountDetails, AccountDetails.class);
 //
 //				//
-//				System.out.println("AFTER GET ACCOUNT DETAILS!!" + accountDetailsObj);
+//				////System.out.println("AFTER GET ACCOUNT DETAILS!!" + accountDetailsObj);
 //				// Assign accountId value to global variable so can use on other
 //				// methods.
 //				accountId = accountDetailsObj.getAccountId();
 //			ArrayList<StockOwned> allStockOwned = remoteObj.getAccountHoldingsById(1);
 //			if (allStockOwned == null) {
-//				System.out.println("sql exception");
+//				////System.out.println("sql exception");
 //			}
 //				String returnedHkStocks = remoteObj.retrieveMarketCache("HK");
 //				String returnedUSStocks = remoteObj.retrieveMarketCache("US");
@@ -945,46 +978,46 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 //
 //				// HK MARKET PAGE
 //				if (returnedHkStocks.equals("empty")) {
-//					System.out.println("db does not have any row");
+//					////System.out.println("db does not have any row");
 //
 //				} else if (returnedHkStocks.equals("error fetching")) {
-//					System.out.println("had some issue fetching from server");
+//					////System.out.println("had some issue fetching from server");
 //
 //				} else {
 //					ArrayList<Stock> arrayListHkStocks = (ArrayList<Stock>) deserializeString(returnedHkStocks,
 //							"stock");
-////					System.out.println("after deserialize HK");
-////					System.out.println(arrayListHkStocks.toString());
+////					////System.out.println("after deserialize HK");
+////					////System.out.println(arrayListHkStocks.toString());
 //
 //				}
 //
 //				// US MARKET PAGE
 //				if (returnedUSStocks.equals("empty")) {
-//					System.out.println("db does not have any row");
+//					////System.out.println("db does not have any row");
 //
 //				} else if (returnedUSStocks.equals("error fetching")) {
-//					System.out.println("had some issue fetching from server");
+//					////System.out.println("had some issue fetching from server");
 //
 //				} else {
 //					ArrayList<Stock> arrayListUSStocks = (ArrayList<Stock>) deserializeString(returnedUSStocks,
 //							"stock");
-////					System.out.println("after deserialize US");
-////					System.out.println(arrayListUSStocks.toString());
+////					////System.out.println("after deserialize US");
+////					////System.out.println(arrayListUSStocks.toString());
 //
 //				}
 //
 //				// SG MARKET PAGE
 //				if (returnedSGkStocks.equals("empty")) {
-//					System.out.println("db does not have any row");
+//					////System.out.println("db does not have any row");
 //
 //				} else if (returnedSGkStocks.equals("error fetching")) {
-//					System.out.println("had some issue fetching from server");
+//					////System.out.println("had some issue fetching from server");
 //
 //				} else {
 //					ArrayList<Stock> arrayListSGStocks = (ArrayList<Stock>) deserializeString(returnedSGkStocks,
 //							"stock");
-////					System.out.println("after deserialize SG ");
-////					System.out.println(arrayListSGStocks.toString());
+////					////System.out.println("after deserialize SG ");
+////					////System.out.println(arrayListSGStocks.toString());
 //
 //				}
 
@@ -1002,8 +1035,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 //					ArrayList<MarketPending> arrayListPendingOrders = (ArrayList<MarketPending>) deserializeString(
 //							stockOrderList, "pendingOrders");
 //
-////					System.out.println("PENDING ORDERS ");
-////					System.out.println(arrayListPendingOrders.toString());
+////					////System.out.println("PENDING ORDERS ");
+////					////System.out.println(arrayListPendingOrders.toString());
 //
 //				}
 //
@@ -1015,8 +1048,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 //
 //					ArrayList<MarketComplete> arrayListCompleteOrders = (ArrayList<MarketComplete>) deserializeString(
 //							orderCompleted, "completeOrders");
-////					System.out.println("COMPLETED ORDERS");
-////					System.out.println(arrayListCompleteOrders.toString());
+////					////System.out.println("COMPLETED ORDERS");
+////					////System.out.println(arrayListCompleteOrders.toString());
 //
 //				}
 
