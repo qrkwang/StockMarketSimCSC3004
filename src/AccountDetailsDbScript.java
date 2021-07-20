@@ -35,6 +35,8 @@ public class AccountDetailsDbScript {
 		Connection con = null;
 		String currConn = this.conn_string;
 
+		System.out.println("account ID is " + accountId);
+
 		float accountBalance = 0;
 		try {
 			Class.forName(DRIVER_CLASS);
@@ -45,6 +47,7 @@ public class AccountDetailsDbScript {
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
 				accountBalance = rs.getFloat("availableCash");
+				System.out.println("account bal is " + accountBalance);
 
 			}
 			con.close();
@@ -54,6 +57,8 @@ public class AccountDetailsDbScript {
 			e.printStackTrace();
 			return (Float) null;
 		}
+		System.out.println("account bal is " + accountBalance);
+
 		return accountBalance;
 
 	}
