@@ -73,6 +73,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 	private int currentDisplayStockId;
 	private int ownedQuantity;
+	private String currentDisplayCompanyName;
+	private String currentDisplayTickerSymbol;
 	private Market currentDisplayMarket;
 	private Page currentPage;
 
@@ -83,6 +85,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			ownedQuantity = -1;
 			accountDetailsObj = null;
 			accountHoldings = null;
+			currentDisplayCompanyName = "";
+			currentDisplayTickerSymbol = "";
 			initialise();
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
@@ -158,8 +162,13 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 	public void sendOrderBook(String orderbook) throws java.rmi.RemoteException {
 		System.out.println("Updating: " + orderbook);
-		ArrayList<OrderBook> arrayListOrderBook = (ArrayList<OrderBook>) deserializeString(orderbook, "orderBook");
-		updateOrderBook(arrayListOrderBook);
+		if(orderbook.equals("empty")) {
+			updateOrderBook(null);
+		}else {
+			ArrayList<OrderBook> arrayListOrderBook = (ArrayList<OrderBook>) deserializeString(orderbook, "orderBook");
+			updateOrderBook(arrayListOrderBook);
+		}
+		chartPanel.revalidate();
 		frame.revalidate();
 	}
 	// Client will need to display account details, send buy/sell order, list of
@@ -510,6 +519,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				ownedQuantity = quantity;
 				currentDisplayStockId = stockId;
 				currentDisplayMarket = market;
+				currentDisplayCompanyName = companyName;
+				currentDisplayTickerSymbol = tickerSymbol;
 				createChartPanel();
 				currentPage = Page.STOCK;
 				switchPanel(chartPanel);
@@ -559,6 +570,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 							createChartPanel();
 							checkOwnHolding(market, s.getStockId());
 							currentDisplayStockId = s.getStockId();
+							currentDisplayCompanyName = s.getCompanyName();
+							currentDisplayTickerSymbol = s.getTickerSymbol();
 							currentDisplayMarket = market;
 							createChartPanel();
 							currentPage = Page.STOCK;
@@ -595,7 +608,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 	@SuppressWarnings("unchecked")
 	public void createChartPanel() {
-		OHLCChart chart = new OHLCChartBuilder().width(800).height(600).title("Prices").build();
+		OHLCChart chart = new OHLCChartBuilder().width(800).height(600).title(currentDisplayTickerSymbol + " - " + currentDisplayCompanyName).build();
 		List<Date> xData = new ArrayList<Date>();
 		List<Float> openData = new ArrayList<Float>();
 		List<Float> highData = new ArrayList<Float>();
@@ -684,21 +697,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			orderPane.add(new JScrollPane(sellOrderBookPanel));
 			infoPanel.add("Order Book", orderPane);
 
-			if (ownedQuantity != -1) {
-				JPanel openOrderPane = new JPanel();
-
-				addLabel(openOrderPane, "Quantity", 0, 0, LISTINSETS);
-				addLabel(openOrderPane, "Price", 1, 0, LISTINSETS);
-				for (StockOwned so : accountHoldings) {
-					if (so.getMarket().equals(currentDisplayMarket.name())
-							&& so.getStockId() == currentDisplayStockId) {
-						addLabel(openOrderPane, so.getQuantity() + "", 0, 1, LISTINSETS);
-						addLabel(openOrderPane, so.getAvgPrice() + "", 1, 2, LISTINSETS);
-					}
-				}
-				infoPanel.add("Open Orders", openOrderPane);
-			}
-
 			gbc.fill = GridBagConstraints.HORIZONTAL;
 			gbc.gridx = 0;
 			gbc.gridy = 0;
@@ -775,6 +773,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			chartPanel.add(bottomPanel, gbc);
 		}
 		frame.repaint();
+		chartPanel.revalidate();
 		frame.revalidate();
 	}
 
@@ -812,6 +811,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				}
 			}
 		}
+		chartPanel.revalidate();
+		frame.revalidate();
 	}
 
 	public void buySellStockFrame(String market, int StockId, boolean buy, int max) {
