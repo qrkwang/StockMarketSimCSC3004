@@ -393,6 +393,28 @@ BEGIN
         SET counterid = counterid + 1;
 	END WHILE;
 END$$
+DELIMITER ;
+
+USE `HKStockMarket`;
+DROP PROCEDURE IF EXISTS `getQuantityByAccountIdAndStockId`;
+
+DELIMITER $$
+USE `HKStockMarket`$$
+
+CREATE PROCEDURE `getQuantityByAccountIdAndStockId`(IN inputBuyerId int, IN inputStockId int)
+BEGIN
+
+SELECT sum(m.Quantity) AS Quantity
+FROM stock s
+INNER JOIN marketcompleted m 
+ON s.StockId = m.StockId
+Where m.BuyerId = inputBuyerId
+AND s.StockId = inputStockId
+group by m.StockId;
+
+END$$
+DELIMITER ;
+
 
 -- Uncomment if first time run the stored procedure
 -- CALL InsertMarketCompletedData();
