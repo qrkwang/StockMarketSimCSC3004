@@ -293,8 +293,6 @@ public class StockDBScript {
 
 				ResultSet rs = stmt.executeQuery();
 
-				System.out.println("before while loop");
-
 				int count = 0;
 				while (rs.next()) {
 					if (count == 0) {
@@ -319,8 +317,6 @@ public class StockDBScript {
 				stmt.setFloat(2, orderPrice); // Set the parameter
 
 				ResultSet rs = stmt.executeQuery();
-
-				System.out.println("before while loop");
 
 				int count = 0;
 				while (rs.next()) {
@@ -383,7 +379,7 @@ public class StockDBScript {
 			isbuyOrder = false;
 
 		}
-		
+
 		if (buyerId == 0 || sellerId == 0) {
 			System.out.println("receive order is randomGen order");
 
@@ -404,7 +400,7 @@ public class StockDBScript {
 					currClient.printToClient("error processing");
 					return;
 				}
-			} 
+			}
 
 			// Order processing
 			if (isbuyOrder) {
@@ -504,8 +500,8 @@ public class StockDBScript {
 																					// it per order.
 
 							totalQtyStocks += buyOrderQuantity; // accumulate the total qty of stocks bought by
-																	// adding it per order.
-							
+																// adding it per order.
+
 							buyOrderQuantity = 0; // make buy order quantity 0 to break the loop, so will stop looking
 							// for more matches
 
@@ -645,7 +641,6 @@ public class StockDBScript {
 
 							lastOrderQty = order.getQuantity() - sellOrderQuantity;
 
-							
 							moneyReceived += order.getPrice() * order.getQuantity(); // accumulate the money received by
 																						// adding
 																						// it per order.
@@ -655,7 +650,7 @@ public class StockDBScript {
 
 							sellOrderQuantity = 0; // make sell order quantity 0 to break the loop, so will stop looking
 							// for more matches
-							
+
 							orderIds.add(order.getMarketPendingId()); // keep array list of order ID so later can update
 																		// those orders through SQL.
 
@@ -711,16 +706,16 @@ public class StockDBScript {
 						}
 					}
 				}
-				
+
 			}
-			if(!isRandomGenOrder)
+			if (!isRandomGenOrder)
 				currClient.updateOrderBook(market, stockId, bought, sold, totalQtyStocks);
 		} catch (SQLException | ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			if (!isRandomGenOrder) {
 				currClient.printToClient("error processing");
-			}else {
+			} else {
 				// will reach here if it is randomGenOrder, if randomGenOrder, cannot print to
 				// client, just print statement.
 				System.out.println("Error when processing random gen order");
@@ -792,7 +787,6 @@ public class StockDBScript {
 						rs.getString("TickerSymbol"), rs.getFloat("CurrentValue"), rs.getBoolean("Status"),
 						rs.getString("Timezone"), localDateTime);
 
-				System.out.println(stockItem.toString());
 				arrayListStocks.add(stockItem);
 				count++;
 			}
@@ -823,8 +817,6 @@ public class StockDBScript {
 
 			ResultSet rs = stmt.executeQuery();
 
-			System.out.println("before while loop");
-
 			int count = 0;
 			while (rs.next()) {
 				if (count == 0) {
@@ -853,8 +845,6 @@ public class StockDBScript {
 
 				marketOrder.setCreatedDate(localDateTime);
 
-				System.out.println("Market Pending: ");
-				System.out.println(marketOrder.toString());
 				arrayListOrders.add(marketOrder);
 				count++;
 			}
@@ -893,8 +883,6 @@ public class StockDBScript {
 						rs.getInt("SellerId"), rs.getInt("BuyerId"), rs.getInt("Quantity"), rs.getFloat("Price"),
 						localDateTime);
 
-				System.out.println("Market Completed: ");
-				System.out.println(marketOrder.toString());
 				arrayListOrders.add(marketOrder);
 				count++;
 			}
@@ -951,8 +939,6 @@ public class StockDBScript {
 				}
 				OrderBook orderbook = new OrderBook(rs.getString("Type"), rs.getInt("Quantity"), rs.getFloat("Price"));
 
-				System.out.println("Market Completed: ");
-				System.out.println(orderbook.toString());
 				arrayListOrderBook.add(orderbook);
 				count++;
 			}
