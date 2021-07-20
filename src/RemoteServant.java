@@ -465,7 +465,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			thread.start();
 			return jedis.get(market);
 		} else
-			return null;
+			cacheMarket();
+			return  jedis.get(market);
 	}
 
 	public void checkStockCache() {
