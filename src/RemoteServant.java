@@ -599,6 +599,26 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			return "problem";
 		}
 	}
+	
+	@Override
+	public String getAccountDetailsById(ClientInt cc, int accountId) throws RemoteException {
+		System.out.println("getAccountDetailsById " + accountId);
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		try {
+			String resAccountDetail = accountDetailsDb.getAccountDetailsById(accountId);
+			System.out.println("result from db script" + resAccountDetail);
+			if (resAccountDetail == "not found") {
+				return "not found";
+			}
+			return resAccountDetail;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			System.out.println("sql or json processing exception");
+			e.printStackTrace();
+			return "problem";
+		}
+	}
 
 	@SuppressWarnings("unchecked")
 	@Override
