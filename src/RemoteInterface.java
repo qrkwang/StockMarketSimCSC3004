@@ -9,6 +9,7 @@ public interface RemoteInterface extends Remote {
 	// need polling, can be on update) when on that page, stock page orders.
 
 	public String getAccountDetailsByUsernameAndPW(ClientInt cc, String username, String pw) throws RemoteException;
+	public String getAccountDetailsById(ClientInt cc, int accountId) throws RemoteException;
 	public ArrayList getAccountHoldingsById(int accountId) throws RemoteException;
 
 	public String sendOrder(int accountId, String market, String order,  boolean randomGeneration) throws RemoteException;

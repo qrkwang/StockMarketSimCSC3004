@@ -11,6 +11,18 @@ END $$
 
 DELIMITER ;
 
+USE AccountDetailsServer;  
+DROP procedure IF EXISTS `getAccountDetailsById`;
+
+DELIMITER $$
+
+-- USE AccountDetailsServer;
+CREATE PROCEDURE getAccountDetailsById(IN inputId INT)
+BEGIN
+	SELECT * FROM account WHERE accountId = inputId;
+END $$
+
+DELIMITER ;
 
 USE AccountDetailsServer;
 DROP procedure IF EXISTS `getAccountHoldingsById`;
