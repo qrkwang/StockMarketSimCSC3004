@@ -16,8 +16,8 @@ PRIMARY KEY (`accountId`),
   UNIQUE KEY `AccountId_UNIQUE` (`accountId`)
 ) ;
 
-INSERT INTO `account` VALUES (1,'testing','password','testing@hotmail.com',6000,1000,0);
-INSERT INTO `account` VALUES (null, 'demo','password','demo@hotmail.com',6000,1000,0);
-INSERT INTO `account` VALUES (null, 'demo1','password','demo1@hotmail.com',6000,1000,0);
-INSERT INTO `account` VALUES (null, 'demo2','password','demo2@hotmail.com',6000,1000,0);
-INSERT INTO `account` VALUES (null, 'demo3','password','demo3@hotmail.com',6000,1000,0);
+INSERT INTO `account` VALUES (1,'testing','password','testing@hotmail.com',6000,0,6000);
+INSERT INTO `account` VALUES (null, 'demo','password','demo@hotmail.com',6000,0,6000);
+INSERT INTO `account` VALUES (null, 'demo1','password','demo1@hotmail.com',6000,0,6000);
+INSERT INTO `account` VALUES (null, 'demo2','password','demo2@hotmail.com',6000,0,6000);
+INSERT INTO `account` VALUES (null, 'demo3','password','demo3@hotmail.com',6000,0,6000);
