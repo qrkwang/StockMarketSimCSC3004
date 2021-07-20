@@ -99,9 +99,32 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 	}
 
 	// Unicast from server to client to print whatever.
-	public void printToClient(String s) throws java.rmi.RemoteException {
+	public void printToClient(String message) throws java.rmi.RemoteException {
 
-		System.out.println(s);
+		System.out.println(message);
+	}
+	public void notificationPopUp(String message) {
+		GridBagConstraints gbc = new GridBagConstraints();
+		JFrame notificationFrame = new JFrame();
+		notificationFrame.setBounds(100, 100, 550, 550);
+		notificationFrame.setVisible(true);
+		JPanel notificationPanel = new JPanel();
+		notificationPanel.setLayout(new GridBagLayout());
+		addLabel(notificationPanel, message, 0, 0, DEFAULTINSETS);
+		JButton btnClose = new JButton("Close");
+			
+		btnClose.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+            	//Send buy order
+            	notificationFrame.dispose();
+            }
+        });
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        gbc.insets = new Insets(0, 0, 10, 10);
+        notificationPanel.add(btnClose, gbc);
+        notificationFrame.add(notificationPanel);
 	}
 
 	public void updateMarket(String market) throws java.rmi.RemoteException {
