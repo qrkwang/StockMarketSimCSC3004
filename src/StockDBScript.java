@@ -57,7 +57,7 @@ public class StockDBScript {
 	public void setConnString(String ipandPort, String dbName) {
 		conn_string = "jdbc:mysql://" + ipandPort + "/" + dbName;
 	}
-	
+
 	public String getConnString() {
 		return conn_string;
 	}
@@ -118,12 +118,11 @@ public class StockDBScript {
 		}
 	}
 
-	public void deleteMarketPendingOrder(int id) throws SQLException {
+	private void deleteMarketPendingOrder(int id, String currConn) throws SQLException {
 		Connection con = null;
-
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
+			con = (Connection) DriverManager.getConnection(currConn, this.username, this.password);
 
 			String query = "{CALL DeleteMarketPending(?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
@@ -140,12 +139,12 @@ public class StockDBScript {
 		}
 	}
 
-	public void updateLastMatchedMarketPendingOrder(int id, int lastQty) throws SQLException {
+	private void updateLastMatchedMarketPendingOrder(int id, int lastQty, String currConn) throws SQLException {
 		Connection con = null;
 
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
+			con = (Connection) DriverManager.getConnection(currConn, this.username, this.password);
 
 			String query = "{CALL UpdateMarketPendingQuantity(?, ?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
@@ -165,12 +164,12 @@ public class StockDBScript {
 	}
 
 	private void addMarketCompleteOrder(boolean isBuy, int stockId, int sellerId, int buyerId, int totalQty,
-			float avgPrice) throws SQLException {
+			float avgPrice, String currConn) throws SQLException {
 		Connection con = null;
 
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
+			con = (Connection) DriverManager.getConnection(currConn, this.username, this.password);
 
 			String query = "{CALL InsertToMarketComplete(?,?,?,?,?,?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
@@ -193,13 +192,13 @@ public class StockDBScript {
 		con.close();
 	}
 
-	private void addMarketPendingOrder(boolean isBuy, int stockId, int transactionAccId, int totalQty, float price)
-			throws SQLException {
+	private void addMarketPendingOrder(boolean isBuy, int stockId, int transactionAccId, int totalQty, float price,
+			String currConn) throws SQLException {
 		Connection con = null;
 
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
+			con = (Connection) DriverManager.getConnection(currConn, this.username, this.password);
 
 			String query = "{CALL InsertToMarketPending(?,?,?,?,?,?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
@@ -226,7 +225,7 @@ public class StockDBScript {
 		con.close();
 	}
 
-	private void closeSellMarketPendingOrder(int marketPendingId, int buyerId) throws SQLException {
+	private void closeSellMarketPendingOrder(int marketPendingId, int buyerId, String currConn) throws SQLException {
 		Connection con = null;
 
 		try {
@@ -270,59 +269,14 @@ public class StockDBScript {
 		}
 	}
 
-	private void updatePurchaseInAccount(int buyerId, float totalPaid) throws SQLException {
-		Connection con = null;
-//		( minus acc value, + securityvalue, - available cash)
-
-		try {
-			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
-
-			String query = "{CALL updatePurchaseInAccount(?,?)}";
-			CallableStatement stmt = con.prepareCall(query); // prepare to call
-
-			stmt.setInt(1, buyerId);
-			stmt.setFloat(2, totalPaid);
-			ResultSet rs = stmt.executeQuery();
-			System.out.println(rs);
-			con.close();
-
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	private void updateSaleInAccount(int sellerId, float value) throws SQLException {
-		Connection con = null;
-
-		try {
-			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
-
-			String query = "{CALL updateSaleInAccount(?,?)}";
-			CallableStatement stmt = con.prepareCall(query); // prepare to call
-
-			stmt.setInt(1, sellerId);
-			stmt.setFloat(2, value);
-			ResultSet rs = stmt.executeQuery();
-			System.out.println(rs);
-			con.close();
-
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	public ArrayList<MarketPending> retrieveOrdersToMatch(boolean isBuy, int stockId, float orderPrice)
-			throws SQLException {
+	private ArrayList<MarketPending> retrieveOrdersToMatch(boolean isBuy, int stockId, float orderPrice,
+			String currConn) throws SQLException {
 		System.out.println("retrieving orders to match function");
 		Connection con = null;
 		ArrayList<MarketPending> retrievedOrders = null;
 		try {
 			Class.forName(DRIVER_CLASS);
-			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
+			con = (Connection) DriverManager.getConnection(currConn, this.username, this.password);
 
 			if (isBuy) {
 				String query = "{CALL getPendingSellOrdersRequiredForNewInsertion(?, ?)}";
@@ -399,6 +353,8 @@ public class StockDBScript {
 		int qty = Integer.parseInt(splitArray[3]);
 		float price = Float.parseFloat(splitArray[4]);
 		Connection con = null;
+		String currConn = conn_string;
+
 		boolean isbuyOrder;
 		boolean isRandomGenOrder = false;
 
@@ -455,7 +411,7 @@ public class StockDBScript {
 			if (isbuyOrder) {
 				// its a buy order
 				System.out.println("Is Buy Order");
-				ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(true, stockId, price);
+				ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(true, stockId, price, currConn);
 				// If return no entries for matching
 				if (fetchedOrders == null) {
 					System.out.println("No fetched orders, Inserting buy order ");
@@ -464,10 +420,11 @@ public class StockDBScript {
 					// buy price or equals to
 
 					Class.forName(DRIVER_CLASS);
-					System.out.println("print conn string, username, password" + this.conn_string + " " + this.username
-							+ " " + this.password);
-					con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
+					System.out.println("print conn string, username, password" + currConn + " " + this.username + " "
+							+ this.password);
+					con = (Connection) DriverManager.getConnection(currConn, this.username, this.password);
 					// If return no entry, create a marketpending order and insert.
+
 					String query1 = "{CALL InsertToMarketPending(?,?,?,?,?,?)}";
 					CallableStatement stmt1 = con.prepareCall(query1); // prepare to call
 					stmt1.setInt(1, stockId);
@@ -544,7 +501,7 @@ public class StockDBScript {
 					if (orderIds.size() == 0) {
 						// no matched orders, make a new marketpending order with initial values.
 						System.out.println("got fetched orders but no matched orders");
-						addMarketPendingOrder(true, stockId, buyerId, qty, price);
+						addMarketPendingOrder(true, stockId, buyerId, qty, price, currConn);
 
 					} else {
 						System.out.println("got fetched orders and got matched orders");
@@ -559,17 +516,18 @@ public class StockDBScript {
 									// update last order here with that qty, call SQL function.
 									System.out.println("update last matched market pending order");
 
-									updateLastMatchedMarketPendingOrder(orderIds.get(i), lastOrderQty);
+									updateLastMatchedMarketPendingOrder(orderIds.get(i), lastOrderQty, currConn);
 									break; // break to stop the loop and not let it close the last matched order.
 								}
 							}
 
 							System.out.println("closing sell market pending order");
 							// call closemarketpendingOrder
-							closeSellMarketPendingOrder(orderIds.get(i), buyerId); // this will delete marketpending
-																					// entries and create
-																					// corresponding marketcomplete
-																					// entries with buyerId.
+							closeSellMarketPendingOrder(orderIds.get(i), buyerId, currConn); // this will delete
+																								// marketpending
+							// entries and create
+							// corresponding marketcomplete
+							// entries with buyerId.
 
 						}
 
@@ -579,7 +537,7 @@ public class StockDBScript {
 							// will create a new marketpending order for the rest of the qty.
 							System.out.println(
 									"add market pending because after closing matched orders, still got more to buy.");
-							addMarketPendingOrder(true, stockId, buyerId, buyOrderQuantity, price);
+							addMarketPendingOrder(true, stockId, buyerId, buyOrderQuantity, price, currConn);
 							// update the user account values with currently executed order total price.
 							int totalQtyBought = qty - buyOrderQuantity;
 							totalPaid = avgPrice * totalQtyBought;
@@ -591,7 +549,7 @@ public class StockDBScript {
 
 						}
 						if (!isRandomGenOrder) {
-							this.updatePurchaseInAccount(buyerId, totalPaid);
+							this.accountDetailsDb.updatePurchaseInAccount(buyerId, totalPaid);
 						}
 					}
 
@@ -602,13 +560,13 @@ public class StockDBScript {
 			{
 				System.out.println("Is sell order");
 				// its a sell order
-				ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(false, stockId, price);
+				ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(false, stockId, price, currConn);
 				if (fetchedOrders == null) {
 					System.out.println("Inserting sell order");
 					// No orders to match with, he want to sell but there's no one buying above his
 					// sell price or equals to.
 					Class.forName(DRIVER_CLASS);
-					con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
+					con = (Connection) DriverManager.getConnection(currConn, this.username, this.password);
 					// If return no entry, create a marketpending order and insert.
 					String query2 = "{CALL InsertToMarketPending(?,?,?,?,?,?)}";
 					CallableStatement stmt2 = con.prepareCall(query2); // prepare to call
@@ -685,7 +643,7 @@ public class StockDBScript {
 					}
 					if (orderIds.size() == 0) {
 						// no matched orders, make a new marketpending order with initial values.
-						addMarketPendingOrder(false, stockId, sellerId, qty, price);
+						addMarketPendingOrder(false, stockId, sellerId, qty, price, currConn);
 
 					} else {
 						for (int i = 0; i < orderIds.size(); i++) { // loop through order IDs and update / delete them
@@ -697,7 +655,7 @@ public class StockDBScript {
 
 								if (lastOrderQty != 0) {
 									// update last order here with that qty, call SQL function.
-									updateLastMatchedMarketPendingOrder(orderIds.get(i), lastOrderQty);
+									updateLastMatchedMarketPendingOrder(orderIds.get(i), lastOrderQty, currConn);
 									break; // break to stop the loop and not let it close the last matched order.
 								}
 							}
@@ -714,7 +672,7 @@ public class StockDBScript {
 						if (sellOrderQuantity != 0) {
 							// means that the order cannot be fulfilled fully, still need more quantity,
 							// will create a new marketpending order for the rest of the qty.
-							addMarketPendingOrder(false, stockId, sellerId, sellOrderQuantity, price);
+							addMarketPendingOrder(false, stockId, sellerId, sellOrderQuantity, price, currConn);
 							// update the user account values with currently executed order total price.
 							int totalQtySold = qty - sellOrderQuantity;
 							totalValueSold = avgPrice * totalQtySold;
@@ -726,7 +684,7 @@ public class StockDBScript {
 						}
 						if (!isRandomGenOrder) {
 
-							this.updateSaleInAccount(sellerId, totalValueSold);
+							this.accountDetailsDb.updateSaleInAccount(sellerId, totalValueSold);
 						}
 					}
 				}
@@ -740,7 +698,8 @@ public class StockDBScript {
 			} else if (!isbuyOrder && !isRandomGenOrder) {
 				this.retrieveClientIntFromHashMap(sellerId).printToClient("error processing");
 			} else {
-				// will reach here if it is randomGenOrder, if randomGenOrder, cannot print to client, just print statement.
+				// will reach here if it is randomGenOrder, if randomGenOrder, cannot print to
+				// client, just print statement.
 				System.out.println("Error when processing random gen order");
 			}
 		}
@@ -821,7 +780,7 @@ public class StockDBScript {
 			e.printStackTrace();
 			System.out.println(market + "-" + currConn);
 			return null;
-			
+
 		}
 		con.close();
 		return arrayListStocks;
@@ -1005,7 +964,13 @@ public class StockDBScript {
 			buyOrSell = rd.nextBoolean();
 			// Get the average price of top 5 per stock
 			averagePrice = getAvgCompletedOrder(stockId);
+
+			if (averagePrice == 0) {
+				averagePrice = randomInRange(0.1, 150.0);
+			}
+
 			if (averagePrice < 10) {
+
 				offsetValue = randomInRange(0, 0.1);
 			} else if (averagePrice >= 10 && averagePrice < 100) {
 				offsetValue = randomInRange(0, 0.2);
