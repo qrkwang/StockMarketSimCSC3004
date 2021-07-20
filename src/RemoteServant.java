@@ -409,15 +409,15 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	public String generateJedisKey(String market, int stockId) {
 		return market + DELIMITER + stockId;
 	}
-	
-	public HashMap<String, String> retrieveFromKey(String key){
+
+	public HashMap<String, String> retrieveFromKey(String key) {
 		HashMap<String, String> data = new HashMap<String, String>();
 		String[] keySplit = key.split(Pattern.quote(DELIMITER));
-		data.put("market",keySplit[0]);
+		data.put("market", keySplit[0]);
 		data.put("stockId", keySplit[1]);
 		return data;
 	}
-	
+
 	public void startCache() {
 		Thread thread = new Thread(new Runnable() {
 			@Override
@@ -496,7 +496,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return value;
 	}
 
-	public String cacheOrderBook(String market, int stockId)  throws RemoteException {
+	public String cacheOrderBook(String market, int stockId) throws RemoteException {
 		String key = generateJedisKey(market, stockId);
 		String value = retrieveOrderBook(market, stockId);
 		if (value.equals("empty") && value.equals("error fetching"))
@@ -507,11 +507,12 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		return value;
 	}
 
-	public HashMap<String, String> retrieveStockCache(String market, int stockId, ClientInt client, boolean callback) throws RemoteException {
-		String key = generateJedisKey(market,stockId);
+	public HashMap<String, String> retrieveStockCache(String market, int stockId, ClientInt client, boolean callback)
+			throws RemoteException {
+		String key = generateJedisKey(market, stockId);
 		lastSearchTimestamp.put(key, System.currentTimeMillis());
 		HashMap<String, String> result = new HashMap<String, String>();
-		if(callback) {
+		if (callback) {
 			Thread thread = new Thread(new Runnable() {
 				@Override
 				public void run() {
@@ -550,6 +551,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 	@Override
 	public void removeFromClientHashMap(int accountId) throws RemoteException {
+		usaDb.removeFromClientHashMap(accountId);
+		hkDb.removeFromClientHashMap(accountId);
+		sgDb.removeFromClientHashMap(accountId);
+
 		if (clientHashMap.containsKey(accountId)) {
 			clientHashMap.remove(accountId);
 		}
