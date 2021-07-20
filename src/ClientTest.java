@@ -147,11 +147,15 @@ public class ClientTest extends java.rmi.server.UnicastRemoteObject  implements 
 		
 	}
 
+
+
 	@Override
-	public void sendOrderBook(String orderbook) throws RemoteException {
+	public void updateOrderBook(String market, int stockId, boolean bought, boolean sold, int quantity)
+			throws RemoteException {
 		// TODO Auto-generated method stub
 		
 	}
+
 
 	
 }

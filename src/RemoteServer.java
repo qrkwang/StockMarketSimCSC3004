@@ -14,8 +14,8 @@ public class RemoteServer {
 			System.out.format("Created server, now advertising it\n");
 
 			// Naming lookup
-			RemoteInterface remoteObj = new RemoteServant();
 			LocateRegistry.createRegistry(port);
+			RemoteInterface remoteObj = new RemoteServant();
 			Naming.rebind("rmi://localhost:" + port + "/RemoteServer", remoteObj);
 			System.out.format("Advertising completed\n");
 

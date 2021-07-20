@@ -383,7 +383,7 @@ public class StockDBScript {
 			isbuyOrder = false;
 
 		}
-
+		
 		if (buyerId == 0 || sellerId == 0) {
 			System.out.println("receive order is randomGen order");
 
@@ -713,7 +713,8 @@ public class StockDBScript {
 				}
 				
 			}
-			currClient.updateOrderBook(market, stockId, bought, sold, totalQtyStocks);
+			if(!isRandomGenOrder)
+				currClient.updateOrderBook(market, stockId, bought, sold, totalQtyStocks);
 		} catch (SQLException | ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
