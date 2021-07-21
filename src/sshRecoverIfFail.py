@@ -19,7 +19,7 @@ client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
 # Server that fail
 failedServer = sys.argv[1]
-username = "joy"
+username = "a"
 # Database password
 dbUser = "root"
 dbPassword = "root"
@@ -30,7 +30,7 @@ sgHostname = hkIPAddress
 sgDatabaseName = "SGStockMarket"
 sgReceivingFile = "SGPart2.sql"
 # Retrieve the other half of the file
-sgReceivingServer = "joy@" + usIPAddress + ":/home/joy/SGPart2.sql"
+sgReceivingServer = "a@" + usIPAddress + ":/home/a/SGPart2.sql"
 # the file has already stored in hk server
 sgCurrentFile = "SGPart1.sql"
 
@@ -40,7 +40,7 @@ usHostname = sgIPAddress
 usDatabaseName = "USStockMarket"
 usReceivingFile = "USPart2.sql"
 # Retrieve the other half of the file
-usReceivingServer = "joy@"+hkIPAddress + ":/home/joy/USPart2.sql"
+usReceivingServer = "a@"+hkIPAddress + ":/home/a/USPart2.sql"
 # the file has already stored in SG server
 usCurrentFile = "USPart1.sql"
 
@@ -50,7 +50,7 @@ hkHostname = usIPAddress
 hkDatabaseName = "HKStockMarket"
 hkReceivingFile = "HKPart2.sql"
 # Retrieve the other half of the file
-hkReceivingServer = "joy@" + sgIPAddress + ":/home/joy/HKPart2.sql"
+hkReceivingServer = "a@" + sgIPAddress + ":/home/a/HKPart2.sql"
 # the file has already stored in US server
 hkCurrentFile = "HKPart1.sql"
 try:

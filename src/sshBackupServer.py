@@ -14,7 +14,7 @@ client = paramiko.SSHClient()
 # add to known hosts
 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-username = "joy"
+username = "a"
 # database username and password
 dbUser = "root"
 dbPassword = "root"
@@ -23,25 +23,25 @@ dbPassword = "root"
 usHostname = usIPAddress
 usDatabaseName = "USStockMarket"
 usFileNamePart1 = "USPart1.sql"
-usDestinationServerPart1 = "joy@" + sgIPAddress + ":/home/joy/USPart1.sql"
+usDestinationServerPart1 = "a@" + sgIPAddress + ":/home/a/USPart1.sql"
 usFileNamePart2 = "USPart2.sql"
-usDestinationServerPart2 = "joy@" + hkIPAddress + ":/home/joy/USPart2.sql"
+usDestinationServerPart2 = "a@" + hkIPAddress + ":/home/a/USPart2.sql"
 
 # SG Server Info
 sgHostname = sgIPAddress
 sgDatabaseName = "SGStockMarket"
 sgFileNamePart1 = "SGPart1.sql"
-sgDestinationServerPart1 = "joy@" + hkIPAddress + ":/home/joy/SGPart1.sql"
+sgDestinationServerPart1 = "a@" + hkIPAddress + ":/home/a/SGPart1.sql"
 sgFileNamePart2 = "SGPart2.sql"
-sgDestinationServerPart2 = "joy@"+usIPAddress+":/home/joy/SGPart2.sql"
+sgDestinationServerPart2 = "a@"+usIPAddress+":/home/a/SGPart2.sql"
 
 # HK Server Info
 hkHostname = hkIPAddress
 hkDatabaseName = "HKStockMarket"
 hkFileNamePart1 = "HKPart1.sql"
-hkDestinationServerPart1 = "joy@"+usIPAddress+":/home/joy/HKPart1.sql"
+hkDestinationServerPart1 = "a@"+usIPAddress+":/home/a/HKPart1.sql"
 hkFileNamePart2 = "HKPart2.sql"
-hkDestinationServerPart2 = "joy@"+sgIPAddress+":/home/joy/HKPart2.sql"
+hkDestinationServerPart2 = "a@"+sgIPAddress+":/home/a/HKPart2.sql"
 i = 0
 usTime = 0
 try:

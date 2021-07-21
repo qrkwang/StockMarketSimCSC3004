@@ -15,7 +15,7 @@ recoveringServer = sys.argv[1]
 client = paramiko.SSHClient()
 # add to known hosts
 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-username = "joy"
+username = "a"
 # database password
 dbUser = "root"
 dbPassword = "root"
@@ -25,27 +25,27 @@ hkTempServer = usIPAddress
 hkDatabaseName = "HKStockMarket"
 hkFileName = "HKBackup.sql"
 # File location to send back to the HK server
-hkDestinationServer = "joy@" + hkIPAddress + ":/home/joy/HKBackup.sql"
+hkDestinationServer = "a@" + hkIPAddress + ":/home/a/HKBackup.sql"
 # The original HK server
-hkDestinationIP = "joy@" + hkIPAddress
+hkDestinationIP = "a@" + hkIPAddress
 
 # Server that temporary running the sg database
 sgTempServer = hkIPAddress
 sgDatabaseName = "SGStockMarket"
 sgFileName = "SGBackup.sql"
 # File location to send back to the SG server
-sgDestinationServer = "joy@" + sgIPAddress + ":/home/joy/SGBackup.sql"
+sgDestinationServer = "a@" + sgIPAddress + ":/home/a/SGBackup.sql"
 # The original SG server
-sgDestinationIP = "joy@"+sgIPAddress
+sgDestinationIP = "a@"+sgIPAddress
 
 # Server that temporary running the US database
 usTempServer = sgIPAddress
 usDatabaseName = "USStockMarket"
 usFileName = "USBackup.sql"
 # File location to send back to the US server
-usDestinationServer = "joy@"+ usIPAddress + ":/home/joy/USBackup.sql"
+usDestinationServer = "a@"+ usIPAddress + ":/home/a/USBackup.sql"
 # The original US server
-usDestinationIP = "joy@" + usIPAddress
+usDestinationIP = "a@" + usIPAddress
 
 try:
     # bringing HK DB back to the original server
