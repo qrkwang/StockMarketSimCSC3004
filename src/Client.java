@@ -69,7 +69,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 	private enum Page {
 		SG, HK, US, STOCK, OTHER
 	};
-
+	//Variable to keep track of user current navigation through the application
 	private int currentDisplayStockId;
 	private int ownedQuantity;
 	private String currentDisplayCompanyName;
@@ -79,7 +79,9 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 	public Client() throws RemoteException {
 		try {
+			//Retrieve the remote server
 			remoteObj = (RemoteInterface) Naming.lookup("rmi://localhost:1099/RemoteServer");
+			//Initialise variable
 			currentDisplayStockId = -1;
 			ownedQuantity = -1;
 			accountDetailsObj = null;
@@ -99,12 +101,12 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		}
 	}
 
-	// Unicast from server to client to print whatever.
+	// Unicast from server to client for notification.
 	public void printToClient(String message) throws java.rmi.RemoteException {
 
 		notificationPopUp(message);
 	}
-
+	//Notification pop up frame
 	public void notificationPopUp(String message) {
 		GridBagConstraints gbc = new GridBagConstraints();
 		JFrame notificationFrame = new JFrame();
@@ -128,7 +130,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		notificationPanel.add(btnClose, gbc);
 		notificationFrame.add(notificationPanel);
 	}
-
+	
+	//Callback to trigger market update
 	public void updateMarket(String market) throws java.rmi.RemoteException {
 		String m = currentPage.name();
 		if (m.equals(market)) {
@@ -151,9 +154,12 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			frame.revalidate();
 		}
 	}
-
+	
+	//Callback trigger upon a completed transaction
+	//Trigger the update of order book, account details and holdings, and market details
+	//Update the owned quantity based on the stock bought/sold
 	public void updateOrderBook(String market, int stockId, boolean bought, boolean sold, int quantity) throws java.rmi.RemoteException {
-		// TODO Auto-generated method stub
+		//Update the stock overview panel upon completed transaction
 		if (currentPage.name().equals("STOCK") && currentDisplayMarket.name().equals(market)
 				&& stockId == currentDisplayStockId) {
 			if(bought) {
@@ -171,31 +177,33 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			remoteObj.cacheMarket();
 			createChartPanel(false);
 			switchPanel(chartPanel);
-			try {
-				String resAccountDetails = remoteObj.getAccountDetailsById(this, accountDetailsObj.getAccountId());
-				// convert json string to object
-				switch(resAccountDetails) {
-				case "not found":
-					notificationPopUp("getAccountDetailsById not found");
-					break;
-				case "problem":
-					notificationPopUp("getAccountDetailsById encountered a problem");
-					break;
-				default:
-					// Redirect to homePanel
-					ObjectMapper objectMapper = new ObjectMapper();
-					accountDetailsObj = objectMapper.readValue(resAccountDetails, AccountDetails.class);
-					accountHoldings = remoteObj.getAccountHoldingsById(accountDetailsObj.getAccountId());
-					createHomePanel();
-				}
-			} catch (Exception ex) {
-				System.out.format("Error obtaining remoteServer/remoteInterface from registry");
-				ex.printStackTrace();
-//				System.exit(1);
+		}
+		//Update the account details and holding, and market details
+		//Refresh the homePanel
+		try {
+			String resAccountDetails = remoteObj.getAccountDetailsById(this, accountDetailsObj.getAccountId());
+			// convert json string to object
+			switch(resAccountDetails) {
+			case "not found":
+				notificationPopUp("getAccountDetailsById not found");
+				break;
+			case "problem":
+				notificationPopUp("getAccountDetailsById encountered a problem");
+				break;
+			default:
+				// Update to homePanel
+				ObjectMapper objectMapper = new ObjectMapper();
+				accountDetailsObj = objectMapper.readValue(resAccountDetails, AccountDetails.class);
+				accountHoldings = remoteObj.getAccountHoldingsById(accountDetailsObj.getAccountId());
+				createHomePanel();
 			}
+		} catch (Exception ex) {
+			System.out.format("Error obtaining remoteServer/remoteInterface from registry");
+			ex.printStackTrace();
 		}
 	}
-	
+
+	//Callback to trigger stock overview update
 	public void updateStock(String market, int stockId) throws java.rmi.RemoteException {
 		if (currentPage.name().equals("STOCK") && currentDisplayMarket.name().equals(market)
 				&& stockId == currentDisplayStockId) {
@@ -207,7 +215,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 	// Client will need to display account details, send buy/sell order, list of
 	// account stock holdings, polling of stock price per interval (not necessarily
 	// need polling, can be on update) when on that page, stock page orders.
-
 	@SuppressWarnings({ "unchecked", "resource", "rawtypes" })
 	private static ArrayList<?> deserializeString(String sb, String action) {
 		final int[] index = { 0 };
@@ -251,6 +258,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		return deserializedList;
 	}
 
+	//Method to add label to panel
 	public void addLabel(JPanel panel, String label, int gridx, int gridy, Insets insets) {
 		GridBagConstraints gbc = new GridBagConstraints();
 		JLabel lbl = new JLabel(label);
@@ -261,6 +269,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		panel.add(lbl, gbc);
 	}
 
+	//Method to add label to JTabbedPane
 	public void addLabel(JTabbedPane panel, String label, int gridx, int gridy, Insets insets) {
 		GridBagConstraints gbc = new GridBagConstraints();
 		JLabel lbl = new JLabel(label);
@@ -271,6 +280,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		panel.add(lbl, gbc);
 	}
 
+	//Method to add text field to panel
 	public void addTextField(JPanel panel, JTextField txtField, int column, int gridx, int gridy, Insets insets) {
 		GridBagConstraints gbc = new GridBagConstraints();
 		txtField.setColumns(column);
@@ -281,6 +291,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		panel.add(txtField, gbc);
 	}
 
+	//Change the panel displayed to the user
 	public void switchPanel(JPanel panel) {
 		frame.setContentPane(new JScrollPane(panel));
 		frame.validate();
@@ -288,6 +299,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		panel.requestFocusInWindow();
 	}
 
+	//Initialise UI variables
 	public void initialise() {
 		frame = new JFrame("Stock");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -301,6 +313,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		////System.out.println("Done initialised!");
 	}
 
+	//Create the Log in panel
 	public void createLoginPanel() {
 		GridBagConstraints gbc = new GridBagConstraints();
 		loginPanel = new JPanel();
@@ -329,6 +342,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		gbc.insets = DEFAULTINSETS;
 		loginPanel.add(errorLbl, gbc);
 
+		//Button to trigger log in check
 		JButton btnLogin = new JButton("Login");
 		Client c = this;
 		btnLogin.addActionListener(new ActionListener() {
@@ -336,10 +350,10 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				checkLogin(userNameTxt, passwordTxt, errorLbl, c);
 			}
 		});
+		//Trigger log in check upon pressing "Enter"
 		userNameTxt.addKeyListener(new KeyListener() {
 			@Override
 			public void keyPressed(KeyEvent e) {
-				// TODO Auto-generated method stub
 				int keyCode = e.getKeyCode();
 				if (keyCode == 10) {
 					checkLogin(userNameTxt, passwordTxt, errorLbl, c);
@@ -357,7 +371,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		passwordTxt.addKeyListener(new KeyListener() {
 			@Override
 			public void keyPressed(KeyEvent e) {
-				// TODO Auto-generated method stub
 				int keyCode = e.getKeyCode();
 				if (keyCode == 10) {
 					checkLogin(userNameTxt, passwordTxt, errorLbl, c);
@@ -372,6 +385,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			public void keyTyped(KeyEvent e) {
 			}
 		});
+		//Focus on the user name textbox upon displaying the panel
 		loginPanel.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusGained(FocusEvent e) {
@@ -387,12 +401,14 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		gbc.gridwidth = 0;
 	}
 
+	//Log in check
 	public void checkLogin(JTextField userNameTxt, JTextField passwordTxt, JLabel errorLbl, Client c) {
-		// Check login
 		try {
+			//Retrieve result from server
 			String resAccountDetails = remoteObj.getAccountDetailsByUsernameAndPW(c, userNameTxt.getText(),
 					passwordTxt.getText());
-			// convert json string to object
+			//Check result
+			//Show error message using error label
 			switch (resAccountDetails) {
 			case "not found":
 				errorLbl.setText("Invalid Username or Password!");
@@ -401,7 +417,9 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				errorLbl.setText("There's a problem while accessing the server. Please try again later.");
 				break;
 			default:
-				// Redirect to homePanel
+				// Log in success
+				//Retrieve account details and holdings
+				//Redirect to home panel
 				ObjectMapper objectMapper = new ObjectMapper();
 				accountDetailsObj = objectMapper.readValue(resAccountDetails, AccountDetails.class);
 				accountHoldings = remoteObj.getAccountHoldingsById(accountDetailsObj.getAccountId());
@@ -414,22 +432,24 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		} catch (Exception ex) {
 			System.out.format("Error obtaining remoteServer/remoteInterface from registry");
 			ex.printStackTrace();
-//			System.exit(1);
 		}
 	}
 	
+	//Log out
 	public void logout(){
+		//Remove client from the server record
 		try {
 			remoteObj.removeFromClientHashMap(accountDetailsObj.getAccountId());
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		// Redirect to loginPanel
+		// Redirect to login panel
 		switchPanel(loginPanel);
 		currentPage = Page.OTHER;
 	}
 
+	//Create the home panel
 	public void createHomePanel() {
 		homePanel = new JPanel();
 		homePanel.setLayout(new GridBagLayout());
@@ -442,6 +462,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		homePanel.add(homePane, gbc);
 		JPanel dashboardPanel = new JPanel();
 		dashboardPanel.setLayout(new GridBagLayout());
+		//Display the account holding
 		if (accountDetailsObj != null) {
 			addLabel(dashboardPanel, accountDetailsObj.getUserName(), 0, 0, DEFAULTINSETS);
 			addLabel(dashboardPanel, "Total Account Value: $" + accountDetailsObj.getTotalAccountValue(), 1, 0,
@@ -507,6 +528,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 		}
 
+		//Display the markets' stocks details
 		JPanel SGPanel = createCountryPanel(Market.SG);
 		JPanel HKPanel = createCountryPanel(Market.HK);
 		JPanel USPanel = createCountryPanel(Market.US);
@@ -544,6 +566,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		homePanel.add(btnLogout, gbc);
 	}
 
+	//Create each row of the account holdings
 	public void setUpHoldingRow(JPanel holdingPanel, Market market, int stockId, String companyName,
 			String tickerSymbol, int quantity, float avgPrice, int count) {
 		GridBagConstraints gbc = new GridBagConstraints();
@@ -571,7 +594,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		holdingPanel.add(submitBtn, gbc);
 	}
 
-	@SuppressWarnings("unchecked")
+	//Create each markets' stocks details
 	public JPanel createCountryPanel(Market market) {
 		GridBagConstraints gbc = new GridBagConstraints();
 		JPanel JSPane = new JPanel();
@@ -628,6 +651,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		return JSPane;
 	}
 
+	//Check if client own the stock
 	public void checkOwnHolding(Market market, int stockId) {
 		boolean found = false;
 		for (StockOwned so : accountHoldings) {
@@ -641,8 +665,9 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			ownedQuantity = -1;
 	}
 
-	@SuppressWarnings("unchecked")
+	//Create the stock overview panel
 	public void createChartPanel(boolean callback) {
+		//Initialise variable for the ohlc chart using knowm xchart
 		OHLCChart chart = new OHLCChartBuilder().width(800).height(600).title(currentDisplayTickerSymbol + " - " + currentDisplayCompanyName).build();
 		List<Date> xData = new ArrayList<Date>();
 		List<Float> openData = new ArrayList<Float>();
@@ -660,7 +685,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		if (currentDisplayStockId != -1) {
 			try {
 				ArrayList<MarketComplete> arrayListCompleteOrders = null;
-//				updateOrderBook(null);
 				HashMap<String, String> res = remoteObj.retrieveStockCache(currentDisplayMarket.name(), currentDisplayStockId,
 						this, callback);
 				String orderCompleted = res.get("orderCompleted");
@@ -669,8 +693,9 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				} else if (orderCompleted.equals("error fetching")) {
 					System.out.println("had some issue fetching from server");
 				} else {
-					arrayListCompleteOrders = (ArrayList<MarketComplete>) deserializeString(orderCompleted,
-							"completeOrders");
+					//Retrieve stock's history
+					//Populate the chart data
+					arrayListCompleteOrders = (ArrayList<MarketComplete>) deserializeString(orderCompleted,"completeOrders");
 					if (arrayListCompleteOrders.size() > 0) {
 						MarketComplete firstMC = arrayListCompleteOrders.get(0);
 						openData.add(firstMC.getPrice());
@@ -680,8 +705,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 								.plusMinutes(1);
 						xData.add(java.sql.Timestamp.valueOf(currentDT));
 						float latestClose = firstMC.getPrice();
-						////System.out.println("Time: " + java.sql.Timestamp.valueOf(currentDT));
-						////System.out.println("Open: " + firstMC.getPrice());
 						for (int i = 1; i < arrayListCompleteOrders.size(); i++) {
 							MarketComplete mc = arrayListCompleteOrders.get(i);
 							LocalDateTime minuteRoundCeiling = mc.getTransactionDate().truncatedTo(ChronoUnit.MINUTES)
@@ -689,31 +712,27 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 							if (!currentDT.equals(minuteRoundCeiling)) {
 								xData.add(java.sql.Timestamp.valueOf(currentDT));
 								closeData.add(latestClose);
-								////System.out.println("Close: " + latestClose);
 								openData.add(latestClose);
 								highData.add(latestClose);
 								lowData.add(latestClose);
-								////System.out.println("Time: " + java.sql.Timestamp.valueOf(currentDT));
-								////System.out.println("Open: " + latestClose);
 
 							}
 							currentDT = minuteRoundCeiling;
 							latestClose = mc.getPrice();
 						}
 						closeData.add(latestClose);
-						////System.out.println("Close: " + latestClose);
-//						// Customize Chart
+						// Customize Chart
 						chart.getStyler().setLegendPosition(Styler.LegendPosition.OutsideS);
 						chart.getStyler().setLegendLayout(Styler.LegendLayout.Horizontal);
-
-//						xData = null;
+						chart.getStyler().setToolTipsEnabled(true);
+						// Add data to the chart
 						chart.addSeries("Series", xData, openData, highData, lowData, closeData).setUpColor(Color.GREEN)
 								.setDownColor(Color.RED);
-						chart.getStyler().setToolTipsEnabled(true);
 					}
-					////System.out.println(arrayListCompleteOrders.toString());
 
 				}
+				//Retrieve order book from the server
+				//Populate the order book
 				String orderbook = res.get("orderBook");
 				if(!orderbook.equals("empty") && !orderbook.equals("error fetching")) {
 					ArrayList<OrderBook> arrayListOrderBook = (ArrayList<OrderBook>) deserializeString(orderbook, "orderBook");
@@ -733,18 +752,13 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 							sellOBCount++;
 						}
 					}
-					System.out.println("INSIDE");
-					for(OrderBook ob : arrayListOrderBook) {
-						System.out.println("ORDER BOOK - " + ob.getType() + " - " + ob.getQuantity() + " - " + ob.getPrice());
-					}
 				}
-				
-				
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			// Create Chart
+			
+			// Create ohlc chart UI
 			XChartPanel<OHLCChart> ohlcChart = new XChartPanel<OHLCChart>(chart);
 			JPanel ohlcPanel = ohlcChart;
 			ohlcChart.repaint();
@@ -754,7 +768,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			gbc.gridy = 0;
 			gbc.insets = DEFAULTINSETS;
 			chartPanel.add(ohlcPanel, gbc);
-
+			
+			//Create the order book UI
 			JPanel bottomPanel = new JPanel();
 			bottomPanel.setLayout(new GridBagLayout());
 			JTabbedPane infoPane = new JTabbedPane();
@@ -769,23 +784,21 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			addLabel(sellOrderBookPanel, "Type", 0, 0, LISTINSETS);
 			addLabel(sellOrderBookPanel, "Quantity", 1, 0, LISTINSETS);
 			addLabel(sellOrderBookPanel, "Price", 2, 0, LISTINSETS);
-
-			
 			
 			infoPane.add("Order Book", orderPanel);
-
 			gbc.fill = GridBagConstraints.HORIZONTAL;
 			gbc.gridx = 0;
 			gbc.gridy = 0;
 			gbc.insets = DEFAULTINSETS;
 			bottomPanel.add(infoPane, gbc);
-
+			
+			//Create button for buy
 			JPanel buttonPanel = new JPanel();
 			buttonPanel.setLayout(new GridBagLayout());
 			JButton btnBuy = new JButton("Buy Stock");
 			btnBuy.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					// Buy stock
+					// Buy stock by setting the 3rd parameter to true
 					buySellStockFrame(currentDisplayMarket.name(), currentDisplayStockId, true, 0);
 				}
 			});
@@ -794,11 +807,13 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			gbc.gridy = 0;
 			gbc.insets = new Insets(0, 0, 10, 10);
 			buttonPanel.add(btnBuy, gbc);
+			
+			//Create button for sell if got owned quantity
 			if (ownedQuantity != -1) {
 				JButton btnSell = new JButton("Sell Stock");
 				btnSell.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-						// Buy stock
+						// Sell stock by setting the 3rd parameter to false
 						buySellStockFrame(currentDisplayMarket.name(), currentDisplayStockId, false, ownedQuantity);
 					}
 				});
@@ -808,7 +823,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				gbc.insets = new Insets(0, 0, 10, 10);
 				buttonPanel.add(btnSell, gbc);
 			}
-
+			
+			//Navigation button
 			JButton btnBack = new JButton("Back to Home");
 			btnBack.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
@@ -854,6 +870,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		}
 	}
 
+	//Create buy/sell pop up frame
 	public void buySellStockFrame(String market, int StockId, boolean buy, int max) {
 		GridBagConstraints gbc = new GridBagConstraints();
 		JFrame orderStockFrame = new JFrame();
@@ -870,6 +887,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		addLabel(orderPanel, "Quantity:", 0, 1, DEFAULTINSETS);
 
 		SpinnerModel sm = new SpinnerNumberModel(0, 0, max, 1);
+		//Remove max limit if buying
 		if (buy)
 			sm = new SpinnerNumberModel(0, 0, null, 1);
 		JSpinner quantitySpinner = new JSpinner(sm);
@@ -897,7 +915,8 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 
 		btnSubmit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				// Send buy order
+				// Retrieve user input from the textbox
+				// Send order to server
 				try {
 					quantitySpinner.commitEdit();
 					priceSpinner.commitEdit();
@@ -909,11 +928,9 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 						order = generateOrder(StockId, -1, accountId, quantity, price);
 					else
 						order = generateOrder(StockId, accountId, -1, quantity, price);
-					remoteObj.sendOrder(accountId, market, order, false); // -1 to indicate null, i will change to null
-																			// on
+					remoteObj.sendOrder(accountId, market, order, false); 
 					orderStockFrame.dispose();
 				} catch (ParseException | RemoteException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -926,8 +943,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		orderStockFrame.add(orderPanel);
 	}
 
-	// Please send in format (accountId, "US", "StockId, SellerId, BuyerId, Qty,
-	// Price")
+	// Generate the order for the server
 	public String generateOrder(int StockId, int sellerId, int buyerId, int qty, float price) {
 		return StockId + "," + sellerId + "," + buyerId + "," + qty + "," + price;
 	}
@@ -935,7 +951,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 	@SuppressWarnings({ "unchecked", "resource" })
 	public static void main(String[] args) {
 		try {
-			RemoteInterface remoteObj = (RemoteInterface) Naming.lookup("rmi://localhost:1099/RemoteServer");
+			//Create the client
 			ClientInt cc = new Client();
 		} catch (Exception e) {
 			System.out.format("Error obtaining remoteServer/remoteInterface from registry");
