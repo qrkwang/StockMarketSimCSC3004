@@ -77,21 +77,81 @@ SELECT * FROM marketpending;
 END$$
 DELIMITER ;
 
-USE USStockMarket;
-DROP PROCEDURE IF EXISTS `UpdateMarketPendingQuantity`;
+USE `USStockMarket`;
+DROP PROCEDURE IF EXISTS `UpdateSellMarketPendingQuantity`;
 
 DELIMITER $$
 USE `USStockMarket`$$
+CREATE PROCEDURE `UpdateSellMarketPendingQuantity`(IN inputMarketPendingId int, In inputQuantity int, In myQty int, In inputBuyerId int)
 
-CREATE PROCEDURE `UpdateMarketPendingQuantity`(IN inputMarketPendingId int, In inputQuantity int)
 BEGIN
+
+SELECT @sellerId := SellerId 
+FROM marketpending 
+WHERE MarketPendingId = inputMarketPendingId;
+
+SELECT @stockId := StockId 
+FROM marketpending 
+WHERE MarketPendingId = inputMarketPendingId;
+
+SELECT @quantity := Quantity 
+FROM marketpending 
+WHERE MarketPendingId = inputMarketPendingId;
+
+SELECT @price := Price 
+FROM marketpending
+WHERE MarketPendingId = inputMarketPendingId;
+
 
 UPDATE marketpending 
 SET Quantity = inputQuantity
 WHERE MarketPendingId = inputMarketPendingId;
 
+INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
+VALUES(@stockId,@sellerId, inputBuyerId, myQty,@price, now());
+
+UPDATE stock SET CurrentValue = @price WHERE StockId = @stockId;
 END$$
 DELIMITER ;
+
+
+USE `USStockMarket`;
+DROP PROCEDURE IF EXISTS `UpdateBuyMarketPendingQuantity`;
+
+DELIMITER $$
+USE `USStockMarket`$$
+CREATE PROCEDURE `UpdateBuyMarketPendingQuantity`(IN inputMarketPendingId int, In inputQuantity int, In myQty int, In inputSellerId int)
+
+BEGIN
+
+SELECT @buyerId := BuyerId 
+FROM marketpending 
+WHERE MarketPendingId = inputMarketPendingId;
+
+SELECT @stockId := StockId 
+FROM marketpending 
+WHERE MarketPendingId = inputMarketPendingId;
+
+SELECT @quantity := Quantity 
+FROM marketpending 
+WHERE MarketPendingId = inputMarketPendingId;
+
+SELECT @price := Price 
+FROM marketpending
+WHERE MarketPendingId = inputMarketPendingId;
+
+
+UPDATE marketpending 
+SET Quantity = inputQuantity
+WHERE MarketPendingId = inputMarketPendingId;
+
+INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
+VALUES(@stockId,inputSellerId, @buyerId, myQty ,@price, now());
+
+UPDATE stock SET CurrentValue = @price WHERE StockId = @stockId;
+END$$
+DELIMITER ;
+
 
 USE `USStockMarket`;
 DROP PROCEDURE IF EXISTS `GetAllStocks`;

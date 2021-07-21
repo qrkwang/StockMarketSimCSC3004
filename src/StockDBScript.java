@@ -139,18 +139,25 @@ public class StockDBScript {
 		}
 	}
 
-	private void updateLastMatchedMarketPendingOrder(int id, int lastQty, String currConn) throws SQLException {
+	private void updateLastMatchedMarketPendingOrder(boolean isBuy, int id, int lastQty, int qty, int accId, String currConn) throws SQLException {
 		Connection con = null;
 
 		try {
 			Class.forName(DRIVER_CLASS);
 			con = (Connection) DriverManager.getConnection(currConn, this.username, this.password);
+			String query;
+			if (isBuy) {
+			 query = "{CALL UpdateSellMarketPendingQuantity(?, ?, ?, ?)}";
+			} else {
+				 query = "{CALL UpdateBuyMarketPendingQuantity(?, ?, ?, ?)}";
 
-			String query = "{CALL UpdateMarketPendingQuantity(?, ?)}";
+			}
+			
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 			stmt.setInt(1, id);
 			stmt.setInt(2, lastQty);
-
+			stmt.setInt(3, qty);
+			stmt.setInt(4, accId);
 			ResultSet rs = stmt.executeQuery();
 			System.out.println(rs);
 			con.close();
@@ -276,11 +283,11 @@ public class StockDBScript {
 			Class.forName(DRIVER_CLASS);
 			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
 
-			String query = "{CALL CloseBuyMarketPendingOrders(?,?)}";
+			String query = "{CALL getQuantityByAccountIdAndStockId(?,?)}";
 			CallableStatement stmt = con.prepareCall(query); // prepare to call
 
-			stmt.setInt(1, stockId);
-			stmt.setInt(2, accId);
+			stmt.setInt(1, accId);
+			stmt.setInt(2, stockId);
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
 				qty = rs.getInt("Quantity");
@@ -374,6 +381,7 @@ public class StockDBScript {
 		int buyerId = Integer.parseInt(splitArray[2]);
 		int qty = Integer.parseInt(splitArray[3]);
 		float price = Float.parseFloat(splitArray[4]);
+		System.out.println("stock id is " + stockId);
 		int totalQtyStocks = 0;
 		boolean bought = false;
 		boolean sold = false;
@@ -410,8 +418,8 @@ public class StockDBScript {
 		try {
 
 			if (!isRandomGenOrder) {
-				// received order is not randomGen order and is buy order
-				System.out.println("received order is not randomGen order and is buy order");
+				// received order is not randomGen order
+				System.out.println("received order is not randomGen order");
 
 				// check balance if not randomGenOrder
 				accountBalance = accountDetailsDb.getAccountBalanceById(accountId);
@@ -515,7 +523,11 @@ public class StockDBScript {
 																				// buyOrderQuantity
 
 							lastOrderQty = order.getQuantity() - buyOrderQuantity;
-
+							System.out.println("order qty is " + order.getQuantity());
+							System.out.println("my buy order qty is " + buyOrderQuantity);
+							
+							System.out.println("last order qty is " + lastOrderQty);
+							
 							moneyPaid += order.getPrice() * order.getQuantity(); // accumulate the money paid by adding
 																					// it per order.
 
@@ -550,7 +562,10 @@ public class StockDBScript {
 									// update last order here with that qty, call SQL function.
 									System.out.println("update last matched market pending order");
 
-									updateLastMatchedMarketPendingOrder(orderIds.get(i), lastOrderQty, currConn);
+									// close last matched order
+									updateLastMatchedMarketPendingOrder(true, orderIds.get(i), lastOrderQty, qty, accountId, currConn);
+									
+									// update that guy sell order with lastorderqty, make a new order completed with my buy id and his sell id, with my buyorder qty.
 									break; // break to stop the loop and not let it close the last matched order.
 								}
 							}
@@ -673,6 +688,10 @@ public class StockDBScript {
 																				// sellOrderQuantity
 
 							lastOrderQty = order.getQuantity() - sellOrderQuantity;
+							System.out.println("order qty is " + order.getQuantity());
+							System.out.println("my sell order qty is " + sellOrderQuantity);
+							
+							System.out.println("last order qty is " + sellOrderQuantity);
 
 							moneyReceived += order.getPrice() * order.getQuantity(); // accumulate the money received by
 																						// adding
@@ -706,7 +725,7 @@ public class StockDBScript {
 
 								if (lastOrderQty != 0) {
 									// update last order here with that qty, call SQL function.
-									updateLastMatchedMarketPendingOrder(orderIds.get(i), lastOrderQty, currConn);
+									updateLastMatchedMarketPendingOrder(false, orderIds.get(i), lastOrderQty, qty, accountId, currConn);
 									break; // break to stop the loop and not let it close the last matched order.
 								}
 							}
