@@ -9,28 +9,30 @@ IN stockId Int, In sellerId Int, In buyerId Int, In quantity Int, In price Doubl
 )
 BEGIN
 
-INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
-VALUES(stockId,sellerId, buyerId, quantity,price, transactionDate);
+	INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
+	VALUES(stockId,sellerId, buyerId, quantity,price, transactionDate);
 
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `GetAllMarketCompleted`;
+
 DELIMITER $$
 USE `HKStockMarket`$$
 
 CREATE PROCEDURE `GetAllMarketCompleted`()
 BEGIN
 
-SELECT * 
-FROM marketcompleted
-ORDER BY TransactionDate ASC;
+	SELECT * 
+	FROM marketcompleted
+	ORDER BY TransactionDate ASC;
 
 END$$
 DELIMITER ;
 
-
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `InsertToMarketPending`;
 
@@ -42,12 +44,13 @@ IN stockId Int, In sellerId Int, In buyerId Int, In quantity Int, In price Doubl
 )
 BEGIN
 
-INSERT INTO marketpending (StockId, SellerId, BuyerId, Quantity, Price, CreatedDate)
-VALUES(stockId,sellerId, buyerId, quantity,price, createdDate);
+	INSERT INTO marketpending (StockId, SellerId, BuyerId, Quantity, Price, CreatedDate)
+	VALUES(stockId,sellerId, buyerId, quantity,price, createdDate);
 
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `DeleteMarketPending`;
 
@@ -57,11 +60,12 @@ USE `HKStockMarket`$$
 CREATE PROCEDURE `DeleteMarketPending`(In inputMarketPendingId int)
 BEGIN
 
-DELETE FROM marketpending where MarketPendingId = inputMarketPendingId;
+	DELETE FROM marketpending WHERE MarketPendingId = inputMarketPendingId;
 
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `GetAllMarketPending`;
 
@@ -71,11 +75,12 @@ USE `HKStockMarket`$$
 CREATE PROCEDURE `GetAllMarketPending`()
 BEGIN
 
-SELECT * FROM marketpending;
+	SELECT * FROM marketpending;
 
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `UpdateSellMarketPendingQuantity`;
 
@@ -86,34 +91,35 @@ CREATE PROCEDURE `UpdateSellMarketPendingQuantity`(IN inputMarketPendingId int, 
 
 BEGIN
 
-SELECT @sellerId := SellerId 
-FROM marketpending 
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @sellerId := SellerId 
+	FROM marketpending 
+	WHERE MarketPendingId = inputMarketPendingId;
 
-SELECT @stockId := StockId 
-FROM marketpending 
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @stockId := StockId 
+	FROM marketpending 
+	WHERE MarketPendingId = inputMarketPendingId;
 
-SELECT @quantity := Quantity 
-FROM marketpending 
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @quantity := Quantity 
+	FROM marketpending 
+	WHERE MarketPendingId = inputMarketPendingId;
 
-SELECT @price := Price 
-FROM marketpending
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @price := Price 
+	FROM marketpending
+	WHERE MarketPendingId = inputMarketPendingId;
 
+	UPDATE marketpending 
+	SET Quantity = inputQuantity
+	WHERE MarketPendingId = inputMarketPendingId;
 
-UPDATE marketpending 
-SET Quantity = inputQuantity
-WHERE MarketPendingId = inputMarketPendingId;
+	INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
+	VALUES(@stockId,@sellerId, inputBuyerId, myQty,@price, now());
 
-INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
-VALUES(@stockId,@sellerId, inputBuyerId, myQty,@price, now());
-
-UPDATE stock SET CurrentValue = @price WHERE StockId = @stockId;
+	UPDATE stock SET CurrentValue = @price WHERE StockId = @stockId;
+    
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `UpdateBuyMarketPendingQuantity`;
 
@@ -124,34 +130,36 @@ CREATE PROCEDURE `UpdateBuyMarketPendingQuantity`(IN inputMarketPendingId int, I
 
 BEGIN
 
-SELECT @buyerId := BuyerId 
-FROM marketpending 
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @buyerId := BuyerId 
+	FROM marketpending 
+	WHERE MarketPendingId = inputMarketPendingId;
 
-SELECT @stockId := StockId 
-FROM marketpending 
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @stockId := StockId 
+	FROM marketpending 
+	WHERE MarketPendingId = inputMarketPendingId;
 
-SELECT @quantity := Quantity 
-FROM marketpending 
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @quantity := Quantity 
+	FROM marketpending 
+	WHERE MarketPendingId = inputMarketPendingId;
 
-SELECT @price := Price 
-FROM marketpending
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @price := Price 
+	FROM marketpending
+	WHERE MarketPendingId = inputMarketPendingId;
 
 
-UPDATE marketpending 
-SET Quantity = inputQuantity
-WHERE MarketPendingId = inputMarketPendingId;
+	UPDATE marketpending 
+	SET Quantity = inputQuantity
+	WHERE MarketPendingId = inputMarketPendingId;
 
-INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
-VALUES(@stockId,inputSellerId, @buyerId, myQty ,@price, now());
+	INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
+	VALUES(@stockId,inputSellerId, @buyerId, myQty ,@price, now());
 
-UPDATE stock SET CurrentValue = @price WHERE StockId = @stockId;
+	UPDATE stock SET CurrentValue = @price WHERE StockId = @stockId;
+    
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `GetAllStocks`;
 
@@ -161,12 +169,12 @@ USE `HKStockMarket`$$
 CREATE PROCEDURE `GetAllStocks`()
 BEGIN
 
-SELECT *
-FROM stock;
+	SELECT * FROM stock;
 
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `GetTotalStockCount`;
 
@@ -176,13 +184,12 @@ USE `HKStockMarket`$$
 CREATE PROCEDURE `GetTotalStockCount`()
 BEGIN
 
-SELECT Count(*)
-FROM stock;
+	SELECT Count(*) FROM stock;
 
 END$$
 DELIMITER ;
 
-
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `getTotalHoldingsByAccountId`;
 
@@ -192,16 +199,17 @@ USE `HKStockMarket`$$
 CREATE PROCEDURE `getTotalHoldingsByAccountId`(IN inputBuyerId int)
 BEGIN
 
-SELECT s.CompanyName,s.StockId, s.TickerSymbol, (totalQuantity - IFNULL(soldQuantity,0)) AS Quantity, (totalPrice - IFNULL(soldPrice,0))/(totalQuantity - IFNULL(soldQuantity,0)) AS Price
-FROM stock s
-JOIN (SELECT m.StockId, SUM(m.Quantity) AS totalQuantity, SUM(m.Price * m.Quantity) AS totalPrice
-FROM marketcompleted m WHERE m.BuyerId = inputBuyerId GROUP BY m.StockId) total ON total.StockId = s.StockId
-LEFT JOIN (SELECT m.StockId, SUM(m.Quantity) AS soldQuantity, SUM(m.Price * m.Quantity) AS soldPrice
-FROM marketcompleted m WHERE m.SellerId = inputBuyerId GROUP BY m.StockId) sold ON sold.StockId = total.StockId;
+	SELECT s.CompanyName,s.StockId, s.TickerSymbol, (totalQuantity - IFNULL(soldQuantity,0)) AS Quantity, (totalPrice - IFNULL(soldPrice,0))/(totalQuantity - IFNULL(soldQuantity,0)) AS Price
+	FROM stock s
+	JOIN (SELECT m.StockId, SUM(m.Quantity) AS totalQuantity, SUM(m.Price * m.Quantity) AS totalPrice
+		FROM marketcompleted m WHERE m.BuyerId = inputBuyerId GROUP BY m.StockId) total ON total.StockId = s.StockId
+	LEFT JOIN (SELECT m.StockId, SUM(m.Quantity) AS soldQuantity, SUM(m.Price * m.Quantity) AS soldPrice
+		FROM marketcompleted m WHERE m.SellerId = inputBuyerId GROUP BY m.StockId) sold ON sold.StockId = total.StockId;
 
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `getCurrentValueByStockId`;
 
@@ -211,13 +219,13 @@ USE `HKStockMarket`$$
 CREATE PROCEDURE `getCurrentValueByStockId`(IN inputStockId int)
 BEGIN
 
-SELECT CurrentValue 
-FROM stock
-where StockId = inputStockId;
+	SELECT CurrentValue FROM stock
+	WHERE StockId = inputStockId;
 
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `getOrdersByStockId`;
 
@@ -227,13 +235,13 @@ USE `HKStockMarket`$$
 CREATE PROCEDURE `getOrdersByStockId`(IN inputStockId int)
 BEGIN
 
-SELECT * 
-FROM marketpending
-where StockId = inputStockId;
+	SELECT * FROM marketpending
+	WHERE StockId = inputStockId;
 
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `getOrderBookByStockId`;
 
@@ -243,21 +251,22 @@ USE `HKStockMarket`$$
 CREATE PROCEDURE `getOrderBookByStockId`(IN inputStockId int)
 BEGIN
 
-(SELECT "BUY" as "Type", sum(Quantity) as "Quantity", Price
-FROM marketpending
-WHERE SellerId IS NULL AND StockId = inputStockId
-GROUP BY Price
-ORDER BY Price desc)
-UNION 
-(SELECT "SELL" as "Type", sum(Quantity) as "Quantity", Price
-FROM marketpending
-WHERE BuyerId IS NULL AND StockId = inputStockId
-GROUP BY Price
-ORDER BY Price asc);
+	(SELECT "BUY" as "Type", sum(Quantity) as "Quantity", Price
+		FROM marketpending
+		WHERE SellerId IS NULL AND StockId = inputStockId
+		GROUP BY Price
+		ORDER BY Price DESC)
+	UNION 
+	(SELECT "SELL" as "Type", sum(Quantity) as "Quantity", Price
+		FROM marketpending
+		WHERE BuyerId IS NULL AND StockId = inputStockId
+		GROUP BY Price
+		ORDER BY Price ASC);
 
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `getOrdersCompletedByStockId`;
 
@@ -267,14 +276,14 @@ USE `HKStockMarket`$$
 CREATE PROCEDURE `getOrdersCompletedByStockId`(IN inputStockId int)
 BEGIN
 
-SELECT * 
-FROM marketcompleted
-where StockId = inputStockId
-ORDER BY TransactionDate ASC;
+	SELECT * FROM marketcompleted
+	WHERE StockId = inputStockId
+	ORDER BY TransactionDate ASC;
 
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `getPendingSellOrdersRequiredForNewInsertion`;
 
@@ -284,17 +293,17 @@ USE `HKStockMarket`$$
 CREATE PROCEDURE `getPendingSellOrdersRequiredForNewInsertion`(IN inputStockId int, In inputPrice double)
 BEGIN
 
-SELECT * 
-FROM marketpending
-where StockId = inputStockId
-AND BuyerId is null 
-AND Price <= inputPrice
-ORDER BY Price DESC;
+	SELECT * FROM marketpending
+	WHERE StockId = inputStockId
+		AND BuyerId is null 
+		AND Price <= inputPrice
+	ORDER BY Price DESC;
 
 
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `getPendingBuyOrdersRequiredForNewInsertion`;
 
@@ -304,16 +313,16 @@ USE `HKStockMarket`$$
 CREATE PROCEDURE `getPendingBuyOrdersRequiredForNewInsertion`(IN inputStockId int, In inputPrice double)
 BEGIN
 
-SELECT * 
-FROM marketpending
-where StockId = inputStockId
-AND SellerId is null 
-AND Price >= inputPrice
-ORDER BY Price;
+	SELECT * FROM marketpending
+	WHERE StockId = inputStockId
+		AND SellerId is null 
+		AND Price >= inputPrice
+	ORDER BY Price;
 
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `closeSellMarketPendingOrders`;
 
@@ -322,34 +331,34 @@ DELIMITER $$
 USE `HKStockMarket`$$
 CREATE PROCEDURE `closeSellMarketPendingOrders` (In inputMarketPendingId int, In inputBuyerId int)
 BEGIN
-SELECT @sellerId := SellerId 
-FROM marketpending 
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @sellerId := SellerId 
+	FROM marketpending 
+	WHERE MarketPendingId = inputMarketPendingId;
 
-SELECT @stockId := StockId 
-FROM marketpending 
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @stockId := StockId 
+	FROM marketpending 
+	WHERE MarketPendingId = inputMarketPendingId;
 
-SELECT @quantity := Quantity 
-FROM marketpending 
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @quantity := Quantity 
+	FROM marketpending 
+	WHERE MarketPendingId = inputMarketPendingId;
 
-SELECT @price := Price 
-FROM marketpending 
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @price := Price 
+	FROM marketpending 
+	WHERE MarketPendingId = inputMarketPendingId;
 
-DELETE FROM marketpending 
-where MarketPendingId = inputMarketPendingId;
+	DELETE FROM marketpending 
+	WHERE MarketPendingId = inputMarketPendingId;
 
-INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
-VALUES(@stockId,@sellerId, inputBuyerId, @quantity,@price, now());
+	INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
+	VALUES(@stockId,@sellerId, inputBuyerId, @quantity,@price, now());
 
-
-UPDATE stock SET CurrentValue = @price WHERE StockId = @stockId;
+	UPDATE stock SET CurrentValue = @price WHERE StockId = @stockId;
 
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `closeBuyMarketPendingOrders`;
 
@@ -358,34 +367,34 @@ DELIMITER $$
 USE `HKStockMarket`$$
 CREATE PROCEDURE `closeBuyMarketPendingOrders` (In inputMarketPendingId int, In inputSellerId int)
 BEGIN
-SELECT @buyerId := BuyerId 
-FROM marketpending 
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @buyerId := BuyerId 
+	FROM marketpending 
+	WHERE MarketPendingId = inputMarketPendingId;
 
-SELECT @stockId := StockId 
-FROM marketpending 
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @stockId := StockId 
+	FROM marketpending 
+	WHERE MarketPendingId = inputMarketPendingId;
 
-SELECT @quantity := Quantity 
-FROM marketpending 
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @quantity := Quantity 
+	FROM marketpending 
+	WHERE MarketPendingId = inputMarketPendingId;
 
-SELECT @price := Price 
-FROM marketpending
-WHERE MarketPendingId = inputMarketPendingId;
+	SELECT @price := Price 
+	FROM marketpending
+	WHERE MarketPendingId = inputMarketPendingId;
 
-DELETE FROM marketpending 
-where MarketPendingId = inputMarketPendingId;
+	DELETE FROM marketpending 
+	WHERE MarketPendingId = inputMarketPendingId;
 
-INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
-VALUES(@stockId, inputSellerId, @buyerId, @quantity,@price, now());
+	INSERT INTO marketcompleted (StockId, SellerId, BuyerId, Quantity, Price, TransactionDate)
+	VALUES(@stockId, inputSellerId, @buyerId, @quantity,@price, now());
 
-
-UPDATE stock SET CurrentValue = @price WHERE StockId = @stockId;
+	UPDATE stock SET CurrentValue = @price WHERE StockId = @stockId;
 
 END$$
 DELIMITER ;
 
+-- ----------------------------------------------------------
 USE `HKStockMarket`;
 DROP PROCEDURE IF EXISTS `getTop5CompletedOrderByStockId`;
 
@@ -395,11 +404,34 @@ USE `HKStockMarket`$$
 CREATE PROCEDURE `getTop5CompletedOrderByStockId`(IN inputStockId int)
 BEGIN
 
-SELECT FORMAT(Avg(Price),2) as averagePrice
-FROM  (Select Price
-FROM marketcompleted 
-where StockId = inputStockId
-ORDER BY TransactionDate desc limit 5) P;
+	SELECT FORMAT(Avg(Price),2) as averagePrice
+	FROM  (Select Price
+		FROM marketcompleted 
+		WHERE StockId = inputStockId
+		ORDER BY TransactionDate desc limit 5) P;
+
+END$$
+DELIMITER ;
+
+-- ----------------------------------------------------------
+USE `HKStockMarket`;
+DROP PROCEDURE IF EXISTS `getQuantityByAccountIdAndStockId`;
+
+DELIMITER $$
+USE `HKStockMarket`$$
+
+CREATE PROCEDURE `getQuantityByAccountIdAndStockId`(IN inputBuyerId int, IN inputStockId int)
+BEGIN
+
+	SELECT (totalQuantity - IFNULL(soldQuantity,0)) AS Quantity
+	FROM stock s
+	JOIN (SELECT m.StockId, SUM(m.Quantity) AS totalQuantity
+		FROM marketcompleted m WHERE m.BuyerId = inputBuyerId GROUP BY m.StockId) total 
+			ON total.StockId = s.StockId
+	LEFT JOIN (SELECT m.StockId, SUM(m.Quantity) AS soldQuantity
+		FROM marketcompleted m WHERE m.SellerId = inputBuyerId GROUP BY m.StockId) sold 
+			ON sold.StockId = total.StockId
+	WHERE s.StockId = inputStockId;
 
 END$$
 DELIMITER ;
@@ -448,32 +480,3 @@ BEGIN
 	END WHILE;
 END$$
 DELIMITER ;
-
-USE `HKStockMarket`;
-DROP PROCEDURE IF EXISTS `getQuantityByAccountIdAndStockId`;
-
-DELIMITER $$
-USE `HKStockMarket`$$
-
-CREATE PROCEDURE `getQuantityByAccountIdAndStockId`(IN inputBuyerId int, IN inputStockId int)
-BEGIN
-
-SELECT (totalQuantity - IFNULL(soldQuantity,0)) AS Quantity
-FROM stock s
-JOIN (SELECT m.StockId, SUM(m.Quantity) AS totalQuantity
-FROM marketcompleted m WHERE m.BuyerId = inputBuyerId GROUP BY m.StockId) total ON total.StockId = s.StockId
-LEFT JOIN (SELECT m.StockId, SUM(m.Quantity) AS soldQuantity
-FROM marketcompleted m WHERE m.SellerId = inputBuyerId GROUP BY m.StockId) sold ON sold.StockId = total.StockId
-WHERE s.StockId = inputStockId;
-
-END$$
-DELIMITER ;
-
-
--- Uncomment if first time run the stored procedure
--- CALL InsertMarketCompletedData();
-
-
-
-
-
