@@ -424,7 +424,12 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 			public void run() {
 				try {
 					while (true) {
-						cacheMarket();
+						try {
+							cacheMarket();
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 						checkStockCache();
 						Thread.sleep(60000);
 					}
@@ -437,7 +442,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 		thread.start();
 	}
 
-	public void cacheMarket() {
+	public void cacheMarket() throws RemoteException {
 		jedis.set(Market.US.name(), getAllStocksByMarket(Market.US));
 		jedis.set(Market.HK.name(), getAllStocksByMarket(Market.HK));
 		jedis.set(Market.SG.name(), getAllStocksByMarket(Market.SG));

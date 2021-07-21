@@ -18,5 +18,6 @@ public interface RemoteInterface extends Remote {
 	
 	public String retrieveMarketCache(String market, ClientInt client)  throws RemoteException;
 	public String cacheOrderBook(String market, int stockId)  throws RemoteException;
+	public void cacheMarket() throws RemoteException;
 	public HashMap<String, String> retrieveStockCache(String market, int stockid, ClientInt client, boolean callback) throws RemoteException;
 }

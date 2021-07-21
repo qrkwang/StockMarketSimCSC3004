@@ -168,6 +168,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 					ownedQuantity = -1;
 			}
 			remoteObj.cacheOrderBook(market, stockId);
+			remoteObj.cacheMarket();
 			createChartPanel(false);
 			switchPanel(chartPanel);
 			try {
