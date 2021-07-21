@@ -90,13 +90,10 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			currentDisplayTickerSymbol = "";
 			initialise();
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NotBoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -252,7 +249,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 				}).readObject();
 			}
 		} catch (ClassNotFoundException | IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return deserializedList;
@@ -441,7 +437,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		try {
 			remoteObj.removeFromClientHashMap(accountDetailsObj.getAccountId());
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		// Redirect to login panel
@@ -645,7 +640,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 			}
 
 		} catch (RemoteException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		return JSPane;
@@ -754,7 +748,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 					}
 				}
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
@@ -948,7 +941,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements Clien
 		return StockId + "," + sellerId + "," + buyerId + "," + qty + "," + price;
 	}
 
-	@SuppressWarnings({ "unchecked", "resource" })
 	public static void main(String[] args) {
 		try {
 			//Create the client

@@ -12,14 +12,15 @@ import com.mysql.jdbc.Connection;
 
 import classes.AccountDetails;
 
+// Handle database for account
 public class AccountDetailsDbScript {
 	private final static String QUEUE_NAME = "hello";
 	public final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
-	private String username = "root";
-	private String password = "root";
+	private String username;
+	private String password;
+	private String conn_string;
 
-	private String conn_string; // jdbc:mysql://ip:3306/DBNAME
-
+	// Constructor
 	public AccountDetailsDbScript(String ip, String dbname, String u, String p) {
 		this.conn_string = "jdbc:mysql://" + ip + "/" + dbname;
 		this.username = u;
@@ -31,6 +32,7 @@ public class AccountDetailsDbScript {
 		conn_string = "jdbc:mysql://" + ipandPort + "/" + dbName;
 	}
 
+	// Retrieve account balance
 	public float getAccountBalanceById(int accountId) throws SQLException {
 		Connection con = null;
 		String currConn = this.conn_string;
@@ -53,7 +55,6 @@ public class AccountDetailsDbScript {
 			con.close();
 
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return (Float) null;
 		}
@@ -63,6 +64,8 @@ public class AccountDetailsDbScript {
 
 	}
 
+	// Retrieve account detail based on username and password
+	// Used to check for log in
 	public String getAccountDetails(String userName, String pw) throws SQLException {
 		Connection con = null;
 		String currConn = this.conn_string;
@@ -71,7 +74,6 @@ public class AccountDetailsDbScript {
 			con = (Connection) DriverManager.getConnection(currConn, username, password);
 			System.out.println("Connected to DB");
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -106,7 +108,6 @@ public class AccountDetailsDbScript {
 				objectMapper.writeValue(stringAccountDetails, accountDetail);
 			} catch (IOException e) {
 				System.out.println("io exception!!");
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			System.out.println("Account Details JSON is\n" + stringAccountDetails);
@@ -117,6 +118,7 @@ public class AccountDetailsDbScript {
 		return "not found";
 	}
 
+	// Retrieve account details based on account id
 	public String getAccountDetailsById(int id) throws SQLException {
 		Connection con = null;
 		String currConn = this.conn_string;
@@ -125,7 +127,6 @@ public class AccountDetailsDbScript {
 			con = (Connection) DriverManager.getConnection(currConn, username, password);
 			System.out.println("Connected to DB");
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -159,7 +160,6 @@ public class AccountDetailsDbScript {
 				objectMapper.writeValue(stringAccountDetails, accountDetail);
 			} catch (IOException e) {
 				System.out.println("io exception!!");
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			System.out.println("Account Details JSON is\n" + stringAccountDetails);
@@ -170,9 +170,9 @@ public class AccountDetailsDbScript {
 		return "not found";
 	}
 
+	// Update purchases by the client
 	public void updatePurchaseInAccount(int buyerId, float totalPaid) throws SQLException {
 		Connection con = null;
-//		( minus acc value, + securityvalue, - available cash)
 		String currConn = this.conn_string;
 
 		try {
@@ -189,11 +189,11 @@ public class AccountDetailsDbScript {
 			con.close();
 
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
+	// Update sales by the client
 	public void updateSaleInAccount(int sellerId, float value) throws SQLException {
 		Connection con = null;
 		String currConn = this.conn_string;
@@ -211,7 +211,6 @@ public class AccountDetailsDbScript {
 			con.close();
 
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

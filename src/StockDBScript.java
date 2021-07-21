@@ -22,8 +22,7 @@ import classes.OrderBook;
 import classes.Stock;
 import classes.StockOwned;
 
-//Put db connection and queries for Hk market db here.
-//Put rabbitMQ receiver here to receive from their own market topic. Will receive from servant.java
+//Handle rabbitMQ and Database for each market
 
 public class StockDBScript {
 	private boolean isOnline = true; // will be true unless algo detected offline in RemoteServant.java
@@ -31,8 +30,8 @@ public class StockDBScript {
 	public final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
 	private String username;
 	private String password;
-	private String conn_string; // jdbc:mysql://ip:3306/DBNAME
-	private String market; // jdbc:mysql://ip:3306/DBNAME
+	private String conn_string;
+	private String market;
 	private AccountDetailsDbScript accountDetailsDb;
 	private HashMap<Integer, ClientInt> clientHashMap; // accountId and clientInterface
 
@@ -64,6 +63,7 @@ public class StockDBScript {
 		this.isOnline = isOnline;
 	}
 
+	// Client HashMap
 	public void addToClientHashMap(ClientInt cc, int accountId) {
 		clientHashMap.put(accountId, cc);
 
@@ -85,8 +85,9 @@ public class StockDBScript {
 		return null;
 	}
 
+	//RabbitMQ receiver
 	public void startWaitForMsg() {
-		System.out.println("starting wait for msg function");
+		System.out.println("Starting wait for msg function");
 
 		try {
 			ConnectionFactory factory = new ConnectionFactory();
@@ -118,6 +119,7 @@ public class StockDBScript {
 		}
 	}
 
+	// Remove pending order
 	private void deleteMarketPendingOrder(int id, String currConn) throws SQLException {
 		Connection con = null;
 		try {
@@ -133,12 +135,13 @@ public class StockDBScript {
 			con.close();
 
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 
 		}
 	}
 
+	// Update pending order quantity
+	// Insertion of completed transaction
 	private void updateLastMatchedMarketPendingOrder(boolean isBuy, int id, int lastQty, int qty, int accId, String currConn) throws SQLException {
 		Connection con = null;
 
@@ -163,13 +166,13 @@ public class StockDBScript {
 			con.close();
 
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 
 		}
 		con.close();
 	}
 
+	// Add complete transaction
 	private void addMarketCompleteOrder(boolean isBuy, int stockId, int sellerId, int buyerId, int totalQty,
 			float avgPrice, String currConn) throws SQLException {
 		Connection con = null;
@@ -192,13 +195,13 @@ public class StockDBScript {
 			con.close();
 
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 
 		}
 		con.close();
 	}
 
+	// Add pending order
 	private void addMarketPendingOrder(boolean isBuy, int stockId, int transactionAccId, int totalQty, float price,
 			String currConn) throws SQLException {
 		Connection con = null;
@@ -226,12 +229,13 @@ public class StockDBScript {
 			System.out.println(rs);
 			con.close();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		con.close();
 	}
 
+	// Remove sell pending order
+	// Insert completed transaction
 	private void closeSellMarketPendingOrder(int marketPendingId, int buyerId, String currConn) throws SQLException {
 		Connection con = null;
 
@@ -249,11 +253,12 @@ public class StockDBScript {
 			con.close();
 
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
+	// Remove buy pending order
+	// Insert completed transaction
 	private void closeBuyMarketPendingOrder(int marketPendingId, int sellerId) throws SQLException {
 		Connection con = null;
 
@@ -271,11 +276,11 @@ public class StockDBScript {
 			con.close();
 
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
+	// Retrieve client holding for specific stock
 	private int fetchHoldingQtyByStockIdandAccId(int stockId, int accId) throws SQLException {
 		Connection con = null;
 		int qty = -1;
@@ -295,12 +300,12 @@ public class StockDBScript {
 			con.close();
 
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return qty;
 	}
 
+	// Retrieve pending order that matches client request
 	private ArrayList<MarketPending> retrieveOrdersToMatch(boolean isBuy, int stockId, float orderPrice,
 			String currConn) throws SQLException {
 		System.out.println("retrieving orders to match function");
@@ -365,14 +370,14 @@ public class StockDBScript {
 
 			}
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		con.close();
 		return retrievedOrders;
-
 	}
 
+	// Received order from the RabbitMQ
+	// Processing of the order
 	private void receiveOrder(String message) throws RemoteException {
 		System.out.println("receive order with msg " + message);
 		String[] splitArray = message.split(",");
@@ -447,7 +452,6 @@ public class StockDBScript {
 						currClient.printToClient("not enough balance");
 						return;
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
 						System.out.println("client offline / cannot connect to client");
 						e.printStackTrace();
 					}
@@ -763,7 +767,6 @@ public class StockDBScript {
 			if (!isRandomGenOrder)
 				currClient.updateOrderBook(market, stockId, bought, sold, totalQtyStocks);
 		} catch (SQLException | ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			if (!isRandomGenOrder) {
 				currClient.printToClient("error processing");
@@ -775,6 +778,7 @@ public class StockDBScript {
 		}
 	}
 
+	// Retrieve all stocks owned by client
 	public ArrayList<StockOwned> getOwnedStocks(int accountId) throws SQLException {
 		ArrayList<StockOwned> arrayListOwned = null;
 		Connection con = null;
@@ -805,7 +809,6 @@ public class StockDBScript {
 
 			}
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -813,6 +816,7 @@ public class StockDBScript {
 		return arrayListOwned;
 	}
 
+	// Retrieve all stocks in the market
 	public ArrayList<Stock> getAllStocks() throws SQLException {
 		ArrayList<Stock> arrayListStocks = null;
 		Connection con = null;
@@ -843,7 +847,6 @@ public class StockDBScript {
 				count++;
 			}
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (CommunicationsException e) {
 			e.printStackTrace();
@@ -856,6 +859,7 @@ public class StockDBScript {
 
 	}
 
+	// Retrieve all pending order for the stock
 	public ArrayList<MarketPending> getPendingOrders(int stockId) throws SQLException {
 		ArrayList<MarketPending> arrayListOrders = null;
 		Connection con = null;
@@ -901,13 +905,13 @@ public class StockDBScript {
 				count++;
 			}
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		con.close();
 		return arrayListOrders;
 	}
 
+	// Retrieve all completed transaction for the stock
 	public ArrayList<MarketComplete> getCompletedOrders(int stockId) throws SQLException {
 		ArrayList<MarketComplete> arrayListOrders = null;
 		Connection con = null;
@@ -939,13 +943,13 @@ public class StockDBScript {
 				count++;
 			}
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		con.close();
 		return arrayListOrders;
 	}
 
+	// Retrieve average price of the 5 latest completed transaction
 	public double getAvgCompletedOrder(int stockId) throws SQLException {
 		Connection con = null;
 		double averagePrice = 0;
@@ -963,7 +967,6 @@ public class StockDBScript {
 				averagePrice = rs.getDouble("averagePrice");
 			}
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		con.close();
@@ -971,6 +974,7 @@ public class StockDBScript {
 		return averagePrice;
 	}
 
+	// Retrieve the order book for the stock
 	public ArrayList<OrderBook> getOrderBook(int stockId) throws SQLException {
 		ArrayList<OrderBook> arrayListOrderBook = null;
 		Connection con = null;
@@ -995,13 +999,13 @@ public class StockDBScript {
 				count++;
 			}
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		con.close();
 		return arrayListOrderBook;
 	}
 
+	// Generate a random number within the range
 	public double randomInRange(double min, double max) {
 		Random random = new Random();
 		double range = max - min;
@@ -1010,6 +1014,7 @@ public class StockDBScript {
 		return shifted;
 	}
 
+	// Generate random order to simulate active market
 	public String dbRandomOrderGeneration(int stockId) {
 		StringBuilder message = new StringBuilder("");
 		try {
@@ -1064,7 +1069,6 @@ public class StockDBScript {
 			}
 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return message.toString();

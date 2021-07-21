@@ -4,10 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public interface RemoteInterface extends Remote {
-	// Client will need to display account details, send buy/sell order, list of
-	// account stock holdings, polling of stock price per interval (not necessarily
-	// need polling, can be on update) when on that page, stock page orders.
-
 	public String getAccountDetailsByUsernameAndPW(ClientInt cc, String username, String pw) throws RemoteException;
 	public String getAccountDetailsById(ClientInt cc, int accountId) throws RemoteException;
 	public ArrayList getAccountHoldingsById(int accountId) throws RemoteException;
