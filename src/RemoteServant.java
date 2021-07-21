@@ -54,7 +54,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private final String USSERVERIPADDRESS = "192.168.68.148";
 	private final String SGSERVERIPADDRESS = "192.168.68.149";
 	private final String HKSERVERIPADDRESS = "192.168.68.150";
-
+	
 	private final String AccountsDBName = "AccountDetailsServer";
 	private final String USDBName = "USStockMarket";
 	private final String HKDBName = "HKStockMarket";
@@ -213,7 +213,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				boolean checkHeartbeatResult = false;
 				try {
 					checkHeartbeatResult = checkConnection(ipname, username, password, "AccountDetailsServer");
-					System.out.println("task have expired , ready to check for renew");
+//					System.out.println("task have expired , ready to check for renew");
 					if (checkHeartbeatResult == false) { // check if it ok to reset the lease , if heartbeat fail no
 						timer.cancel(); // cancel all the schedule task that maybe happending
 						leaseAlive = false;
@@ -288,32 +288,37 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				boolean usRequiredRecovery = false;
 				boolean hkRequiredRecovery = false;
 				boolean sgRequiredRecovery = false;
+				boolean sgOnline = false;
+				boolean hkOnline = false;
+				boolean usOnline = false;
+
 				while (true) {
 					try {
 						if (sendPingRequest(USSERVERIPADDRESS) == false) {
 							failedServer = Market.US.name();
 							System.out.println("Cannot ping US");
-							usaDb.setOnline(false);
+							usOnline = false;
 							usaDb.setConnString(SGSERVERIPADDRESS + ":3306", USDBName);
 							System.out.println(usaDb.getConnString());
 						} else {
-							usaDb.setOnline(true);
+							usOnline = true;
 						}
 						if (sendPingRequest(SGSERVERIPADDRESS) == false) {
 							failedServer = Market.SG.name();
 							System.out.println("Cannot ping SG");
-							sgDb.setOnline(false);
+							
+							sgOnline = false;
 							sgDb.setConnString(HKSERVERIPADDRESS + ":3306", SGDBName);
 						} else {
-							sgDb.setOnline(true);
+							sgOnline = true;
 						}
 						if (sendPingRequest(HKSERVERIPADDRESS) == false) {
 							failedServer = Market.HK.name();
 							System.out.println("Cannot ping HK");
-							hkDb.setOnline(false);
+							hkOnline = false;
 							hkDb.setConnString(USSERVERIPADDRESS + ":3306", HKDBName);
 						} else {
-							hkDb.setOnline(true);
+							hkOnline = true;
 						}
 
 						if (failedServer != null && usRequiredRecovery == false && sgRequiredRecovery == false
@@ -330,9 +335,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 							}
 
 						}
-						if ((usRequiredRecovery == true && usaDb.isOnline() == true)
-								|| (sgDb.isOnline() == true && sgRequiredRecovery == true)
-								|| (hkDb.isOnline() == true && hkRequiredRecovery == true)) {
+						if ((usRequiredRecovery == true && usOnline == true)
+								|| (sgOnline == true && sgRequiredRecovery == true)
+								|| (hkOnline == true && hkRequiredRecovery == true)) {
 							executeFile("src/sshRecoverOriginalServer.py", failedServer);
 
 							if (failedServer.equals(Market.US.name())) {
