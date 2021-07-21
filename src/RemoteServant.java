@@ -59,13 +59,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private final String USDBName = "USStockMarket";
 	private final String HKDBName = "HKStockMarket";
 	private final String SGDBName = "SGStockMarket";
-//
-//	private final String ACCOUNTSERVER = "localhost"; // 192.168.87.54
-//	private final String ACCOUNTSERVER2 = "localhost"; // 192.168.87.55
-//	private final String ACCOUNTSERVER3 = "localhost"; // 192.168.87.56
-//	private final String USSERVERIPADDRESS = "localhost";
-//	private final String SGSERVERIPADDRESS = "localhost";
-//	private final String HKSERVERIPADDRESS = "localhost";
+	
 	private String accountUser;
 
 	private boolean leaseAlive;

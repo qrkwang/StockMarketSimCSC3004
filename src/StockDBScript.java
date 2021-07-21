@@ -1013,11 +1013,11 @@ public class StockDBScript {
 
 			if (averagePrice < 10) {
 
-				offsetValue = randomInRange(0, 0.1);
+				offsetValue = randomInRange(-0.1, 0.1);
 			} else if (averagePrice >= 10 && averagePrice < 100) {
-				offsetValue = randomInRange(0, 0.2);
+				offsetValue = randomInRange(-0.2, 0.2);
 			} else {
-				offsetValue = randomInRange(0, 0.5);
+				offsetValue = randomInRange(-0.5, 0.5);
 			}
 			// true = + , false = -
 			randomSign = rd.nextBoolean();
