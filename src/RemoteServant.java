@@ -54,7 +54,7 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 	private final String USSERVERIPADDRESS = "192.168.68.148";
 	private final String SGSERVERIPADDRESS = "192.168.68.149";
 	private final String HKSERVERIPADDRESS = "192.168.68.150";
-
+	
 	private final String AccountsDBName = "AccountDetailsServer";
 	private final String USDBName = "USStockMarket";
 	private final String HKDBName = "HKStockMarket";
@@ -165,7 +165,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				System.out.println("Selected Server as a leader is " + selectedserver + " current generation no " + generation);
 			}
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -286,6 +285,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				boolean usRequiredRecovery = false;
 				boolean hkRequiredRecovery = false;
 				boolean sgRequiredRecovery = false;
+				boolean sgOnline = false;
+				boolean hkOnline = false;
+				boolean usOnline = false;
 				//Check for connection to servers every minute
 				while (true) {
 					try {
@@ -293,26 +295,27 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 						if (sendPingRequest(USSERVERIPADDRESS) == false) {
 							failedServer = Market.US.name();
 							System.out.println("Cannot ping US");
-							usaDb.setOnline(false);
+							usOnline = false;
 							usaDb.setConnString(SGSERVERIPADDRESS + ":3306", USDBName);
 						} else {
-							usaDb.setOnline(true);
+							usOnline = true;
 						}
 						if (sendPingRequest(SGSERVERIPADDRESS) == false) {
 							failedServer = Market.SG.name();
 							System.out.println("Cannot ping SG");
-							sgDb.setOnline(false);
+							
+							sgOnline = false;
 							sgDb.setConnString(HKSERVERIPADDRESS + ":3306", SGDBName);
 						} else {
-							sgDb.setOnline(true);
+							sgOnline = true;
 						}
 						if (sendPingRequest(HKSERVERIPADDRESS) == false) {
 							failedServer = Market.HK.name();
 							System.out.println("Cannot ping HK");
-							hkDb.setOnline(false);
+							hkOnline = false;
 							hkDb.setConnString(USSERVERIPADDRESS + ":3306", HKDBName);
 						} else {
-							hkDb.setOnline(true);
+							hkOnline = true;
 						}
 						
 						// Server recovery
@@ -329,9 +332,9 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 						}
 						// Recover original data back to server and switch back to server from temporary server
-						if ((usRequiredRecovery == true && usaDb.isOnline() == true)
-								|| (sgDb.isOnline() == true && sgRequiredRecovery == true)
-								|| (hkDb.isOnline() == true && hkRequiredRecovery == true)) {
+						if ((usRequiredRecovery == true && usOnline == true)
+								|| (sgOnline == true && sgRequiredRecovery == true)
+								|| (hkOnline == true && hkRequiredRecovery == true)) {
 							executeFile("src/sshRecoverOriginalServer.py", failedServer);
 
 							if (failedServer.equals(Market.US.name())) {
@@ -350,13 +353,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 						Thread.sleep(60000);
 
 					} catch (UnknownHostException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
@@ -456,10 +456,8 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 					} catch (ConnectException e) {
 						Thread.currentThread().interrupt();
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
@@ -647,7 +645,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
 		}
@@ -696,7 +693,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 
 			System.out.println(" [x] Sent '" + order + "'" + QUEUE_NAME);
 		} catch (IOException | TimeoutException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
@@ -753,7 +749,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				}
 			}).writeObject(arrayListStocks);
 		} catch (SQLException | IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return "error fetching";
 		}
@@ -783,7 +778,6 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 				}
 			}).writeObject(arrayListStocks);
 		} catch (SQLException | IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return "error fetching";
 		}
@@ -856,13 +850,10 @@ public class RemoteServant extends UnicastRemoteObject implements RemoteInterfac
 							sendOrder(0, marketStr, message, true);
 							Thread.sleep(5000);
 						}
-						// TODO Auto-generated method stub
-
 					} catch (Exception ex) {
 						ex.printStackTrace();
 					}
 				}
-
 			}
 		});
 		thread.start();
