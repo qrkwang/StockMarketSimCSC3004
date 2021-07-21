@@ -36,11 +36,6 @@ public class StockDBScript {
 	private AccountDetailsDbScript accountDetailsDb;
 	private HashMap<Integer, ClientInt> clientHashMap; // accountId and clientInterface
 
-//	public StockDBScript() {
-//		this.queue_name = "";
-//		this.conn_string = "";
-//	}
-
 	public StockDBScript(String m, String qn, String ip, String dbname, String u, String p,
 			AccountDetailsDbScript accountDetailsDb) {
 		this.market = m;
@@ -272,6 +267,31 @@ public class StockDBScript {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	private int fetchHoldingQtyByStockIdandAccId(int stockId, int accId) throws SQLException {
+		Connection con = null;
+		int qty = -1;
+		try {
+			Class.forName(DRIVER_CLASS);
+			con = (Connection) DriverManager.getConnection(this.conn_string, this.username, this.password);
+
+			String query = "{CALL CloseBuyMarketPendingOrders(?,?)}";
+			CallableStatement stmt = con.prepareCall(query); // prepare to call
+
+			stmt.setInt(1, stockId);
+			stmt.setInt(2, accId);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				qty = rs.getInt("Quantity");
+			}
+			con.close();
+
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return qty;
 	}
 
 	private ArrayList<MarketPending> retrieveOrdersToMatch(boolean isBuy, int stockId, float orderPrice,
@@ -577,6 +597,19 @@ public class StockDBScript {
 				// its a sell order
 
 				// check if sell qty match with his own holdings qty.
+				if (!isRandomGenOrder) {
+					int personHoldingQty = this.fetchHoldingQtyByStockIdandAccId(stockId, accountId);
+					if (personHoldingQty < qty) {
+						this.retrieveClientIntFromHashMap(accountId).printToClient("not enough quantity");
+						return;
+
+					} else if (personHoldingQty == -1) {
+						this.retrieveClientIntFromHashMap(accountId).printToClient("error processing ");
+						return;
+					} else {
+//						System.out.println("enough qty to sell");
+					}
+				}
 
 				ArrayList<MarketPending> fetchedOrders = retrieveOrdersToMatch(false, stockId, price, currConn);
 				if (fetchedOrders == null) {
